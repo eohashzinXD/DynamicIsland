@@ -29,6 +29,8 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
 
     private final Map<Object, Slot> slots = new IdentityHashMap<>();
     private CardPainter painter;
+    /** The slots placed in the current frame, back to front. */
+    private final java.util.List<Slot> placed = new java.util.ArrayList<>();
     /** Counts frames so a slot can tell whether it was placed in the current one. */
     private int frame;
 
@@ -55,6 +57,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     @Override
     public void beginFrame() {
         frame++;
+        placed.clear();
     }
 
     @Override
@@ -66,6 +69,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
             addView(slot, new FrameLayout.LayoutParams(0, 0));
         }
         slot.placedInFrame = frame;
+        placed.add(slot);
         slot.update(bounds, corner, alpha);
     }
 
@@ -74,6 +78,21 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         for (Slot slot : slots.values()) {
             if (slot.placedInFrame != frame) {
                 slot.hide();
+            }
+        }
+        keepPlacementOrder();
+    }
+
+    /** Slots are placed back to front; when a card changed its place in the stack its view has to follow. */
+    private void keepPlacementOrder() {
+        int first = getChildCount() - placed.size();
+        boolean inOrder = first >= 0;
+        for (int i = 0; inOrder && i < placed.size(); i++) {
+            inOrder = getChildAt(first + i) == placed.get(i);
+        }
+        if (!inOrder) {
+            for (Slot slot : placed) {
+                slot.bringToFront();
             }
         }
     }

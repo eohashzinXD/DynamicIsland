@@ -128,7 +128,8 @@ final class PillPainter {
         }
         canvas.drawCircle(bubbleX, bubbleY, bubbleRadius + m.outlineW, paint);
         if (hasNeck) {
-            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * neckAlpha));
+            // squared: the outline is wider than the black neck, so it must be gone before the neck is thin
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * neckAlpha * neckAlpha));
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
             paint.setStrokeWidth(m.outlineW * 2.0f);
             canvas.drawPath(neck, paint);

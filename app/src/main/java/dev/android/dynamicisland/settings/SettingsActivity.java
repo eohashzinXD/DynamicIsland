@@ -166,6 +166,7 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.hub_about));
         LinearLayout about = ui.card(page);
         ui.actionRow(about, getString(R.string.hub_version), "Dynamic Island " + version(), null);
+        ui.actionRow(about, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
         ui.actionRow(about, getString(R.string.hub_credits), getString(R.string.hub_credits_text), null);
     }
 

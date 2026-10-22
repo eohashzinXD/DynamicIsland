@@ -167,6 +167,8 @@
     <string name="test_stage">Stage %d</string>
     <string name="test_code_title">Verification code</string>
     <string name="test_progress_title">Progress in the text</string>
+    <string name="hub_author">Made by</string>
+    <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">Credits</string>
     <string name="hub_credits_text">Inspired by @cryyear\'s DynamicIsland (github.com/Spottq) and reimplemented. Rule file format by LiveBridge. Xposed API by rovo89 (Apache-2.0).</string>
 </resources>

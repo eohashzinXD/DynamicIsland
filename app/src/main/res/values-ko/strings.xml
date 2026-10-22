@@ -167,6 +167,8 @@
     <string name="test_stage">%d단계</string>
     <string name="test_code_title">인증번호</string>
     <string name="test_progress_title">글 속 진행률</string>
+    <string name="hub_author">만든 사람</string>
+    <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">크레딧</string>
     <string name="hub_credits_text">@cryyear의 DynamicIsland(github.com/Spottq)에서 영감을 받아 새로 구현했습니다. 규칙 파일 형식은 LiveBridge를 따릅니다. Xposed API는 rovo89 (Apache-2.0).</string>
 </resources>

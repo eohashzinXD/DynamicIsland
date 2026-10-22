@@ -443,7 +443,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         for (Card c : scene.cards) {
             active |= c.bridge.animating(t);
         }
-        springs.outlineFade.animateTo(scene.cards.isEmpty() ? 1.0f : 0.0f);
+        springs.outlineFade.animateTo(allLeaving() ? 1.0f : 0.0f);
         if (scene.mainOut != null && scene.mainOut.finished(t)) {
             scene.mainOut = null;
         }
@@ -518,6 +518,16 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean performHapticFeedback(int feedbackConstant, int flags) {
         return ModuleSettings.haptics() && super.performHapticFeedback(feedbackConstant, flags);
+    }
+
+    /** True when no card is staying: the pill is (or is about to be) all there is, so it shows its outline again. */
+    private boolean allLeaving() {
+        for (Card c : scene.cards) {
+            if (!c.leaving) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

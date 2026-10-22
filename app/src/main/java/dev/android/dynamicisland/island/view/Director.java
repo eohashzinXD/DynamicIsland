@@ -27,12 +27,16 @@ final class Director {
     private static final long CARD_CONTENT_DELAY_MS = 230;
     /** How long a card's backdrop blur keeps the frame loop alive after it was switched on. */
     private static final long BLUR_SETTLE_MS = 320;
-    private static final long IN_DELAY_MS = 115;
+    private static final long IN_DELAY_MS = 60;
     private static final long FIRST_CONTENT_IN_MS = 60;
-    private static final long APPEAR_IN_MS = 150;
+    private static final long APPEAR_IN_MS = 90;
+    /** The first bubble waits this long after the pill appeared. */
+    private static final long SPLIT_AFTER_APPEAR_MS = 220;
     private static final long BUBBLE_FIRST_IN_MS = 180;
     private static final long COLLAPSE_IN_MS = 330;
-    private static final long REGROW_DELAY_MS = 420;
+    private static final long REGROW_DELAY_MS = 70;
+    /** A closing card waits for the pill to grow back at most this long before it is dropped anyway. */
+    private static final long PILL_SETTLE_TIMEOUT_MS = 1200;
     private static final long FADE_PILL_BLOB_DELAY_MS = 260;
 
     /** Horizontal speed kick (dp) when the shown item changes towards the given side. */
@@ -42,7 +46,6 @@ final class Director {
     /** Height the pill starts at when it appears, as a fraction of its final height. */
     private static final float APPEAR_HEIGHT_FROM = 0.55f;
     /** Upward speed given to the pill's height when it swallows the cards, in dp per second. */
-    private static final float ABSORB_HEIGHT_KICK_DP = 40.0f;
 
     private final IslandView view;
     private final IslandHost host;
@@ -56,6 +59,9 @@ final class Director {
     private final Runnable autoCollapse = this::collapseIfExpanded;
     private final Runnable fadePillBlob = this::fadePillBlobNow;
     private final Runnable regrowPill = this::regrowPillNow;
+    private final Runnable startSplit = this::startSplitNow;
+    /** When the pill last appeared from nothing, for the timing of the first bubble. */
+    private long appearedAt;
 
     Director(IslandView view, IslandHost host, Metrics m, Scene scene, Shapes shapes, BodyFactory bodies, MediaFxCache mediaFx) {
         this.view = view;
@@ -201,7 +207,21 @@ final class Director {
             scene.bubbleIn = Layer.incoming(new BubbleContent(view, secondary), t, IN_DELAY_MS);
         }
         if (scene.mode == Mode.COMPACT) {
+            long sinceAppear = t - appearedAt;
+            if (sinceAppear < SPLIT_AFTER_APPEAR_MS) {
+                // the pill is still landing: the bubble leaves it a moment later instead of competing with the drop
+                view.removeCallbacks(startSplit);
+                view.postDelayed(startSplit, SPLIT_AFTER_APPEAR_MS - sinceAppear);
+            } else {
+                sp.split.animateTo(1.0f, Motion.BUBBLE_SPLIT);
+            }
+        }
+    }
+
+    private void startSplitNow() {
+        if (scene.mode == Mode.COMPACT && scene.secondary != null) {
             sp.split.animateTo(1.0f, Motion.BUBBLE_SPLIT);
+            view.scheduleFrame();
         }
     }
 
@@ -215,6 +235,7 @@ final class Director {
 
     private void appear(IslandItem primary, boolean fromLeft) {
         scene.mode = Mode.COMPACT;
+        appearedAt = IslandView.now();
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.snapTo(1.0f);
         float start = m.restWidth();
@@ -446,8 +467,14 @@ final class Director {
         c.leaveAt = at;
         c.launched = false;
         c.targetCy = m.cy;
-        c.targetW = m.pillH * 1.6f;
-        c.targetH = m.pillH * 0.8f;
+        if (scene.mode == Mode.COMPACT && scene.mainIn != null) {
+            // closing the stack: the card folds into the shape the pill is growing back to, so nothing pops when it ends
+            c.targetW = Math.max(m.pillH, scene.mainIn.content.desiredWidth());
+            c.targetH = m.pillH;
+        } else {
+            c.targetW = m.pillH * 1.6f;
+            c.targetH = m.pillH * 0.8f;
+        }
     }
 
     private int expandedWindowHeight() {
@@ -481,7 +508,9 @@ final class Director {
             if (c.blurOnAt != 0 && t - c.blurOnAt < BLUR_SETTLE_MS) {
                 active = true;
             }
-            boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f) && c.h.value() < m.pillH * 0.95f;
+            boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f)
+                    && Math.abs(c.h.value() - c.targetH) < m.dp(3.0f) && Math.abs(c.w.value() - c.targetW) < m.dp(6.0f)
+                    && (pillSettled() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS);
             if (gone) {
                 scene.cards.remove(i);
                 if (scene.blur != null) {
@@ -496,12 +525,19 @@ final class Director {
             if (scene.mode == Mode.COMPACT) {
                 view.removeCallbacks(regrowPill);
                 regrowPillNow();
-                sp.pulse.impulse(1.4f);
-                // the swallowed cards make the pill wobble once vertically
-                sp.height.impulse(m.dp(ABSORB_HEIGHT_KICK_DP));
+                sp.pulse.impulse(0.8f);
             }
         }
         return active;
+    }
+
+    /** While the stack closes the card keeps covering the pill until the pill itself has grown back, so no step shows. */
+    private boolean pillSettled() {
+        if (scene.mode != Mode.COMPACT || scene.mainIn == null) {
+            return true;
+        }
+        return Math.abs(sp.width.value() - scene.mainIn.content.desiredWidth()) < m.dp(4.0f)
+                && Math.abs(sp.height.value() - m.pillH) < m.dp(3.0f);
     }
 
     private void launch(Card c) {

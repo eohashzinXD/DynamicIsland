@@ -45,10 +45,14 @@ final class StackPainter {
     private final RectF gooLower = new RectF();
     private final Path gooPath = new Path();
 
+    /** Outline of a card that is still changing shape: brighter than the pill's, so the motion shows on a black screen. */
+    private static final int MORPH_OUTLINE = 0x70FFFFFF;
     private Shader rim;
     private float rimHeight = -1.0f;
     private float rimTop = Float.NaN;
     private float rimAlpha = -1.0f;
+    private float rimSettle = -1.0f;
+    private int rimBase;
     private boolean drawFailureLogged;
 
     StackPainter(Metrics m, Paints paints, Scene scene, Shapes shapes) {
@@ -103,7 +107,9 @@ final class StackPainter {
         blur.beginFrame();
         float alpha = scene.visibleAlpha();
         if (alpha > IslandView.MIN_VISIBLE_ALPHA) {
-            for (Card c : scene.cards) {
+            // back to front: the first card is the one nearest the pill, so it lies on top of the cards below it
+            for (int i = scene.cards.size() - 1; i >= 0; i--) {
+                Card c = scene.cards.get(i);
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha);
@@ -152,12 +158,13 @@ final class StackPainter {
     /** Draws one card whose rectangle {@code r} was already computed. */
     void drawCard(Canvas canvas, Card c, RectF r, long t, float opening) {
         float corner = Math.min(r.height() / 2.0f, m.cardRadius);
-        float rimStrength = clamp01((opening - 0.82f) / 0.18f);
-        // while it pours out of (or back into) the pill the card is the pill's black with no rim, so the two
-        // read as one liquid shape; the card colour, glass and rim only fade in as it settles
+        float rimSettled = clamp01((opening - 0.82f) / 0.18f);
+        // while it pours out of (or back into) the pill the card is the pill's black, but it wears a clearly
+        // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
+        // colour and glass fade in as it settles, and the outline turns into the card's light rim
         paints.card.setColor(fillColor(opening));
         canvas.drawRoundRect(r, corner, corner, paints.card);
-        paints.cardStroke.setShader(rimShader(r, rimStrength));
+        paints.cardStroke.setShader(rimShader(r, 1.0f, rimSettled, c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
         canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
@@ -186,17 +193,26 @@ final class StackPainter {
     }
 
     /** The light rim gradient of a card; rebuilt only when the card moved or changed height noticeably. */
-    private Shader rimShader(RectF r, float alpha) {
+    private Shader rimShader(RectF r, float alpha, float settle, int base) {
         boolean stale = rim == null || Math.abs(rimHeight - r.height()) > 1.0f || Math.abs(rimTop - r.top) > 1.0f
-                || Math.abs(rimAlpha - alpha) > 0.02f;
+                || Math.abs(rimAlpha - alpha) > 0.02f || Math.abs(rimSettle - settle) > 0.02f || rimBase != base;
         if (stale) {
             rimHeight = r.height();
             rimTop = r.top;
             rimAlpha = alpha;
+            rimSettle = settle;
+            rimBase = base;
             rim = new LinearGradient(0.0f, r.top, 0.0f, r.bottom,
-                    Colors.withAlpha(Colors.RIM_TOP, alpha), Colors.withAlpha(Colors.RIM_BOTTOM, alpha), Shader.TileMode.CLAMP);
+                    Colors.withAlpha(whiteMix(base, Colors.RIM_TOP, settle), alpha),
+                    Colors.withAlpha(whiteMix(base, Colors.RIM_BOTTOM, settle), alpha), Shader.TileMode.CLAMP);
         }
         return rim;
+    }
+
+    /** Between two white colours that differ only in alpha. */
+    private static int whiteMix(int from, int to, float t) {
+        int a = Math.round((from >>> 24) + (((to >>> 24) - (from >>> 24)) * t));
+        return (a << 24) | 0x00FFFFFF;
     }
 
     void drawBackground(CardBody body, Canvas canvas, RectF frame, float alpha) {
