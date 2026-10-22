@@ -56,6 +56,24 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # -> release/DynamicIsland-<versionName>
 
 `scripts/sign.sh` takes the keystore password from `KEYSTORE_PASSWORD` and creates a self-signed key in `release-keys/` on first run (git-ignored); keep it, updates must use the same key. To release: bump `versionCode` / `versionName` in `app/build.gradle` and `CrashGuard.BUILD`, run the tests, sign.
 
+## README pictures
+
+`ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`) and the settings render tests write the settings pages (`app/build/render`) when `./gradlew testReleaseUnitTest` runs; `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/`. Run both again after a change of the look and commit the pictures.
+
+## Releases
+
+`.github/workflows/release.yml` builds, tests, signs and publishes the APK as a GitHub release when a tag `v<versionName>` is pushed (the tag must match `versionName` in `app/build.gradle`) or when it is started by hand. The signing key stays in repository secrets, so every release has the same signature and installs as an update over the last one; keep a backup of the keystore, a lost key cannot be replaced.
+
+One-time setup (Settings → Secrets and variables → Actions → New repository secret):
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | `base64 -w0 release-keys/dynamicisland.jks` |
+| `KEYSTORE_PASSWORD` | the keystore password (the key uses the same one) |
+| `KEYSTORE_ALIAS` | optional, defaults to `dynamicisland` |
+
+To release: raise `versionCode` / `versionName` in `app/build.gradle` and `CrashGuard.BUILD`, commit, then `git tag v<version> && git push origin v<version>`. The workflow can also be started by hand (Actions → Release → Run workflow, branch `main`): it then creates the tag `v<versionName>` itself. The release text is `docs/release-notes/<versionName>.md` (English and Korean) when that file exists, otherwise it is generated from the commits; running the workflow again for an existing version updates the assets and the text. `ci.yml` runs the tests on every push and pull request.
+
 ## Tests
 
 ```bash
