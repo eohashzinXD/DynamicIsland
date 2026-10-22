@@ -91,4 +91,38 @@ public class UserRulesTest {
         assertFalse(rules.has("gym"));
         assertNull(rules.toJson());
     }
+
+    @Test
+    public void behaviourSettingsOverrideTheShippedOnesAndUndoCleanly() {
+        UserRules rules = UserRules.parse(null);
+        rules.setFlag("relay", "show_progress", true);
+        rules.setFlag("relay", "hide_original", false);
+        rules.setNumber("relay", "ttl_min", 30);
+        rules.setText("relay", "accent", "#FF9500");
+        rules.setText("relay", "name", "My relay");
+        rules.addTrigger("relay", "IrisRelay"); // stored in lower case
+        rules.addSignal("relay", 1, "(\\d+)% done", 1);
+        RuleDictionary merged = RuleStore.build(new RuleConfig(rules.toJson()));
+        RuleDictionary.SmartRule rule = merged.rule("relay");
+        // the shipped relay rule hides its original and has no bar; the user turned both the other way
+        assertTrue(rule.showsProgress());
+        assertFalse(rule.hidesOriginal());
+        assertEquals(30, rule.ttlMinutes);
+        assertEquals(0xFFFF9500, rule.options.accent);
+        assertEquals("My relay", rule.options.name);
+        assertTrue(rule.textTriggers.contains("irisrelay"));
+        // untouched, the shipped rule keeps its own behaviour
+        RuleDictionary.SmartRule shipped = RuleStore.build(new RuleConfig(null)).rule("relay");
+        assertFalse(shipped.showsProgress());
+        assertTrue(shipped.hidesOriginal());
+        // undoing every setting leaves no husk of a rule in the stored file
+        rules.setFlag("relay", "show_progress", null);
+        rules.setFlag("relay", "hide_original", null);
+        rules.setNumber("relay", "ttl_min", 0);
+        rules.setText("relay", "accent", null);
+        rules.setText("relay", "name", null);
+        rules.removeTrigger("relay", "irisrelay");
+        rules.removeSignal("relay", 1, "(\\d+)% done");
+        assertNull(rules.toJson());
+    }
 }

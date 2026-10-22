@@ -93,7 +93,7 @@ public final class UserRules {
         JSONArray signals = rule == null ? null : rule.optJSONArray("signals");
         for (int i = 0; signals != null && i < signals.length(); i++) {
             JSONObject signal = signals.optJSONObject(i);
-            out.add(new Object[] {signal.optInt("stage"), signal.optString("pattern")});
+            out.add(new Object[] {signal.optInt("stage"), signal.optString("pattern"), signal.optInt("percent_group", 0)});
         }
         return out;
     }
@@ -110,7 +110,70 @@ public final class UserRules {
         return labels == null ? null : labels.has(String.valueOf(stage)) ? labels.optString(String.valueOf(stage)) : null;
     }
 
+    /** A number the user set on the rule (minutes), or 0 when not set. */
+    public int number(String id, String key) {
+        JSONObject rule = find(id, false);
+        return rule == null ? 0 : rule.optInt(key, 0);
+    }
+
+    /** A yes / no the user set on the rule, or null when not set. */
+    public Boolean flag(String id, String key) {
+        JSONObject rule = find(id, false);
+        return rule == null || !rule.has(key) ? null : rule.optBoolean(key);
+    }
+
+    /** A text the user set on the rule (its name, its colour), or null. */
+    public String text(String id, String key) {
+        JSONObject rule = find(id, false);
+        String value = rule == null ? "" : rule.optString(key, "");
+        return value.isEmpty() ? null : value;
+    }
+
+    public List<String> triggers(String id) {
+        return strings(find(id, false), "text_triggers");
+    }
+
     // ---------------------------------------------------------------- editing
+
+    /** Sets a number on the rule; 0 or less removes it (the rule's own value or the default applies again). */
+    public void setNumber(String id, String key, int value) {
+        setKey(id, key, value > 0 ? Integer.valueOf(value) : null);
+    }
+
+    /** Sets a yes / no on the rule; null removes it. */
+    public void setFlag(String id, String key, Boolean value) {
+        setKey(id, key, value);
+    }
+
+    /** Sets a text on the rule; empty removes it. */
+    public void setText(String id, String key, String value) {
+        setKey(id, key, value == null || value.trim().isEmpty() ? null : value.trim());
+    }
+
+    public void addTrigger(String id, String word) {
+        addUnique(find(id, true), "text_triggers", word.trim().toLowerCase(Locale.ROOT)); // the module reads words in lower case
+    }
+
+    public void removeTrigger(String id, String word) {
+        removeFrom(find(id, false), "text_triggers", word);
+        tidy(id);
+    }
+
+    private void setKey(String id, String key, Object value) {
+        try {
+            if (value == null) {
+                JSONObject rule = find(id, false);
+                if (rule != null) {
+                    rule.remove(key);
+                    tidy(id);
+                }
+            } else {
+                find(id, true).put(key, value);
+            }
+        } catch (JSONException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     public void addPackage(String id, String pkg) {
         addUnique(find(id, true), "package_hints", pkg.trim().toLowerCase(Locale.ROOT));
@@ -131,6 +194,11 @@ public final class UserRules {
     }
 
     public void addSignal(String id, int stage, String pattern) {
+        addSignal(id, stage, pattern, 0);
+    }
+
+    /** {@code percentGroup} > 0 names the group of the pattern that holds a percentage, which then drives the card's bar. */
+    public void addSignal(String id, int stage, String pattern, int percentGroup) {
         JSONObject rule = find(id, true);
         for (Object[] existing : signals(id)) {
             if ((Integer) existing[0] == stage && existing[1].equals(pattern.trim())) {
@@ -139,7 +207,11 @@ public final class UserRules {
         }
         try {
             JSONArray signals = array(rule, "signals");
-            signals.put(new JSONObject().put("stage", stage).put("pattern", pattern.trim()));
+            JSONObject signal = new JSONObject().put("stage", stage).put("pattern", pattern.trim());
+            if (percentGroup > 0) {
+                signal.put("percent_group", percentGroup);
+            }
+            signals.put(signal);
             rule.put("max_stage", Math.max(rule.optInt("max_stage", 1), stage));
         } catch (JSONException e) {
             throw new IllegalStateException(e);
@@ -284,15 +356,23 @@ public final class UserRules {
         JSONObject labels = labelsOf(id, false);
         JSONObject koLabels = labelsFor(id, "ko", false);
         boolean noLabels = (labels == null || labels.length() == 0) && (koLabels == null || koLabels.length() == 0);
-        if (rule != null && rule.optJSONArray("signals") == null && rule.optJSONArray("package_hints") == null
-                && rule.optJSONArray("exclude_patterns") == null && noLabels) {
-            remove(id);
-        } else if (rule != null) {
-            for (String key : new String[] {"signals", "package_hints", "exclude_patterns"}) {
+        if (rule != null) {
+            for (String key : new String[] {"signals", "package_hints", "exclude_patterns", "text_triggers"}) {
                 JSONArray array = rule.optJSONArray(key);
                 if (array != null && array.length() == 0) {
                     rule.remove(key);
                 }
+            }
+            boolean onlyIdentity = true;
+            java.util.Iterator<String> keys = rule.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                if (!key.equals("id") && !key.equals("max_stage")) {
+                    onlyIdentity = false;
+                }
+            }
+            if (onlyIdentity && noLabels) {
+                remove(id);
             }
         }
         if (noLabels && root.optJSONObject("status_labels") != null) {

@@ -53,6 +53,7 @@ final class IslandSources {
         progress = new ProgressSource(ctx, main, onChange);
         rules = new RuleSource(ctx, main, onChange);
         progress.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
+        rules.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         calls = new CallSource(ctx, main, onChange);
         peeks = new PeekSource(ctx, main, onChange);
     }

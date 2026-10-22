@@ -36,9 +36,13 @@ Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill 
 
 ## Screenshots
 
-<table><tr><td align="center"><img src="docs/screenshots/island_pill.png" width="170"><br><sub>Pill</sub></td><td align="center"><img src="docs/screenshots/island_live.png" width="170"><br><sub>Live notification</sub></td><td align="center"><img src="docs/screenshots/island_call.png" width="170"><br><sub>Call</sub></td><td align="center"><img src="docs/screenshots/island_music.png" width="170"><br><sub>Music</sub></td><td align="center"><img src="docs/screenshots/island_stack.png" width="170"><br><sub>Several at once</sub></td></tr></table>
+<p align="center">
+  <img src="docs/strip_island.png" alt="The island: pill, live notification, call, music and several at once">
+</p>
 
-<table><tr><td align="center"><img src="docs/screenshots/app_hub.png" width="170"><br><sub>Settings</sub></td><td align="center"><img src="docs/screenshots/app_notifications.png" width="170"><br><sub>Notification cards</sub></td><td align="center"><img src="docs/screenshots/app_rules.png" width="170"><br><sub>Rules</sub></td><td align="center"><img src="docs/screenshots/app_rule.png" width="170"><br><sub>One rule</sub></td><td align="center"><img src="docs/screenshots/app_tester.png" width="170"><br><sub>Try a notification</sub></td></tr></table>
+<p align="center">
+  <img src="docs/strip_app.png" alt="The settings app: settings, notification cards, rules, one rule, try a notification">
+</p>
 
 These pictures are drawn by the app's own drawing code on a mock phone in the test environment (see `scripts/readme_images.py`); they are not photos of a device, and the app icons are made of plain shapes.
 

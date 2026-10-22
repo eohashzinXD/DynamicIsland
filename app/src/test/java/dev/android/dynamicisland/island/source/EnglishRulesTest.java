@@ -100,4 +100,15 @@ public class EnglishRulesTest {
         assertTrue(notConnected == null || notConnected.stage == 0);
         assertTrue(hit("com.google.android.apps.maps", "Moderate traffic. Head north on Main St") != null);
     }
+
+    @Test
+    public void irisRelayServiceBecomesACard() {
+        RuleSource.Hit hit = hit("app.iris.relay", "릴레이 실행 중 수신 552 · 업로드 552 · 전송 0");
+        assertTrue(hit != null);
+        assertEquals("relay", hit.rule.id);
+        assertEquals(1, hit.stage);
+        // a running service has no beginning and end: no progress bar; and its original leaves the shade
+        assertTrue(!hit.rule.showsProgress());
+        assertTrue(hit.rule.hidesOriginal());
+    }
 }

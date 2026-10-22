@@ -16,6 +16,7 @@ import dev.android.dynamicisland.island.rules.Rx;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -47,7 +48,11 @@ public final class RuleSource {
     private static final String KEY_PREFIX = "rule:";
     private static final String LIVEBRIDGE_PACKAGE = "com.locnall.KimGiSa";
     /** Rules whose stage can go backwards (a route, a connection), so the newest notification decides; the others keep their highest stage. */
-    private static final Set<String> VOLATILE_RULES = new HashSet<>(Arrays.asList("navigation", "external_device", "vpn"));
+    /** Keys of the cards whose rule hides the original notification. */
+    private final Set<String> hideOriginal = new HashSet<>();
+    private volatile Set<String> hiddenOriginals = Collections.emptySet();
+    private Runnable onShownChanged = () -> { };
+    private static final Set<String> VOLATILE_RULES = new HashSet<>(Arrays.asList("navigation", "external_device", "vpn", "relay"));
     private static final Set<String> IGNORED = new HashSet<>(Arrays.asList("android", "com.android.systemui", "dev.android.dynamicisland"));
 
     private final AppLook apps;
@@ -155,8 +160,10 @@ public final class RuleSource {
     /** Adds the cards, except for the foreground app's and those already shown another way. */
     public void collect(List<IslandItem> out, String foregroundPackage) {
         if (items.isEmpty()) {
+            publishHidden(Collections.emptySet());
             return;
         }
+        Set<String> hidden = new HashSet<>();
         Set<String> shown = new HashSet<>();
         for (IslandItem it : out) {
             if (it.key.startsWith("oa:")) {
@@ -179,7 +186,11 @@ public final class RuleSource {
                 continue;
             }
             out.add(it);
+            if (hideOriginal.contains(it.key)) {
+                hidden.add(it.sourceKey);
+            }
         }
+        publishHidden(hidden);
         main.removeCallbacks(expiryTick);
         if (nextExpiry != Long.MAX_VALUE) {
             main.postDelayed(expiryTick, nextExpiry - now + EXPIRY_SLACK_MS);
@@ -264,6 +275,22 @@ public final class RuleSource {
         return out;
     }
 
+    /** True when the card of this notification is on the island and its rule asks for the original to leave the shade. */
+    public boolean isShownOnIsland(String notificationKey) {
+        return hiddenOriginals.contains(notificationKey);
+    }
+
+    public void setOnShownChanged(Runnable listener) {
+        onShownChanged = listener;
+    }
+
+    private void publishHidden(Set<String> hidden) {
+        if (!hidden.equals(hiddenOriginals)) {
+            hiddenOriginals = hidden;
+            onShownChanged.run();
+        }
+    }
+
     private IslandItem card(StatusBarNotification sbn, Notification n, Hit hit, RuleDictionary rules, Locale locale) {
         String pkg = sbn.getPackageName();
         RuleDictionary.SmartRule rule = hit.rule;
@@ -279,8 +306,12 @@ public final class RuleSource {
         it.subtitle = rule.id.equals("vpn") ? hit.subject : (body != null ? body : status);
         it.postTime = sbn.getPostTime();
         it.contentIntent = n.contentIntent;
-        it.accent = accentOf(rule.id, n);
-        it.progress = hit.percent >= 0.0f ? hit.percent : Math.min(1.0f, Math.max(0.0f, hit.stage / (float) rule.maxStage));
+        it.accent = accentOf(rule, n);
+        if (hit.percent >= 0.0f) {
+            it.progress = hit.percent;
+        } else if (rule.showsProgress()) {
+            it.progress = Math.min(1.0f, Math.max(0.0f, hit.stage / (float) rule.maxStage));
+        } // else: no bar; a state without a beginning and an end would only show a meaningless half-full one
         it.stage = hit.stage;
         it.expiresAtWall = expiry(rule, hit.stage, sbn.getPostTime());
         it.cooldownMinutes = rule.cooldownMinutes;
@@ -299,6 +330,11 @@ public final class RuleSource {
         it.cardImage = icon;
         it.cardImageIsImage = true;
         it.actionType = 1;
+        if (rule.hidesOriginal()) {
+            hideOriginal.add(it.key);
+        } else {
+            hideOriginal.remove(it.key);
+        }
         if (n.actions != null) {
             for (Notification.Action a : n.actions) {
                 if (a.actionIntent != null && a.title != null && it.actions.size() < MAX_ACTIONS) {
@@ -444,8 +480,11 @@ public final class RuleSource {
         return s.isEmpty() ? null : s;
     }
 
-    private static int accentOf(String ruleId, Notification n) {
-        switch (ruleId) {
+    private static int accentOf(RuleDictionary.SmartRule rule, Notification n) {
+        if (rule.options.accent != 0) {
+            return rule.options.accent;
+        }
+        switch (rule.id) {
             case "food":
                 return 0xFFFF9500;
             case "taxi":

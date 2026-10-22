@@ -28,13 +28,16 @@ final class Director {
     /** How long a card's backdrop blur keeps the frame loop alive after it was switched on. */
     private static final long BLUR_SETTLE_MS = 320;
     private static final long IN_DELAY_MS = 60;
+    private static final long LEGACY_IN_DELAY_MS = 115;
     private static final long FIRST_CONTENT_IN_MS = 60;
     private static final long APPEAR_IN_MS = 90;
+    private static final long LEGACY_APPEAR_IN_MS = 150;
     /** The first bubble waits this long after the pill appeared. */
     private static final long SPLIT_AFTER_APPEAR_MS = 220;
     private static final long BUBBLE_FIRST_IN_MS = 180;
     private static final long COLLAPSE_IN_MS = 330;
     private static final long REGROW_DELAY_MS = 70;
+    private static final long LEGACY_REGROW_DELAY_MS = 420;
     /** A closing card waits for the pill to grow back at most this long before it is dropped anyway. */
     private static final long PILL_SETTLE_TIMEOUT_MS = 1200;
     private static final long FADE_PILL_BLOB_DELAY_MS = 260;
@@ -45,6 +48,7 @@ final class Director {
     private static final float HIDE_TO_LEFT_IMPULSE_DP = 200.0f;
     /** Height the pill starts at when it appears, as a fraction of its final height. */
     private static final float APPEAR_HEIGHT_FROM = 0.55f;
+    private static final float ABSORB_HEIGHT_KICK_DP = 40.0f;
     /** Upward speed given to the pill's height when it swallows the cards, in dp per second. */
 
     private final IslandView view;
@@ -166,7 +170,7 @@ final class Director {
         long t = IslandView.now();
         if (crossfade && scene.mainIn != null) {
             scene.mainOut = scene.mainIn.toOutgoing(t, outDir);
-            scene.mainIn = Layer.incoming(content, t, IN_DELAY_MS).slide(inDir);
+            scene.mainIn = Layer.incoming(content, t, inDelay()).slide(inDir);
         } else if (scene.mainIn == null) {
             scene.mainIn = Layer.incoming(content, t, FIRST_CONTENT_IN_MS);
         } else {
@@ -204,11 +208,11 @@ final class Director {
             scene.bubbleIn = Layer.shownLike(new BubbleContent(view, secondary), scene.bubbleIn);
         } else {
             scene.bubbleOut = scene.bubbleIn.toOutgoing(t, 0);
-            scene.bubbleIn = Layer.incoming(new BubbleContent(view, secondary), t, IN_DELAY_MS);
+            scene.bubbleIn = Layer.incoming(new BubbleContent(view, secondary), t, inDelay());
         }
         if (scene.mode == Mode.COMPACT) {
             long sinceAppear = t - appearedAt;
-            if (sinceAppear < SPLIT_AFTER_APPEAR_MS) {
+            if (!legacy() && sinceAppear < SPLIT_AFTER_APPEAR_MS) {
                 // the pill is still landing: the bubble leaves it a moment later instead of competing with the drop
                 view.removeCallbacks(startSplit);
                 view.postDelayed(startSplit, SPLIT_AFTER_APPEAR_MS - sinceAppear);
@@ -252,7 +256,7 @@ final class Director {
             sp.offsetX.impulse(m.dp(APPEAR_FROM_LEFT_IMPULSE_DP));
         }
         scene.mainOut = null;
-        scene.mainIn = Layer.incoming(new CompactContent(view, primary), IslandView.now(), APPEAR_IN_MS).slide(fromLeft ? -1 : 0);
+        scene.mainIn = Layer.incoming(new CompactContent(view, primary), IslandView.now(), legacy() ? LEGACY_APPEAR_IN_MS : APPEAR_IN_MS).slide(fromLeft ? -1 : 0);
         sp.width.animateTo(scene.mainIn.content.desiredWidth(), Motion.PILL_GROW);
         sp.height.animateTo(m.pillH, Motion.PILL_DROP);
         host.onWindowHeightNeeded(m.compactWindowHeight());
@@ -363,7 +367,7 @@ final class Director {
         replaceMain(new CompactContent(view, scene.primary), true, 0, 0);
         scene.mainIn = Layer.incoming(scene.mainIn.content, IslandView.now(), COLLAPSE_IN_MS);
         view.removeCallbacks(regrowPill);
-        view.postDelayed(regrowPill, REGROW_DELAY_MS);
+        view.postDelayed(regrowPill, legacy() ? LEGACY_REGROW_DELAY_MS : REGROW_DELAY_MS);
         view.scheduleFrame();
         host.onExpandedChanged(false);
         view.notifyHost();
@@ -467,7 +471,7 @@ final class Director {
         c.leaveAt = at;
         c.launched = false;
         c.targetCy = m.cy;
-        if (scene.mode == Mode.COMPACT && scene.mainIn != null) {
+        if (!legacy() && scene.mode == Mode.COMPACT && scene.mainIn != null) {
             // closing the stack: the card folds into the shape the pill is growing back to, so nothing pops when it ends
             c.targetW = Math.max(m.pillH, scene.mainIn.content.desiredWidth());
             c.targetH = m.pillH;
@@ -509,8 +513,9 @@ final class Director {
                 active = true;
             }
             boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f)
-                    && Math.abs(c.h.value() - c.targetH) < m.dp(3.0f) && Math.abs(c.w.value() - c.targetW) < m.dp(6.0f)
-                    && (pillSettled() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS);
+                    && (legacy() ? c.h.value() < m.pillH * 0.95f
+                    : Math.abs(c.h.value() - c.targetH) < m.dp(3.0f) && Math.abs(c.w.value() - c.targetW) < m.dp(6.0f)
+                    && (pillSettled() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS));
             if (gone) {
                 scene.cards.remove(i);
                 if (scene.blur != null) {
@@ -525,7 +530,13 @@ final class Director {
             if (scene.mode == Mode.COMPACT) {
                 view.removeCallbacks(regrowPill);
                 regrowPillNow();
-                sp.pulse.impulse(0.8f);
+                if (legacy()) {
+                    sp.pulse.impulse(1.4f);
+                    // the swallowed cards make the pill wobble once vertically
+                    sp.height.impulse(m.dp(ABSORB_HEIGHT_KICK_DP));
+                } else {
+                    sp.pulse.impulse(0.8f);
+                }
             }
         }
         return active;
@@ -538,6 +549,15 @@ final class Director {
         }
         return Math.abs(sp.width.value() - scene.mainIn.content.desiredWidth()) < m.dp(4.0f)
                 && Math.abs(sp.height.value() - m.pillH) < m.dp(3.0f);
+    }
+
+    /** True when the user chose the animations of 0.1.3 and before. */
+    private static boolean legacy() {
+        return ModuleSettings.legacyAnimation();
+    }
+
+    private static long inDelay() {
+        return legacy() ? LEGACY_IN_DELAY_MS : IN_DELAY_MS;
     }
 
     private void launch(Card c) {

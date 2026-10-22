@@ -14,6 +14,7 @@ import dev.android.dynamicisland.island.graphics.Easing;
 import dev.android.dynamicisland.island.graphics.Metaball;
 import dev.android.dynamicisland.island.view.card.CardBody;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 
 /**
@@ -108,8 +109,9 @@ final class StackPainter {
         float alpha = scene.visibleAlpha();
         if (alpha > IslandView.MIN_VISIBLE_ALPHA) {
             // back to front: the first card is the one nearest the pill, so it lies on top of the cards below it
-            for (int i = scene.cards.size() - 1; i >= 0; i--) {
-                Card c = scene.cards.get(i);
+            boolean legacy = ModuleSettings.legacyAnimation();
+            for (int n = 0; n < scene.cards.size(); n++) {
+                Card c = scene.cards.get(legacy ? n : scene.cards.size() - 1 - n);
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha);
@@ -164,7 +166,9 @@ final class StackPainter {
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
         paints.card.setColor(fillColor(opening));
         canvas.drawRoundRect(r, corner, corner, paints.card);
-        paints.cardStroke.setShader(rimShader(r, 1.0f, rimSettled, c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE));
+        paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
+                ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE) // before 0.1.4: no outline until the card has nearly opened
+                : rimShader(r, 1.0f, rimSettled, c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
         canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);

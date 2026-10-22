@@ -44,6 +44,7 @@ public final class SettingsActivity extends Activity {
     private SharedPreferences prefs;
     private OneUi ui;
     private RulesScreen rules;
+    private AnimationScreen animation;
     private LinearLayout page;
     private ScrollView scroll;
     /** Builders of the open pages, the visible one on top. */
@@ -56,6 +57,7 @@ public final class SettingsActivity extends Activity {
         prefs = openPrefs();
         ui = new OneUi(this);
         rules = new RulesScreen(this, ui, prefs);
+        animation = new AnimationScreen(this, ui, prefs);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -153,6 +155,7 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.hub_settings));
         LinearLayout main = ui.card(page);
         ui.linkRow(main, getString(R.string.hub_display), getString(R.string.hub_display_sum), () -> open(this::displayPage));
+        ui.linkRow(main, getString(R.string.anim_title), getString(R.string.anim_sum), () -> open(animation::open));
         ui.linkRow(main, getString(R.string.hub_notifications), getString(R.string.hub_notifications_sum), () -> open(this::notificationsPage));
         ui.linkRow(main, getString(R.string.hub_events), getString(R.string.hub_events_sum), () -> open(this::eventsPage));
         ui.linkRow(main, getString(R.string.apps_title), appsSummary(), () -> open(this::appsPage));

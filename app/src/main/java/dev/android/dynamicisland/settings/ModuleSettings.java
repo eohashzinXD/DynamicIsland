@@ -26,6 +26,8 @@ public final class ModuleSettings {
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
     public static final String KEY_HAPTICS = "haptics";
+    /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
+    public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     public static final String KEY_HEADS_UP_ISLAND = "heads_up_island";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
@@ -65,6 +67,7 @@ public final class ModuleSettings {
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
+    private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean progressNotifications = true;
     private static volatile boolean hideProgressOriginals = true;
@@ -128,6 +131,7 @@ public final class ModuleSettings {
             eventRinger = prefs.getBoolean(KEY_EVENT_RINGER, true);
             eventBluetooth = prefs.getBoolean(KEY_EVENT_BLUETOOTH, true);
             haptics = prefs.getBoolean(KEY_HAPTICS, true);
+            legacyAnimation = prefs.getBoolean(KEY_LEGACY_ANIMATION, false);
             headsUpIsland = prefs.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = prefs.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             hideProgressOriginals = prefs.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
@@ -151,7 +155,7 @@ public final class ModuleSettings {
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges() {
-        String now = "haptics=" + haptics + " visualizer=" + visualizer + " cardHeader=" + cardHeader
+        String now = "haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
                 + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
@@ -284,6 +288,12 @@ public final class ModuleSettings {
     public static boolean privacyLocation() {
         ensureStarted();
         return privacyLocation;
+    }
+
+    /** The animations of 0.1.3 and before instead of the smoothed ones (default off). */
+    public static boolean legacyAnimation() {
+        ensureStarted();
+        return legacyAnimation;
     }
 
     /** Tick when the island expands / collapses and click on button presses. */

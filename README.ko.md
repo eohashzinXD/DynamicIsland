@@ -36,9 +36,13 @@
 
 ## 스크린샷
 
-<table><tr><td align="center"><img src="docs/screenshots/island_pill_ko.png" width="170"><br><sub>알약</sub></td><td align="center"><img src="docs/screenshots/island_live_ko.png" width="170"><br><sub>라이브 알림</sub></td><td align="center"><img src="docs/screenshots/island_call_ko.png" width="170"><br><sub>통화</sub></td><td align="center"><img src="docs/screenshots/island_music_ko.png" width="170"><br><sub>음악</sub></td><td align="center"><img src="docs/screenshots/island_stack_ko.png" width="170"><br><sub>여러 개</sub></td></tr></table>
+<p align="center">
+  <img src="docs/strip_island_ko.png" alt="아일랜드: 알약, 라이브 알림, 통화, 음악, 여러 개">
+</p>
 
-<table><tr><td align="center"><img src="docs/screenshots/app_hub_ko.png" width="170"><br><sub>설정</sub></td><td align="center"><img src="docs/screenshots/app_notifications_ko.png" width="170"><br><sub>알림 카드</sub></td><td align="center"><img src="docs/screenshots/app_rules_ko.png" width="170"><br><sub>규칙</sub></td><td align="center"><img src="docs/screenshots/app_rule_ko.png" width="170"><br><sub>규칙 하나</sub></td><td align="center"><img src="docs/screenshots/app_tester_ko.png" width="170"><br><sub>알림 시험</sub></td></tr></table>
+<p align="center">
+  <img src="docs/strip_app_ko.png" alt="설정 앱: 설정, 알림 카드, 규칙, 규칙 하나, 알림 시험">
+</p>
 
 이 그림들은 테스트 환경에서 앱의 실제 그리기 코드로 가상의 폰 위에 그린 것이며(`scripts/readme_images.py` 참고), 실제 기기를 찍은 사진이 아닙니다. 앱 아이콘은 단순한 도형으로 만든 가상의 아이콘입니다.
 

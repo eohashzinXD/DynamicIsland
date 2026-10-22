@@ -241,7 +241,7 @@ public final class RuleDictionary {
             out.add(new SmartRule(id, Math.max(1, item.optInt("max_stage", 1)), words(item, "package_hints"),
                     words(item, "text_triggers"), patterns(item.optJSONArray("exclude_patterns"), true), signals,
                     Math.max(0, item.optInt("ttl_min", 0)), Math.max(0, item.optInt("final_ttl_min", 0)),
-                    Math.max(0, item.optInt("cooldown_min", 0))));
+                    Math.max(0, item.optInt("cooldown_min", 0)), Options.parse(item)));
         }
         return out;
     }
@@ -509,9 +509,12 @@ public final class RuleDictionary {
          * sighting, and a repost within the cooldown stays quiet. 0 = no limit.
          */
         public final int cooldownMinutes;
+        /** Name, colour and behaviour the rule file sets beyond the words it reads. */
+        public final Options options;
 
         SmartRule(String id, int maxStage, Set<String> packageHints, Set<String> textTriggers, List<Rx> excludePatterns,
-                List<Signal> signals, int ttlMinutes, int finalTtlMinutes, int cooldownMinutes) {
+                List<Signal> signals, int ttlMinutes, int finalTtlMinutes, int cooldownMinutes, Options options) {
+            this.options = options;
             this.cooldownMinutes = cooldownMinutes;
             this.ttlMinutes = ttlMinutes;
             this.finalTtlMinutes = finalTtlMinutes;
@@ -590,7 +593,63 @@ public final class RuleDictionary {
                     union(textTriggers, other.textTriggers), unionPatterns(excludePatterns, other.excludePatterns), merged,
                     other.ttlMinutes != 0 ? other.ttlMinutes : ttlMinutes,
                     other.finalTtlMinutes != 0 ? other.finalTtlMinutes : finalTtlMinutes,
-                    other.cooldownMinutes != 0 ? other.cooldownMinutes : cooldownMinutes);
+                    other.cooldownMinutes != 0 ? other.cooldownMinutes : cooldownMinutes,
+                    options.mergedWith(other.options));
+        }
+
+        /** Whether the card shows how far the stages have come as a progress bar (default yes). */
+        public boolean showsProgress() {
+            return options.showProgress == null || options.showProgress;
+        }
+
+        /** Whether the original notification leaves the shade while the card is on the island (default no). */
+        public boolean hidesOriginal() {
+            return options.hideOriginal != null && options.hideOriginal;
+        }
+    }
+
+    /**
+     * What a rule file can say about a rule besides its words: a name for the rule list, an accent colour for the card,
+     * whether the card shows a progress bar and whether the original notification is hidden. {@code null} means "not
+     * said", so a later file (the user's) can switch on what an earlier one switched off and the other way round.
+     */
+    public static final class Options {
+        public static final Options NONE = new Options(null, null, null, 0);
+
+        public final String name;
+        public final Boolean showProgress;
+        public final Boolean hideOriginal;
+        /** ARGB, 0 = not set. */
+        public final int accent;
+
+        public Options(String name, Boolean showProgress, Boolean hideOriginal, int accent) {
+            this.name = name;
+            this.showProgress = showProgress;
+            this.hideOriginal = hideOriginal;
+            this.accent = accent;
+        }
+
+        static Options parse(JSONObject item) {
+            String name = item.optString("name", "").trim();
+            int accent = 0;
+            String color = item.optString("accent", "").trim();
+            if (color.startsWith("#") && (color.length() == 7 || color.length() == 9)) {
+                try {
+                    long value = Long.parseLong(color.substring(1), 16);
+                    accent = (int) (color.length() == 7 ? (0xFF000000L | value) : value);
+                } catch (NumberFormatException ignored) {
+                    // not a colour: the card keeps its own
+                }
+            }
+            return new Options(name.isEmpty() ? null : name, item.has("show_progress") ? item.optBoolean("show_progress", true) : null,
+                    item.has("hide_original") ? item.optBoolean("hide_original", false) : null, accent);
+        }
+
+        Options mergedWith(Options other) {
+            return new Options(other.name != null ? other.name : name,
+                    other.showProgress != null ? other.showProgress : showProgress,
+                    other.hideOriginal != null ? other.hideOriginal : hideOriginal,
+                    other.accent != 0 ? other.accent : accent);
         }
     }
 

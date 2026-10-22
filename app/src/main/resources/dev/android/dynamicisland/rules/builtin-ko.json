@@ -329,6 +329,23 @@
      "pattern": "(연결 ?중|connecting|pairing)"
     }
    ]
+  },
+  {
+   "id": "relay",
+   "max_stage": 2,
+   "ttl_min": 1440,
+   "package_hints": [
+    "app.iris.relay"
+   ],
+   "exclude_patterns": [],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(릴레이 실행 중|relay (is )?running)"
+    }
+   ],
+   "show_progress": false,
+   "hide_original": true
   }
  ],
  "status_labels": {
@@ -383,6 +400,14 @@
     "2": "이동 중",
     "3": "곧 하차",
     "4": "도착"
+   }
+  },
+  "relay": {
+   "ko": {
+    "1": "실행 중"
+   },
+   "en": {
+    "1": "Running"
    }
   }
  },

@@ -48,11 +48,13 @@ final class RulesScreen {
     private final SettingsActivity activity;
     private final OneUi ui;
     private final SharedPreferences prefs;
+    private final RuleEditor editor;
 
     RulesScreen(SettingsActivity activity, OneUi ui, SharedPreferences prefs) {
         this.activity = activity;
         this.ui = ui;
         this.prefs = prefs;
+        this.editor = new RuleEditor(activity, ui, this);
     }
 
     // ---------------------------------------------------------------- state
@@ -61,11 +63,11 @@ final class RulesScreen {
         return prefs.getString(ModuleSettings.KEY_RULES_CUSTOM, null);
     }
 
-    private UserRules user() {
+    UserRules user() {
         return UserRules.parse(customJson());
     }
 
-    private void save(UserRules rules) {
+    void save(UserRules rules) {
         String json = rules.toJson();
         SharedPreferences.Editor edit = prefs.edit();
         if (json == null) {
@@ -81,19 +83,19 @@ final class RulesScreen {
     }
 
     /** What the module ships alone, and everything together (including the rules the user switched off). */
-    private RuleDictionary shipped() {
+    RuleDictionary shipped() {
         return RuleStore.build(RuleConfig.DEFAULT);
     }
 
-    private RuleDictionary everything() {
+    RuleDictionary everything() {
         return RuleStore.build(new RuleConfig(customJson()));
     }
 
-    private String str(int id, Object... args) {
+    String str(int id, Object... args) {
         return activity.getString(id, args);
     }
 
-    private String ruleName(String id) {
+    String ruleName(String id) {
         switch (id) {
             case "food": return str(R.string.rule_name_food);
             case "parcel": return str(R.string.rule_name_parcel);
@@ -103,7 +105,10 @@ final class RulesScreen {
             case "battery": return str(R.string.rule_name_battery);
             case "external_device": return str(R.string.rule_name_device);
             case "vpn": return str(R.string.rule_name_vpn);
-            default: return id;
+            case "relay": return str(R.string.rule_name_relay);
+            default:
+                RuleDictionary.SmartRule own = everything().rule(id);
+                return own != null && own.options.name != null ? own.options.name : id;
         }
     }
 
@@ -194,6 +199,8 @@ final class RulesScreen {
                 activity.refresh();
             });
         }
+
+        editor.sections(id, rule, own);
 
         ui.category(activity.page(), str(R.string.group_apps));
         LinearLayout apps = ui.card(activity.page());
@@ -294,6 +301,13 @@ final class RulesScreen {
         TextView help = ui.text(str(R.string.stage_pattern_help), 12, ui.muted);
         help.setPadding(0, ui.dp(4), 0, 0);
         box.addView(help);
+        EditText group = field(str(R.string.stage_percent_group), null, false);
+        group.setInputType(InputType.TYPE_CLASS_NUMBER);
+        box.addView(group);
+        TextView groupHelp = ui.text(str(R.string.stage_percent_help), 12, ui.muted);
+        groupHelp.setPadding(0, ui.dp(4), 0, 0);
+        box.addView(groupHelp);
+        editor.liveTest(box, add, group);
 
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(box);
@@ -312,7 +326,13 @@ final class RulesScreen {
             UserRules edited = user();
             edited.setLabel(id, stage, name.getText().toString());
             if (!pattern.isEmpty()) {
-                edited.addSignal(id, stage, pattern);
+                int percentGroup = 0;
+                try {
+                    percentGroup = Integer.parseInt(group.getText().toString().trim());
+                } catch (NumberFormatException ignored) {
+                    // no group: the stage is just a stage
+                }
+                edited.addSignal(id, stage, pattern, percentGroup);
             }
             save(edited);
             dialog.dismiss();
@@ -328,7 +348,7 @@ final class RulesScreen {
         return v;
     }
 
-    private EditText field(String hint, String value, boolean multiline) {
+    EditText field(String hint, String value, boolean multiline) {
         EditText edit = new EditText(activity);
         edit.setHint(hint);
         edit.setSingleLine(!multiline);

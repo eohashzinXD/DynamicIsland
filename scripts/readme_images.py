@@ -81,6 +81,50 @@ def banner(lang: str) -> None:
     strip.convert("RGB").save(os.path.join(os.path.dirname(OUT), "banner" + lang + ".png"), optimize=True)
 
 
+STRIP_W = 1600
+STRIP_PICTURE_H = 360
+FONT_DIRS = ("/usr/share/fonts/opentype/inter", os.path.expanduser("~/.fonts"), "/usr/share/fonts/truetype")
+LABELS = {
+    "": {"island": ["Pill", "Live notification", "Call", "Music", "Several at once"],
+         "app": ["Settings", "Notification cards", "Rules", "One rule", "Try a notification"]},
+    "_ko": {"island": ["알약", "라이브 알림", "통화", "음악", "여러 개"],
+            "app": ["설정", "알림 카드", "규칙", "규칙 하나", "알림 시험"]},
+}
+
+
+def caption_font(lang: str, size: int):
+    """Inter for English, Pretendard for Korean when they are installed, else Pillow's default font."""
+    from PIL import ImageFont
+    names = ("Pretendard-Medium.otf",) if lang else ("Inter-Medium.otf",)
+    for folder in FONT_DIRS:
+        for name in names:
+            path = os.path.join(folder, name)
+            if os.path.exists(path):
+                return ImageFont.truetype(path, size)
+    return ImageFont.load_default()
+
+
+def strip(lang: str, row: str, files: list) -> None:
+    """One row of pictures with their captions on a dark panel. One image scales evenly on a phone, unlike a table."""
+    shots = []
+    for name in files:
+        im = Image.open(os.path.join(OUT, name + lang + ".png")).convert("RGBA")
+        shots.append(im.resize((round(im.width * STRIP_PICTURE_H / im.height), STRIP_PICTURE_H), Image.LANCZOS))
+    caption_h = 78
+    height = 56 + STRIP_PICTURE_H + caption_h
+    panel = Image.new("RGBA", (STRIP_W, height), (0, 0, 0, 0))
+    d = ImageDraw.Draw(panel)
+    d.rounded_rectangle((0, 0, STRIP_W - 1, height - 1), radius=36, fill=(12, 12, 20, 255), outline=(255, 255, 255, 28), width=2)
+    font = caption_font(lang, 30)
+    slot = STRIP_W / len(shots)
+    for i, (im, label) in enumerate(zip(shots, LABELS[lang][row])):
+        cx = slot * (i + 0.5)
+        panel.alpha_composite(im, (round(cx - im.width / 2), 40))
+        width = d.textlength(label, font=font)
+        d.text((cx - width / 2, 40 + STRIP_PICTURE_H + 22), label, font=font, fill=(226, 228, 240, 255))
+    panel.save(os.path.join(os.path.dirname(OUT), "strip_" + row + lang + ".png"), optimize=True)
+
+
 def main() -> int:
     os.makedirs(OUT, exist_ok=True)
     for lang in ("", "_ko"):
@@ -93,6 +137,8 @@ def main() -> int:
             screen = Image.open(os.path.join(RENDER, prefix + page + ".png")).convert("RGBA")
             finish(phone_from_screen(screen, VISIBLE_APP), "app_" + key + lang, VISIBLE_APP)
         banner(lang)
+        strip(lang, "island", ["island_pill", "island_live", "island_call", "island_music", "island_stack"])
+        strip(lang, "app", ["app_hub", "app_notifications", "app_rules", "app_rule", "app_tester"])
     print("wrote", len(os.listdir(OUT)), "pictures to", OUT)
     return 0
 

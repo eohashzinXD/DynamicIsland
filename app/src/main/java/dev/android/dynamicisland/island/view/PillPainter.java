@@ -10,6 +10,7 @@ import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.LiquidBridge;
 import dev.android.dynamicisland.island.graphics.Metaball;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
  * Draws the pill, the bubble next to it, the neck of goo that joins them, the thin outline around the group,
@@ -129,7 +130,7 @@ final class PillPainter {
         canvas.drawCircle(bubbleX, bubbleY, bubbleRadius + m.outlineW, paint);
         if (hasNeck) {
             // squared: the outline is wider than the black neck, so it must be gone before the neck is thin
-            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * neckAlpha * neckAlpha));
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * (ModuleSettings.legacyAnimation() ? neckAlpha : neckAlpha * neckAlpha)));
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
             paint.setStrokeWidth(m.outlineW * 2.0f);
             canvas.drawPath(neck, paint);

@@ -443,7 +443,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         for (Card c : scene.cards) {
             active |= c.bridge.animating(t);
         }
-        springs.outlineFade.animateTo(allLeaving() ? 1.0f : 0.0f);
+        springs.outlineFade.animateTo((ModuleSettings.legacyAnimation() ? scene.cards.isEmpty() : allLeaving()) ? 1.0f : 0.0f);
         if (scene.mainOut != null && scene.mainOut.finished(t)) {
             scene.mainOut = null;
         }
