@@ -1,10 +1,38 @@
-[![English](https://img.shields.io/badge/English-2F80ED?style=flat-square)](README.md) [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-555?style=flat-square)](README.ko.md)
+<p align="center">
+  <img src="docs/hero.png" alt="Dynamic Island: live cards for Samsung One UI">
+</p>
 
-# Dynamic Island
+<h3 align="center">make the status bar alive!</h3>
 
-A Dynamic Island for Samsung One UI: replaces the status bar Now Bar capsule with a pill and cards, and turns ordinary notifications into live cards.
+<p align="center">
+  <b>A Dynamic Island for Samsung One UI.</b><br>
+  A pill around the camera hole that opens into live cards for calls, music, navigation, timers and notifications.
+</p>
 
-![Android](https://img.shields.io/badge/Android-15%2B-3DDC84?logo=android&logoColor=white) ![LSPosed](https://img.shields.io/badge/LSPosed-Xposed%20API%2093-6f42c1) ![License: MIT](https://img.shields.io/badge/License-MIT-blue)
+<p align="center">
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/github/v/release/sampple-korea/dynamicisland?style=flat-square&color=3DDC84" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Android-15%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 15+">
+  <img src="https://img.shields.io/badge/LSPosed-Xposed%20API%2093-6f42c1?style=flat-square" alt="LSPosed">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/Download-APK-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="Download the APK"></a>
+</p>
+
+<p align="center">
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
+</p>
+
+### Everything the capsule shows, as cards
+
+The pill sits where the stock Now Bar capsule was and opens into cards.
+
+<p align="center">
+  <img src="docs/banner.png" alt="The island as a pill, as a live card, as a music player and with several cards stacked">
+</p>
+
+Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill that grows into cards. Everything One UI keeps in the capsule (calls, timers, screen recording, casting, navigation, a music player) becomes a card, and so do ordinary notifications: messages, verification codes, downloads and the delivery, ride and route updates that apps only write as text. It is an LSPosed module that runs inside System UI, with a One UI style settings app and a rule manager. Inspired by [@cryyear's DynamicIsland](https://github.com/Spottq); this is a new implementation.
 
 ## Screenshots
 

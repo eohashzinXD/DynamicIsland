@@ -1,10 +1,38 @@
-[![English](https://img.shields.io/badge/English-555?style=flat-square)](README.md) [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-2F80ED?style=flat-square)](README.ko.md)
+<p align="center">
+  <img src="docs/hero_ko.png" alt="Dynamic Island: 삼성 One UI용 라이브 카드">
+</p>
 
-# Dynamic Island
+<h3 align="center">상태바에 생기를!</h3>
 
-삼성 One UI용 다이나믹 아일랜드입니다. 상태바의 Now Bar 캡슐을 알약과 카드로 바꾸고, 일반 알림도 라이브 카드로 보여 줍니다.
+<p align="center">
+  <b>삼성 One UI용 다이나믹 아일랜드</b><br>
+  카메라 구멍 둘레의 알약이 통화, 음악, 길안내, 타이머, 알림을 라이브 카드로 펼쳐 줍니다.
+</p>
 
-![Android](https://img.shields.io/badge/Android-15%2B-3DDC84?logo=android&logoColor=white) ![LSPosed](https://img.shields.io/badge/LSPosed-Xposed%20API%2093-6f42c1) ![License: MIT](https://img.shields.io/badge/License-MIT-blue)
+<p align="center">
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/github/v/release/sampple-korea/dynamicisland?style=flat-square&color=3DDC84" alt="최신 릴리스"></a>
+  <img src="https://img.shields.io/badge/Android-15%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 15+">
+  <img src="https://img.shields.io/badge/LSPosed-Xposed%20API%2093-6f42c1?style=flat-square" alt="LSPosed">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT 라이선스"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/APK-%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="APK 다운로드"></a>
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> · <b>한국어</b> · <a href="#주요-기능">주요 기능</a> · <a href="#설치">설치</a>
+</p>
+
+### 캡슐이 보여 주던 모든 것을 카드로
+
+알약은 기본 Now Bar 캡슐 자리에 놓이고, 누르면 카드로 펼쳐집니다.
+
+<p align="center">
+  <img src="docs/banner_ko.png" alt="알약, 라이브 카드, 음악 플레이어, 여러 카드가 쌓인 모습">
+</p>
+
+다이나믹 아일랜드는 삼성 상태바의 Now Bar 캡슐을 카드로 펼쳐지는 알약으로 바꿔 줍니다. One UI가 캡슐에 담던 통화, 타이머, 화면 녹화, 화면 전송, 길안내, 음악 플레이어는 물론 메시지, 인증번호, 다운로드, 글로만 오던 배달·택시·경로 알림까지 카드로 보여 줍니다. 시스템 UI 안에서 도는 LSPosed 모듈이며, One UI 스타일 설정 앱과 규칙 관리 화면이 함께 들어 있습니다. [@cryyear의 DynamicIsland](https://github.com/Spottq)에서 영감을 받아 새로 구현했습니다.
 
 ## 스크린샷
 

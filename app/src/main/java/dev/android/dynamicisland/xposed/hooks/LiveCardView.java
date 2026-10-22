@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.XLog;
 
@@ -52,6 +53,17 @@ final class LiveCardView extends FrameLayout {
         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         setOnClickListener(v -> onTapped());
         setOnLongClickListener(v -> forwardLongPress());
+    }
+
+    /** The haptics switch also covers the haptics the framework starts by itself (long press). */
+    @Override
+    public boolean performHapticFeedback(int feedbackConstant) {
+        return ModuleSettings.haptics() && super.performHapticFeedback(feedbackConstant);
+    }
+
+    @Override
+    public boolean performHapticFeedback(int feedbackConstant, int flags) {
+        return ModuleSettings.haptics() && super.performHapticFeedback(feedbackConstant, flags);
     }
 
     CardRowState owner() {

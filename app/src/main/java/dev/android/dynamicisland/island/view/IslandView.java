@@ -24,6 +24,7 @@ import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
 import dev.android.dynamicisland.island.view.media.MediaFx;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -506,6 +507,17 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     public void onSecondTick() {
         ticker.onTick();
+    }
+
+    /** The haptics switch also covers the haptics the framework starts by itself. */
+    @Override
+    public boolean performHapticFeedback(int feedbackConstant) {
+        return ModuleSettings.haptics() && super.performHapticFeedback(feedbackConstant);
+    }
+
+    @Override
+    public boolean performHapticFeedback(int feedbackConstant, int flags) {
+        return ModuleSettings.haptics() && super.performHapticFeedback(feedbackConstant, flags);
     }
 
     @Override
