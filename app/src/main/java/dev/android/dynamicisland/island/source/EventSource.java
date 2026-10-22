@@ -59,6 +59,13 @@ public final class EventSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private final Map<String, IslandItem> events = new LinkedHashMap<>();
     /** Last known on/off state per quick-setting name, to announce only real changes. */
     private final Map<String, Boolean> toggleState = new LinkedHashMap<>();
@@ -73,7 +80,6 @@ public final class EventSource {
      * battery, hotspot): that is the current state, not a change, so it only sets the baseline.
      */
     private boolean baseline;
-    private String btKey;
 
     public EventSource(Context ctx, Handler main, Runnable onChange) {
         this.ctx = ctx;
@@ -126,6 +132,10 @@ public final class EventSource {
             PowerManager pm = ctx.getSystemService(PowerManager.class);
             toggleState.put("powersave", pm != null && pm.isPowerSaveMode());
             toggleState.put("rotate", Settings.System.getInt(ctx.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1) != 0);
+            Object apState = Refl.call(ctx.getSystemService(Context.WIFI_SERVICE), "getWifiApState");
+            if (apState instanceof Integer) {
+                toggleState.put("hotspot", ((Integer) apState).intValue() == HOTSPOT_ENABLED);
+            }
         } catch (Throwable t) {
             XLog.e("toggle baseline failed", t);
         }
@@ -276,8 +286,8 @@ public final class EventSource {
             next = Math.min(next, item.expiresAtUptime);
         }
         if (next != Long.MAX_VALUE) {
-            main.removeCallbacks(onChange);
-            main.postDelayed(onChange, Math.max(16L, next - now + 20));
+            main.removeCallbacks(tick);
+            main.postDelayed(tick, Math.max(16L, next - now + 20));
         }
     }
 
@@ -422,8 +432,8 @@ public final class EventSource {
             int battery = batteryOf(device);
             show(bluetoothItem(device, battery), BLUETOOTH_MS);
         } else if (BT_BATTERY_ACTION.equals(i.getAction())) {
-            IslandItem old = btKey == null ? null : events.get(btKey);
-            if (old != null && ("event:bt:" + device.getAddress()).equals(old.key)) {
+            IslandItem old = events.get("event:bt:" + device.getAddress());
+            if (old != null) {
                 int level = i.getIntExtra(BT_BATTERY_EXTRA, -1);
                 if (level >= 0) {
                     IslandItem fresh = bluetoothItem(device, level);
@@ -461,7 +471,6 @@ public final class EventSource {
             // permission / hidden state: fall back to a generic name
         }
         IslandItem it = base("event:bt:" + device.getAddress());
-        btKey = it.key;
         it.title = name != null ? name : t("블루투스 기기", "Bluetooth device");
         it.subtitle = battery >= 0 ? t("연결됨 · 배터리 " + battery + "%", "Connected · " + battery + "% battery") : t("연결됨", "Connected");
         it.accent = BLUE;

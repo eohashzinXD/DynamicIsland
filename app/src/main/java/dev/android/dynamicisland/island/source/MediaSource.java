@@ -37,6 +37,13 @@ public final class MediaSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private final AppAssets assets;
     private final Map<MediaSession.Token, Session> sessions = new HashMap<>();
     private final Map<String, Cover> covers = new HashMap<>();
@@ -105,8 +112,8 @@ public final class MediaSource {
         if (!shown.isPlaying()) {
             // come back when the paused card is due to leave
             long remaining = ModuleSettings.pausedTimeoutMs() - (now - shown.lastActive);
-            main.removeCallbacks(onChange);
-            main.postDelayed(onChange, Math.max(50L, remaining + 50));
+            main.removeCallbacks(tick);
+            main.postDelayed(tick, Math.max(50L, remaining + 50));
         }
         String pkg = shown.controller.getPackageName();
         packages.add(pkg);

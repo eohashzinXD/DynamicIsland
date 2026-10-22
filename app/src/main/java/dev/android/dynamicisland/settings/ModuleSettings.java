@@ -5,6 +5,8 @@ import android.os.HandlerThread;
 import android.os.Process;
 import de.robv.android.xposed.XSharedPreferences;
 import dev.android.dynamicisland.island.rules.RuleConfig;
+import dev.android.dynamicisland.xposed.Diagnostics;
+import dev.android.dynamicisland.xposed.XLog;
 import java.util.Set;
 
 /**
@@ -78,6 +80,7 @@ public final class ModuleSettings {
 
     private static boolean started;
     private static XSharedPreferences prefs;
+    private static String lastLogged;
 
     private ModuleSettings() {
     }
@@ -88,6 +91,7 @@ public final class ModuleSettings {
             return;
         }
         started = true;
+        refresh(); // the first values are in place before the first getter returns
         try {
             HandlerThread thread = new HandlerThread("DynamicIslandPrefs", Process.THREAD_PRIORITY_BACKGROUND);
             thread.start();
@@ -110,8 +114,11 @@ public final class ModuleSettings {
             if (prefs == null) {
                 prefs = new XSharedPreferences(PACKAGE, FILE);
                 prefs.makeWorldReadable();
+                XLog.event("settings file " + prefs.getFile() + " readable=" + prefs.getFile().canRead());
             } else if (prefs.hasFileChanged()) {
                 prefs.reload();
+            } else {
+                return;
             }
             pausedTimeoutS = prefs.getInt(KEY_PAUSED_TIMEOUT_S, DEF_PAUSED_TIMEOUT_S);
             autoCollapseS = prefs.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
@@ -135,8 +142,25 @@ public final class ModuleSettings {
             Set<String> listed = prefs.getStringSet(KEY_APPS_LISTED, null);
             appFilter = new AppFilter(prefs.getBoolean(KEY_APPS_ONLY_LISTED, false),
                     listed == null ? null : new java.util.HashSet<>(listed));
-        } catch (Throwable ignored) {
+            logChanges();
+        } catch (Throwable t) {
             // unreadable preferences: keep the last known / default values
+            XLog.once("ModuleSettings.refresh", t);
+        }
+    }
+
+    /** One line in the event log whenever the values the module runs on differ from the last read. */
+    private static void logChanges() {
+        String now = "haptics=" + haptics + " visualizer=" + visualizer + " cardHeader=" + cardHeader
+                + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
+                + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
+                + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
+                + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
+                + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+        Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
+        if (!now.equals(lastLogged)) {
+            lastLogged = now;
+            XLog.event("settings: " + now);
         }
     }
 

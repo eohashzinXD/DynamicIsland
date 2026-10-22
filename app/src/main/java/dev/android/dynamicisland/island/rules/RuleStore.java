@@ -13,7 +13,8 @@ import java.nio.charset.StandardCharsets;
  */
 public final class RuleStore {
     /** The module's own rule file, always in force. */
-    private static final String BUILTIN = "/dev/android/dynamicisland/rules/builtin-ko.json";
+    private static final String[] BUILTIN = {
+            "/dev/android/dynamicisland/rules/builtin-ko.json", "/dev/android/dynamicisland/rules/builtin-en.json"};
     private static final Object LOCK = new Object();
     private static volatile RuleDictionary current = RuleDictionary.empty();
     private static volatile int builtFor = 0;
@@ -45,10 +46,14 @@ public final class RuleStore {
     /** Builds the merged rules for {@code config}. A file that does not parse is skipped. */
     public static RuleDictionary build(RuleConfig config) {
         RuleDictionary merged = RuleDictionary.empty();
-        // the module's own rules, built from a year and a half of real notifications, come first
-        RuleDictionary builtin = RuleDictionary.fromJson(readResource(BUILTIN));
-        if (builtin != null) {
-            merged = merged.mergedWith(builtin);
+        // the module's own rules come first: Korean (built from a year and a half of recorded notifications) and English
+        for (String path : BUILTIN) {
+            RuleDictionary builtin = RuleDictionary.fromJson(readResource(path));
+            if (builtin != null) {
+                merged = merged.mergedWith(builtin);
+            } else {
+                XLog.i("rule file " + path + " could not be loaded");
+            }
         }
         RuleDictionary custom = RuleDictionary.fromJson(config.custom);
         return (custom == null ? merged : merged.mergedWith(custom)).without(config.disabled);

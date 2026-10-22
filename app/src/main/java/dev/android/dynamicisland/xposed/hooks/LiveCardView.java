@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.xposed.Refl;
@@ -77,7 +78,7 @@ final class LiveCardView extends FrameLayout {
             IslandItem latest = ShadeLiveCards.item(key);
             boolean ours = !owner.isRestored() && !moved && latest != null && latest == downItem;
             if (ours && renderer.shadeCardTap(latest, getWidth(), downX, downY)) {
-                performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+                Haptics.perform(this, HapticFeedbackConstants.CONTEXT_CLICK);
             }
         } catch (Throwable t) {
             owner.fail(t);

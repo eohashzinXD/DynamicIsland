@@ -12,6 +12,21 @@ public final class Entry implements IXposedHookLoadPackage {
     private static final String SYSTEM_UI = "com.android.systemui";
     private static boolean installed;
 
+    /** Path of the apk this code was loaded from (tells an old install from the new one), or "?". */
+    private static String moduleApk() {
+        try {
+            String loader = String.valueOf(Entry.class.getClassLoader());
+            int from = loader.indexOf("zip file \"");
+            if (from >= 0) {
+                int start = from + "zip file \"".length();
+                return loader.substring(start, loader.indexOf('"', start));
+            }
+            return loader;
+        } catch (Throwable t) {
+            return "?";
+        }
+    }
+
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         boolean mainSystemUi = SYSTEM_UI.equals(lpparam.packageName) && SYSTEM_UI.equals(lpparam.processName);
@@ -20,6 +35,7 @@ public final class Entry implements IXposedHookLoadPackage {
         }
         installed = true;
         Diagnostics.fact("entry", "module loaded into " + lpparam.processName);
+        Diagnostics.fact("module", CrashGuard.BUILD + " from " + moduleApk());
         if (!CrashGuard.enter(lpparam.appInfo)) {
             Diagnostics.stage("crash guard", false, new IllegalStateException("switched the module off for this System UI process"));
             return;

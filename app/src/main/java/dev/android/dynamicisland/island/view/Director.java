@@ -2,8 +2,10 @@ package dev.android.dynamicisland.island.view;
 
 import android.graphics.RectF;
 import android.view.HapticFeedbackConstants;
+import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.graphics.Motion;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.CardBody;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
@@ -282,7 +284,7 @@ final class Director {
         layoutCards(show);
         sp.width.animateTo(m.restWidth(), Motion.PILL_GATHER);
         sp.height.animateTo(Math.min(m.restWidth(), m.pillH), Motion.PILL_GATHER);
-        if (scene.mainIn != null) {
+        if (!wasExpanded && scene.mainIn != null) {
             scene.mainOut = scene.mainIn.toOutgoing(IslandView.now(), 0);
         }
         sp.split.animateTo(0.0f, Motion.BUBBLE_MERGE);
@@ -295,7 +297,7 @@ final class Director {
         view.scheduleTick();
         if (!wasExpanded) {
             host.onExpandedChanged(true);
-            view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+            Haptics.perform(view, HapticFeedbackConstants.CONTEXT_CLICK);
         }
         view.notifyHost();
     }
@@ -393,6 +395,9 @@ final class Director {
                 created++;
             } else {
                 c.item = it;
+                if (view.seekBody != null && view.seekBody == c.body && body instanceof MediaBody) {
+                    view.seekBody = (MediaBody) body; // the dragged seek bar follows the rebuilt body
+                }
                 c.body = body;
             }
             c.targetW = w;
@@ -405,7 +410,7 @@ final class Director {
         }
         List<Card> leaving = new ArrayList<>();
         for (Card old : scene.cards) {
-            if (!next.contains(old)) {
+            if (!next.contains(old) && !old.leaving) {
                 startLeaving(old, t);
             }
             if (old.leaving) {
@@ -476,7 +481,7 @@ final class Director {
             if (c.blurOnAt != 0 && t - c.blurOnAt < BLUR_SETTLE_MS) {
                 active = true;
             }
-            boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - m.cy) < m.dp(4.0f) && c.h.value() < m.pillH * 0.95f;
+            boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f) && c.h.value() < m.pillH * 0.95f;
             if (gone) {
                 scene.cards.remove(i);
                 if (scene.blur != null) {

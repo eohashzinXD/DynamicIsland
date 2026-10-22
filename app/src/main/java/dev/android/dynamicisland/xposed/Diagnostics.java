@@ -22,12 +22,15 @@ public final class Diagnostics {
     public static final String SETTING = "dynamicisland_report";
 
     private static final int MAX_ERRORS = 8;
-    private static final int MAX_CHARS = 7000;
+    private static final int MAX_EVENTS = 60;
+    private static final int MAX_CHARS = 12000;
     private static final long PUBLISH_INTERVAL_MS = 15_000;
 
     private static final Map<String, String> FACTS = new LinkedHashMap<>();
     private static final Map<String, String> STAGES = new LinkedHashMap<>();
     private static final ArrayDeque<String> ERRORS = new ArrayDeque<>();
+    private static final ArrayDeque<String> EVENTS = new ArrayDeque<>();
+    private static final SimpleDateFormat EVENT_TIME = new SimpleDateFormat("HH:mm:ss", Locale.US);
     private static long lastPublish;
     private static boolean dirty;
     private static Context context;
@@ -53,11 +56,25 @@ public final class Diagnostics {
         }
     }
 
+    /** Remembers what just happened (an item came or went, the island hid, a setting changed), newest last. */
+    public static synchronized void event(String what) {
+        EVENTS.addLast(EVENT_TIME.format(new Date()) + " " + what);
+        while (EVENTS.size() > MAX_EVENTS) {
+            EVENTS.removeFirst();
+        }
+        dirty = true;
+    }
+
     /** Keeps the last few exceptions the module contained (they are logged, but only the log of this boot has them). */
     public static synchronized void error(String site, Throwable t) {
         StackTraceElement[] trace = t.getStackTrace();
         String where = trace.length > 0 ? trace[0].getClassName().replaceAll("^.*\\.", "") + "." + trace[0].getMethodName() + ":" + trace[0].getLineNumber() : "?";
-        String line = site + ": " + t.getClass().getSimpleName() + ": " + t.getMessage() + " at " + where;
+        Throwable root = t;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String cause = root == t ? "" : " (caused by " + root.getClass().getSimpleName() + ": " + root.getMessage() + ")";
+        String line = site + ": " + t.getClass().getSimpleName() + ": " + t.getMessage() + " at " + where + cause;
         if (!ERRORS.contains(line)) {
             ERRORS.addLast(line);
             while (ERRORS.size() > MAX_ERRORS) {
@@ -86,6 +103,12 @@ public final class Diagnostics {
         if (!ERRORS.isEmpty()) {
             sb.append("-- errors\n");
             for (String line : ERRORS) {
+                sb.append(line).append('\n');
+            }
+        }
+        if (!EVENTS.isEmpty()) {
+            sb.append("-- recent events\n");
+            for (String line : EVENTS) {
                 sb.append(line).append('\n');
             }
         }

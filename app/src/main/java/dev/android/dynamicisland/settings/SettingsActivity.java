@@ -334,7 +334,11 @@ public final class SettingsActivity extends Activity {
                 names[i] = rows.get(i).getValue() + "\n" + rows.get(i).getKey();
                 checked[i] = listed.contains(rows.get(i).getKey());
             }
-            runOnUiThread(() -> new AlertDialog.Builder(this)
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                new AlertDialog.Builder(this)
                     .setTitle(R.string.apps_choose)
                     .setMultiChoiceItems(names, checked, (dialog, which, isChecked) -> {
                         String pkg = rows.get(which).getKey();
@@ -349,7 +353,8 @@ public final class SettingsActivity extends Activity {
                         done.run();
                     })
                     .setNegativeButton(android.R.string.cancel, null)
-                    .show());
+                    .show();
+            });
         }, "list-apps").start();
     }
 

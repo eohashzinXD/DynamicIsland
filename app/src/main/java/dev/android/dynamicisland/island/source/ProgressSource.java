@@ -40,6 +40,13 @@ public final class ProgressSource {
     private final AppLook apps;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private final Map<String, IslandItem> items = new LinkedHashMap<>();
     private long lastNotify;
     /** Keys of the notifications whose card is on the island right now; read from the list builder. */
@@ -93,9 +100,9 @@ public final class ProgressSource {
             lastNotify = now;
             onChange.run();
         } else {
-            main.removeCallbacks(onChange);
+            main.removeCallbacks(tick);
             lastNotify = now + wait;
-            main.postDelayed(onChange, wait);
+            main.postDelayed(tick, wait);
         }
     }
 

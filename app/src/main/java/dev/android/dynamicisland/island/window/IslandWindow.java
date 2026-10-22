@@ -129,6 +129,10 @@ public final class IslandWindow {
         }
     }
 
+    public boolean isAdded() {
+        return added;
+    }
+
     void detach() {
         if (!added) {
             return;

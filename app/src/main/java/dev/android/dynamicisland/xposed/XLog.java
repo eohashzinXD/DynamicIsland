@@ -21,6 +21,13 @@ public final class XLog {
         toBridge(msg);
     }
 
+    /** Something that happened (not a failure): logcat, the module log and the recent events of the report. */
+    public static void event(String msg) {
+        Log.i(TAG, msg);
+        Diagnostics.event(msg);
+        toBridge(msg);
+    }
+
     public static void d(String msg) {
         Log.d(TAG, msg);
     }

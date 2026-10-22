@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.graphics.Motion;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
@@ -49,6 +50,7 @@ final class TouchController {
     private Card downCard;
     /** The gesture already did its job (e.g. collapsed the stack): swallow the rest of it. */
     private boolean ignoreGesture;
+    private int pointerId;
     /** A downward drag on the pill is being forwarded to the notification shade. */
     private boolean forwardingShade;
     private Axis axis = Axis.UNDECIDED;
@@ -64,6 +66,17 @@ final class TouchController {
         this.director = director;
         this.buttons = buttons;
         this.touchSlop = ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
+    }
+
+    /** Position of the finger that started the gesture; a second finger never moves it. */
+    private float x(MotionEvent e) {
+        int index = e.findPointerIndex(pointerId);
+        return e.getX(index < 0 ? 0 : index);
+    }
+
+    private float y(MotionEvent e) {
+        int index = e.findPointerIndex(pointerId);
+        return e.getY(index < 0 ? 0 : index);
     }
 
     boolean handle(MotionEvent e) {
@@ -84,6 +97,12 @@ final class TouchController {
             case MotionEvent.ACTION_MOVE:
                 move(e);
                 break;
+            case MotionEvent.ACTION_POINTER_UP:
+                if (e.getPointerId(e.getActionIndex()) == pointerId) {
+                    up(e); // the finger that owns the gesture lifted first: finish with its position
+                    ignoreGesture = true;
+                }
+                break;
             case MotionEvent.ACTION_CANCEL:
                 cancel(e);
                 break;
@@ -103,8 +122,9 @@ final class TouchController {
     private void down(MotionEvent e) {
         ignoreGesture = false;
         axis = Axis.UNDECIDED;
-        downX = e.getX();
-        downY = e.getY();
+        pointerId = e.getPointerId(0);
+        downX = x(e);
+        downY = y(e);
         dragging = false;
         downOnPill = false;
         downOnBubble = false;
@@ -187,13 +207,13 @@ final class TouchController {
             return;
         }
         if (view.seekBody != null && downCard != null) {
-            view.seekFraction = view.seekBody.fractionAt(e.getX() - shapes.contentLeft(downCard));
+            view.seekFraction = view.seekBody.fractionAt(x(e) - shapes.contentLeft(downCard));
             view.scheduleFrame();
             view.invalidate();
             return;
         }
-        float dx = e.getX() - downX;
-        float dy = e.getY() - downY;
+        float dx = x(e) - downX;
+        float dy = y(e) - downY;
         if (!dragging && (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop)) {
             dragging = true;
             buttons.release();
@@ -264,8 +284,8 @@ final class TouchController {
             sp.offsetX.animateTo(0.0f, Motion.RUBBER_RELEASE);
         }
         view.scheduleFrame();
-        float dx = e.getX() - downX;
-        float dy = e.getY() - downY;
+        float dx = x(e) - downX;
+        float dy = y(e) - downY;
         boolean horizontal = Math.abs(dx) > m.dp(SWIPE_MIN_DP) && Math.abs(dx) > Math.abs(dy) * SWIPE_DOMINANCE;
         if (downOnHole) {
             if ((horizontal && dx > 0.0f) || !dragging) {
@@ -274,7 +294,7 @@ final class TouchController {
         } else if (dragging) {
             dragReleased(horizontal, dx, dy);
         } else {
-            tap(e.getX(), e.getY());
+            tap(x(e), y(e));
         }
     }
 
@@ -288,14 +308,14 @@ final class TouchController {
         if (body.item.mediaSeek != null) {
             body.item.mediaSeek.accept(target);
         }
-        view.performHapticFeedback(HAPTIC_SEEK_DONE);
+        Haptics.perform(view, HAPTIC_SEEK_DONE);
         director.postAutoCollapse();
         view.invalidate();
     }
 
     private void dragReleased(boolean horizontal, float dx, float dy) {
         if (scene.mode == Mode.COMPACT && horizontal) {
-            view.performHapticFeedback(HAPTIC_CONFIRM);
+            Haptics.perform(view, HAPTIC_CONFIRM);
             if (dx < 0.0f) {
                 boolean bubbleSwiped = downOnBubble && scene.secondary != null;
                 host.onMinimize(bubbleSwiped ? scene.secondary : scene.primary);
@@ -356,9 +376,9 @@ final class TouchController {
         }
         Card c = downCard;
         shapes.card(c, slot);
-        Btn b = c.body.hit(x - m.centredLeft(c.body.w), y - slot.top);
+        Btn b = c.body.hit(x - shapes.contentLeft(c), y - slot.top);
         if (b != null) {
-            view.performHapticFeedback(HAPTIC_CONFIRM);
+            Haptics.perform(view, HAPTIC_CONFIRM);
             if (b.run != null) {
                 b.run.run();
             } else if (b.action != null) {

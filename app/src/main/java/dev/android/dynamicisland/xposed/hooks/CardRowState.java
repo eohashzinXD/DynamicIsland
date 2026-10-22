@@ -17,6 +17,7 @@ import java.util.WeakHashMap;
  */
 final class CardRowState {
     /** Height limits of the content view; all are set to the card height while it measures. */
+    private static final int[] NO_LIMITS = new int[0];
     private static final String[] LIMITS = {"mSmallHeight", "mMinContractedHeight", "mHeadsUpHeight"};
 
     /** Content views whose stock children are temporarily back in place while System UI rebinds the row. */
@@ -40,10 +41,12 @@ final class CardRowState {
     /** Height limits saved by nested measures; the innermost measure is on top. */
     private final ArrayDeque<int[]> savedLimits = new ArrayDeque<>();
     private boolean restoreQueued;
+    private final String key;
     private boolean restored;
 
     CardRowState(View row, ViewGroup layout, String key, IslandItem item) throws Throwable {
         this.row = row;
+        this.key = key;
         this.layout = layout;
         contracted = (View) Refl.get(layout, "mContractedChild");
         expanded = (View) Refl.get(layout, "mExpandedChild");
@@ -112,6 +115,7 @@ final class CardRowState {
             throw new IllegalStateException("row mExpandable");
         }
         relayout("island live card");
+        XLog.event("shade card installed " + key);
     }
 
     /** Puts the stock children back so System UI can rebind them; {@link #concealOriginals} undoes it. */
@@ -127,25 +131,53 @@ final class CardRowState {
         }
     }
 
-    /** Swaps the card back in after System UI rebound the stock children. */
-    void concealOriginals() {
+    /**
+     * Swaps the card back in after System UI rebound the stock children.
+     *
+     * @return false when System UI inflated new stock children instead of reusing the old ones: the card is then
+     *         detached and given up, and the caller must bind a fresh card, or the new stock views would show
+     *         next to the old card
+     */
+    boolean concealOriginals() {
         EXPOSED.remove(layout);
         if (restored) {
-            return;
+            return true;
         }
-        if (Refl.get(layout, "mContractedChild") == contracted) {
-            Refl.set(layout, "mContractedChild", card);
+        boolean reused = Refl.get(layout, "mContractedChild") == contracted
+                && Refl.get(layout, "mExpandedChild") == expanded
+                && (headsUpCard == null || Refl.get(layout, "mHeadsUpChild") == headsUp);
+        if (!reused) {
+            XLog.event("shade card given up (stock children were replaced) " + key);
+            abandon();
+            return false;
         }
-        if (Refl.get(layout, "mExpandedChild") == expanded) {
-            Refl.set(layout, "mExpandedChild", null);
-        }
-        if (headsUpCard != null && Refl.get(layout, "mHeadsUpChild") == headsUp) {
+        Refl.set(layout, "mContractedChild", card);
+        Refl.set(layout, "mExpandedChild", null);
+        if (headsUpCard != null) {
             Refl.set(layout, "mHeadsUpChild", headsUpCard);
+        }
+        return true;
+    }
+
+    /** Drops the card without touching the layout's stock children, which System UI has just replaced. */
+    private void abandon() {
+        restored = true;
+        while (!savedLimits.isEmpty()) {
+            endMeasure();
+        }
+        detach(card);
+        detach(headsUpCard);
+    }
+
+    private void detach(View child) {
+        if (child != null && child.getParent() == layout) {
+            layout.removeView(child);
         }
     }
 
     /** Raises the height limits to the card height for a measure at {@code width}; paired with {@link #endMeasure}. */
     void beginMeasure(int width) {
+        boolean pushed = false;
         try {
             int inner = Math.max(1, width - layout.getPaddingLeft() - layout.getPaddingRight());
             int height = card.heightFor(inner);
@@ -154,20 +186,24 @@ final class CardRowState {
                 saved[i] = Refl.getInt(layout, LIMITS[i], 0);
             }
             savedLimits.push(saved);
+            pushed = true;
             for (String limit : LIMITS) {
                 if (!Refl.set(layout, limit, height)) {
                     throw new IllegalStateException(limit);
                 }
             }
         } catch (Throwable t) {
-            endMeasure();
             fail(t);
+        } finally {
+            if (!pushed) {
+                savedLimits.push(NO_LIMITS); // keeps this level paired with its endMeasure
+            }
         }
     }
 
     void endMeasure() {
         int[] saved = savedLimits.poll();
-        if (saved == null) {
+        if (saved == null || saved.length == 0) {
             return;
         }
         for (int i = 0; i < LIMITS.length; i++) {
@@ -180,7 +216,7 @@ final class CardRowState {
         if (restored || restoreQueued) {
             return;
         }
-        XLog.e("shade live card failed", t);
+        XLog.e("shade live card failed " + key, t);
         restoreQueued = true;
         row.post(this::restore);
     }
@@ -191,6 +227,7 @@ final class CardRowState {
             return;
         }
         restored = true;
+        XLog.event("shade card restored " + key);
         while (!savedLimits.isEmpty()) {
             endMeasure();
         }
@@ -199,6 +236,8 @@ final class CardRowState {
         if (headsUpCard != null) {
             putBack(setHeadsUp, "mHeadsUpChild", headsUpCard, headsUp);
         }
+        detach(card);
+        detach(headsUpCard);
         if (!Refl.set(row, "mExpandable", rowExpandable)) {
             XLog.i("shade live card restore mExpandable failed");
         }

@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class CrashGuard {
     /** Bump together with the module version: a new build gets a fresh chance. */
-    static final String BUILD = "0.1.0";
+    static final String BUILD = "0.1.1";
 
     private static final long STABLE_AFTER_MS = 45_000;
     // two quick restarts (theme / font change, double reboot) are normal; three in a row are a loop
@@ -148,7 +148,7 @@ public final class CrashGuard {
             try {
                 StringWriter sw = new StringWriter();
                 throwable.printStackTrace(new PrintWriter(sw));
-                boolean ours = sw.toString().contains("dev.android.dynamicisland") || sw.toString().contains("de.robv.android.xposed");
+                boolean ours = sw.toString().contains("dev.android.dynamicisland");
                 write(REPORT, "build " + BUILD + " thread " + thread.getName() + " uptime " + SystemClock.uptimeMillis()
                         + "ms module-involved=" + ours + "\n" + sw);
                 if (ours) {

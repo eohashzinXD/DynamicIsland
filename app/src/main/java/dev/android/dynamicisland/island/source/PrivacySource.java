@@ -62,6 +62,13 @@ public final class PrivacySource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private final Map<String, Use> uses = new HashMap<>();
     private final Map<String, String> labels = new HashMap<>();
     private IslandItem cached;
@@ -137,8 +144,8 @@ public final class PrivacySource {
         if (fresh) {
             onChange.run();
         }
-        main.removeCallbacks(onChange);
-        main.postDelayed(onChange, NOTED_HOLD_MS + 50);
+        main.removeCallbacks(tick);
+        main.postDelayed(tick, NOTED_HOLD_MS + 50);
     }
 
     /** A sensor use that has a start and an end (camera, microphone, long-running location). */
@@ -200,8 +207,8 @@ public final class PrivacySource {
             }
         }
         if (next != Long.MAX_VALUE) {
-            main.removeCallbacks(onChange);
-            main.postDelayed(onChange, Math.max(16L, next - now + 20));
+            main.removeCallbacks(tick);
+            main.postDelayed(tick, Math.max(16L, next - now + 20));
         }
         if (packages.isEmpty() || !(cam || mic || loc)) {
             return;

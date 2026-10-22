@@ -80,8 +80,8 @@ public final class ShadeLiveCards {
         @Override
         protected void after(XC_MethodHook.MethodHookParam p) {
             CardRowState state = CardRowState.exposedIn(privateLayout(p));
-            if (state != null) {
-                state.concealOriginals();
+            if (state != null && !state.concealOriginals()) {
+                bind(p.args[APPLY_ROW_ARG]); // System UI built new stock views: the row needs a fresh card
             }
         }
 
@@ -154,6 +154,13 @@ public final class ShadeLiveCards {
         CardRowState previous = CardRowState.installedIn(layout);
         if (previous != null) {
             previous.restore();
+        }
+        ViewGroup group = (ViewGroup) layout;
+        for (int i = group.getChildCount() - 1; i >= 0; i--) {
+            View child = group.getChildAt(i);
+            if (child instanceof LiveCardView && ((LiveCardView) child).owner().isRestored()) {
+                group.removeViewAt(i); // a card left behind by a state that was given up
+            }
         }
         CardRowState state = null;
         try {

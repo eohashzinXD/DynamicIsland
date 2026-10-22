@@ -69,6 +69,7 @@ final class IslandPlacement {
     // System UI state that decides whether the island may be shown.
     private int barState;
     private boolean dozing;
+    private boolean lastSuppressed;
     private int statusBarWindowState;
     private boolean landscapeSuppressed;
     /** Unlock just happened: the island stays hidden until the reveal timer fires. */
@@ -164,6 +165,12 @@ final class IslandPlacement {
             window.setShown(false);
             updateGeometry();
             window.attach();
+            if (!window.isAdded()) {
+                XLog.event("island window could not be added, retrying on the next refresh");
+                window = null;
+                view = null;
+                return;
+            }
             updateSuppression();
             Diagnostics.fact("window", "created");
         } catch (Throwable t) {
@@ -181,6 +188,7 @@ final class IslandPlacement {
             return;
         }
         boolean wasLocked = barState == BAR_STATE_KEYGUARD || barState == BAR_STATE_SHADE_LOCKED;
+        XLog.event("status bar state " + barState + " -> " + state);
         barState = state;
         if (wasLocked && state == BAR_STATE_SHADE) {
             revealPending = true;
@@ -192,6 +200,7 @@ final class IslandPlacement {
 
     void setDozing(boolean value) {
         if (dozing != value) {
+            XLog.event("dozing " + value);
             dozing = value;
             updateSuppression();
         }
@@ -218,7 +227,13 @@ final class IslandPlacement {
         }
         boolean locked = barState == BAR_STATE_KEYGUARD || barState == BAR_STATE_SHADE_LOCKED;
         boolean fullscreen = statusBarWindowState != 0;
-        view.setSuppressed(locked || dozing || fullscreen || landscapeSuppressed || revealPending);
+        boolean suppressed = locked || dozing || fullscreen || landscapeSuppressed || revealPending;
+        if (suppressed != lastSuppressed) {
+            lastSuppressed = suppressed;
+            XLog.event("island " + (suppressed ? "hidden" : "shown") + " (keyguard=" + locked + " dozing=" + dozing + " fullscreen=" + fullscreen
+                    + " landscape=" + landscapeSuppressed + " unlockReveal=" + revealPending + ")");
+        }
+        view.setSuppressed(suppressed);
         onFrame();
     }
 

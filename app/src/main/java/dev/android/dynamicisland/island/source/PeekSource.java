@@ -39,6 +39,13 @@ public final class PeekSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private IslandItem current;
 
     public PeekSource(Context ctx, Handler main, Runnable onChange) {
@@ -51,8 +58,8 @@ public final class PeekSource {
     public void show(IslandItem item, long ms) {
         item.expiresAtUptime = SystemClock.uptimeMillis() + ms;
         current = item;
-        main.removeCallbacks(onChange);
-        main.postDelayed(onChange, ms + 40);
+        main.removeCallbacks(tick);
+        main.postDelayed(tick, ms + 40);
     }
 
     /** The card on the island right now, or null when none is (or its time is up). */

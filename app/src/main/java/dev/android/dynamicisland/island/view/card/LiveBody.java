@@ -120,7 +120,7 @@ public final class LiveBody extends CardBody {
         subChrono = item.description == null && item.hasChronometer() && item.chronoPosition == 2;
         secIndent = (item.secondaryIcon != null && item.description == null) ? owner.dp(22.0f) : 0.0f;
         CharSequence secondary = item.subtitle;
-        if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null) {
+        if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null && score == null) {
             secondary = item.trailingText;
         }
         this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth, 3);

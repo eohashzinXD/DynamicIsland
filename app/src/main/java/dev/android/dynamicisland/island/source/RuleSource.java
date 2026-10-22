@@ -53,6 +53,13 @@ public final class RuleSource {
     private final AppLook apps;
     private final Handler main;
     private final Runnable onChange;
+    /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            onChange.run();
+        }
+    };
     private final Map<String, IslandItem> items = new LinkedHashMap<>();
     private long lastNotify;
     /** Asks for a new look at the cards when the next one expires. */
@@ -68,7 +75,7 @@ public final class RuleSource {
         this.apps = new AppLook(ctx);
         this.main = main;
         this.onChange = onChange;
-        this.expiryTick = onChange;
+        this.expiryTick = () -> onChange.run();
     }
 
     /** Called every time the notification list was rebuilt. */
@@ -333,7 +340,8 @@ public final class RuleSource {
             IslandItem old = e.getValue();
             if (next == null || next.stage != old.stage || !String.valueOf(next.title).equals(String.valueOf(old.title))
                     || !String.valueOf(next.subtitle).equals(String.valueOf(old.subtitle))
-                    || !String.valueOf(next.trailingText).equals(String.valueOf(old.trailingText))) {
+                    || !String.valueOf(next.trailingText).equals(String.valueOf(old.trailingText))
+                    || next.postTime != old.postTime || !java.util.Objects.equals(next.contentIntent, old.contentIntent)) {
                 return false;
             }
         }
@@ -347,9 +355,9 @@ public final class RuleSource {
             lastNotify = now;
             onChange.run();
         } else {
-            main.removeCallbacks(onChange);
+            main.removeCallbacks(tick);
             lastNotify = now + wait;
-            main.postDelayed(onChange, wait);
+            main.postDelayed(tick, wait);
         }
     }
 

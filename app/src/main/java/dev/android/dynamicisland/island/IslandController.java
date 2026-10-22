@@ -23,7 +23,9 @@ import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Facade of the island: the single per-process entry point for the Xposed hooks and the callback
@@ -59,6 +61,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     private boolean refreshPosted;
     private final Runnable refreshRunnable = this::refreshNow;
+    /** Key to "kind package" of the items of the last refresh, for the event log. */
+    private Map<String, String> lastItems = new LinkedHashMap<>();
 
     private IslandController(Context ctx, ClassLoader classLoader) {
         this.ctx = ctx;
@@ -319,6 +323,28 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     // ---- refresh -------------------------------------------------------------------------------
 
+    /** Event log: which items appeared or went away since the last refresh (only changes, so it stays quiet). */
+    private void logItemChanges(ItemLedger.Arrangement shape) {
+        Map<String, String> now = new LinkedHashMap<>();
+        for (IslandItem item : shape.shown) {
+            now.put(item.key, item.kind + (item.packageName == null ? "" : " " + item.packageName));
+        }
+        for (IslandItem item : shape.bubbled) {
+            now.put(item.key, item.kind + " minimized" + (item.packageName == null ? "" : " " + item.packageName));
+        }
+        for (Map.Entry<String, String> e : now.entrySet()) {
+            if (!e.getValue().equals(lastItems.get(e.getKey()))) {
+                XLog.event((lastItems.containsKey(e.getKey()) ? "item changed " : "item added ") + e.getKey() + " [" + e.getValue() + "]");
+            }
+        }
+        for (Map.Entry<String, String> e : lastItems.entrySet()) {
+            if (!now.containsKey(e.getKey())) {
+                XLog.event("item removed " + e.getKey() + " [" + e.getValue() + "]");
+            }
+        }
+        lastItems = now;
+    }
+
     /** Rebuilds the item list from all sources and hands it to the view. A failure only skips this refresh. */
     private void refreshNow() {
         try {
@@ -332,6 +358,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             long now = SystemClock.uptimeMillis();
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
+            logItemChanges(shape);
             Diagnostics.fact("islands", shape.shown.size() + " shown, " + shape.bubbled.size() + " minimized");
             Diagnostics.publish(ctx);
             if (shape.flyIn) {

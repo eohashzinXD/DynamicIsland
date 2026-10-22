@@ -15,6 +15,8 @@ import org.json.JSONObject;
 public final class UserRules {
     /** Language key of the stage names written here: the fallback every language reads. */
     static final String LABEL_LANGUAGE = "en";
+    /** The user's stage names are written for these languages: English is the fallback, Korean beats it on Korean phones. */
+    private static final String[] LABEL_LANGUAGES = {"en", "ko"};
     static final int MAX_STAGE = 9;
 
     private JSONObject root;
@@ -168,11 +170,13 @@ public final class UserRules {
     /** Names a stage; an empty text removes the name. */
     public void setLabel(String id, int stage, String text) {
         try {
-            JSONObject labels = labelsOf(id, true);
-            if (text == null || text.trim().isEmpty()) {
-                labels.remove(String.valueOf(stage));
-            } else {
-                labels.put(String.valueOf(stage), text.trim());
+            for (String language : LABEL_LANGUAGES) {
+                JSONObject labels = labelsFor(id, language, true);
+                if (text == null || text.trim().isEmpty()) {
+                    labels.remove(String.valueOf(stage));
+                } else {
+                    labels.put(String.valueOf(stage), text.trim());
+                }
             }
             tidy(id);
         } catch (JSONException e) {
@@ -248,6 +252,10 @@ public final class UserRules {
     }
 
     private JSONObject labelsOf(String id, boolean create) {
+        return labelsFor(id, LABEL_LANGUAGE, create);
+    }
+
+    private JSONObject labelsFor(String id, String language, boolean create) {
         try {
             JSONObject all = root.optJSONObject("status_labels");
             if (all == null && create) {
@@ -259,10 +267,10 @@ public final class UserRules {
                 byLanguage = new JSONObject();
                 all.put(id, byLanguage);
             }
-            JSONObject stages = byLanguage == null ? null : byLanguage.optJSONObject(LABEL_LANGUAGE);
+            JSONObject stages = byLanguage == null ? null : byLanguage.optJSONObject(language);
             if (stages == null && create) {
                 stages = new JSONObject();
-                byLanguage.put(LABEL_LANGUAGE, stages);
+                byLanguage.put(language, stages);
             }
             return stages;
         } catch (JSONException e) {
@@ -274,7 +282,8 @@ public final class UserRules {
     private void tidy(String id) {
         JSONObject rule = find(id, false);
         JSONObject labels = labelsOf(id, false);
-        boolean noLabels = labels == null || labels.length() == 0;
+        JSONObject koLabels = labelsFor(id, "ko", false);
+        boolean noLabels = (labels == null || labels.length() == 0) && (koLabels == null || koLabels.length() == 0);
         if (rule != null && rule.optJSONArray("signals") == null && rule.optJSONArray("package_hints") == null
                 && rule.optJSONArray("exclude_patterns") == null && noLabels) {
             remove(id);
@@ -290,7 +299,9 @@ public final class UserRules {
             JSONObject all = root.optJSONObject("status_labels");
             JSONObject byLanguage = all.optJSONObject(id);
             if (byLanguage != null) {
-                byLanguage.remove(LABEL_LANGUAGE);
+                for (String language : LABEL_LANGUAGES) {
+                    byLanguage.remove(language);
+                }
                 if (byLanguage.length() == 0) {
                     all.remove(id);
                 }

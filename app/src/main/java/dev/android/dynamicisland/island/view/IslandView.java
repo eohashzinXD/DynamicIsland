@@ -702,7 +702,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         return paints.mediaArtist();
     }
 
+    private static final int MAX_LAYOUT_CHARS = 600;
+
     public static StaticLayout layout(CharSequence text, TextPaint paint, int width, int maxLines) {
+        if (text.length() > MAX_LAYOUT_CHARS) {
+            text = text.subSequence(0, MAX_LAYOUT_CHARS); // a huge notification text must not stall the main thread
+        }
         return StaticLayout.Builder.obtain(text, 0, text.length(), paint, width)
                 .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                 .setMaxLines(maxLines)
