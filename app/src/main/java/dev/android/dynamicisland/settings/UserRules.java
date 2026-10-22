@@ -23,6 +23,44 @@ public final class UserRules {
 
     private UserRules(JSONObject root) {
         this.root = root;
+        dropJunk();
+    }
+
+    /** Imported or hand-edited files may hold entries that are not objects; the editors assume objects, so those go. */
+    private void dropJunk() {
+        JSONArray rules = root.optJSONArray("smart_rules");
+        if (rules == null) {
+            root.remove("smart_rules");
+            return;
+        }
+        JSONArray kept = new JSONArray();
+        for (int i = 0; i < rules.length(); i++) {
+            JSONObject rule = rules.optJSONObject(i);
+            if (rule == null) {
+                continue;
+            }
+            JSONArray signals = rule.optJSONArray("signals");
+            if (signals != null) {
+                JSONArray keptSignals = new JSONArray();
+                for (int j = 0; j < signals.length(); j++) {
+                    JSONObject signal = signals.optJSONObject(j);
+                    if (signal != null) {
+                        keptSignals.put(signal);
+                    }
+                }
+                try {
+                    rule.put("signals", keptSignals);
+                } catch (JSONException ignored) {
+                    // a plain key cannot fail
+                }
+            }
+            kept.put(rule);
+        }
+        try {
+            root.put("smart_rules", kept);
+        } catch (JSONException ignored) {
+            // a plain key cannot fail
+        }
     }
 
     /** The model of a stored file; an empty one when it is missing or not a JSON object. */
@@ -276,7 +314,7 @@ public final class UserRules {
         if (rules != null) {
             JSONArray kept = new JSONArray();
             for (int i = 0; i < rules.length(); i++) {
-                if (!id.equals(rules.optJSONObject(i).optString("id"))) {
+                if (!id.equalsIgnoreCase(rules.optJSONObject(i).optString("id"))) {
                     kept.put(rules.optJSONObject(i));
                 }
             }
@@ -303,7 +341,7 @@ public final class UserRules {
     private JSONObject find(String id, boolean create) {
         JSONArray rules = root.optJSONArray("smart_rules");
         for (int i = 0; rules != null && i < rules.length(); i++) {
-            if (id.equals(rules.optJSONObject(i).optString("id"))) {
+            if (id.equalsIgnoreCase(rules.optJSONObject(i).optString("id"))) {
                 return rules.optJSONObject(i);
             }
         }

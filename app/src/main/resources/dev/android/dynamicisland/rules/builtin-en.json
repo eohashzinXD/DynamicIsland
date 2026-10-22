@@ -227,11 +227,11 @@
    "signals": [
     {
      "stage": 3,
-     "pattern": "(charging complete|fully charged|battery (is )?full|finished charging|(is )?charged)"
+     "pattern": "(charging complete|fully charged|battery (is )?full|finished charging|(is )?(?<![a-z])charged)"
     },
     {
      "stage": 2,
-     "pattern": "((is )?(now )?(?<!dis)(?<!not )(re)?connected|connected to your phone|reconnected|back online|(is )?online)"
+     "pattern": "((is )?(now )?(?<!dis)(?<!not )(?<!n't )(re)?connected|connected to your phone|reconnected|back online|(is )?online)"
     },
     {
      "stage": 0,
@@ -257,12 +257,12 @@
    "signals": [
     {
      "stage": 1,
-     "pattern": "(?:battery|charge)[^%\\d]{0,24}?(?:low|critical|at|is|left)[^%\\d]{0,12}?(\\d{1,3})\\s*%",
+     "pattern": "(?:battery|charge)[^%\\d]{0,24}?(?:low|critical|at|is|left)[^%\\d]{0,12}?(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
      "percent_group": 1
     },
     {
      "stage": 1,
-     "pattern": "(\\d{1,3})\\s*%\\s*(?:battery\\s*)?(?:remaining|left)",
+     "pattern": "(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%\\s*(?:battery\\s*)?(?:remaining|left)",
      "percent_group": 1
     },
     {
@@ -295,7 +295,7 @@
    "signals": [
     {
      "stage": 2,
-     "pattern": "((?<!dis)(?<!not )connected( to)?|paired( with)?|now (connected|paired))"
+     "pattern": "((?<!dis)(?<!not )(?<!n't )connected( to)?|paired( with)?|now (connected|paired))"
     },
     {
      "stage": 1,

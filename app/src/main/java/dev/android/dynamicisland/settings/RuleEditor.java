@@ -125,6 +125,16 @@ final class RuleEditor {
     }
 
     private void accentDialog(String id) {
+        colorDialog(rules.user().text(id, "accent"), value -> {
+            UserRules edited = rules.user();
+            edited.setText(id, "accent", value);
+            rules.save(edited);
+            activity.refresh();
+        });
+    }
+
+    /** Pick a colour from a few swatches or write it as #RRGGBB; {@code picked} gets the text, or null for "default". */
+    void colorDialog(String current, java.util.function.Consumer<String> picked) {
         LinearLayout column = new LinearLayout(activity);
         column.setOrientation(LinearLayout.VERTICAL);
         column.setPadding(ui.dp(18), ui.dp(8), ui.dp(18), 0);
@@ -134,21 +144,21 @@ final class RuleEditor {
         LinearLayout second = new LinearLayout(activity);
         second.setGravity(Gravity.CENTER);
         column.addView(second, new LinearLayout.LayoutParams(-1, -2));
-        EditText hex = rules.field("#RRGGBB", rules.user().text(id, "accent"), false);
+        EditText hex = rules.field("#RRGGBB", current, false);
         hex.setTypeface(Typeface.MONOSPACE);
         LinearLayout.LayoutParams hexParams = new LinearLayout.LayoutParams(-1, -2);
         hexParams.topMargin = ui.dp(12);
         column.addView(hex, hexParams);
         AlertDialog dialog = new AlertDialog.Builder(activity).setTitle(R.string.rule_accent).setView(column)
                 .setPositiveButton(R.string.save, null)
-                .setNeutralButton(R.string.rule_time_default, (d, w) -> saveAccent(id, null))
+                .setNeutralButton(R.string.rule_time_default, (d, w) -> picked.accept(null))
                 .setNegativeButton(android.R.string.cancel, null).show();
         for (int i = 0; i < COLORS.length; i++) {
             View dot = new View(activity);
             dot.setBackground(ui.round(COLORS[i], ui.dp(22)));
             final int color = COLORS[i];
             dot.setOnClickListener(v -> {
-                saveAccent(id, String.format(Locale.ROOT, "#%06X", color & 0xFFFFFF));
+                picked.accept(String.format(Locale.ROOT, "#%06X", color & 0xFFFFFF));
                 dialog.dismiss();
             });
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ui.dp(44), ui.dp(44));
@@ -158,23 +168,14 @@ final class RuleEditor {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String text = hex.getText().toString().trim();
             if (!text.isEmpty()) {
-                try {
-                    Color.parseColor(text);
-                } catch (IllegalArgumentException e) {
+                if (!text.matches("#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?")) {
                     Toast.makeText(activity, R.string.rule_accent_bad, Toast.LENGTH_LONG).show();
                     return;
                 }
             }
-            saveAccent(id, text);
+            picked.accept(text.isEmpty() ? null : text);
             dialog.dismiss();
         });
-    }
-
-    private void saveAccent(String id, String value) {
-        UserRules edited = rules.user();
-        edited.setText(id, "accent", value);
-        rules.save(edited);
-        activity.refresh();
     }
 
     // ---------------------------------------------------------------- the words that make a notification belong to the rule

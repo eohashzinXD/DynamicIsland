@@ -19,6 +19,9 @@ public final class Card {
     boolean leaving;
     int order;
     long startAt;
+    /** Size the card had when it started to leave; its content fades by how far the fold has got. */
+    float leaveFromH;
+    float leaveFromW;
     float targetCy;
     float targetH;
     float targetW;

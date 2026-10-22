@@ -44,8 +44,19 @@ public final class MediaSource {
             onChange.run();
         }
     };
+    private static final int MAX_RETIRED = 4;
     private final AppAssets assets;
     private final Map<MediaSession.Token, Session> sessions = new HashMap<>();
+    /**
+     * The last card of players whose session ended (a stopped song): the notification shade keeps showing their player
+     * for a while, and it should keep its look instead of falling back to the stock one.
+     */
+    private final Map<MediaSession.Token, IslandItem> retired = new java.util.LinkedHashMap<MediaSession.Token, IslandItem>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<MediaSession.Token, IslandItem> eldest) {
+            return size() > MAX_RETIRED;
+        }
+    };
     private final Map<String, Cover> covers = new HashMap<>();
     private final MediaSessionManager.OnActiveSessionsChangedListener sessionsListener = this::sync;
     private OutputSource output;
@@ -83,9 +94,10 @@ public final class MediaSource {
                 next.put(controller.getSessionToken(), known != null ? known : new Session(controller));
             }
         }
-        for (Session gone : sessions.values()) {
-            gone.release();
+        for (Map.Entry<MediaSession.Token, Session> gone : sessions.entrySet()) {
+            gone.getValue().retire();
         }
+        retired.keySet().removeAll(next.keySet());
         sessions.clear();
         sessions.putAll(next);
         forgetGonePlayers();
@@ -148,7 +160,10 @@ public final class MediaSource {
     /** Card for one media session (the shade's media tile), or null when it has nothing to show. */
     public IslandItem itemForSession(MediaSession.Token token) {
         Session s = sessions.get(token);
-        return s != null && s.hasContent() ? s.card() : null;
+        if (s != null) {
+            return s.hasContent() ? s.card() : null;
+        }
+        return retired.get(token);
     }
 
     /**
@@ -250,6 +265,16 @@ public final class MediaSource {
             controller.registerCallback(this, main);
         }
 
+        /** Stops listening and keeps the last card for the shade, which may still show this player. */
+        void retire() {
+            if (hasContent()) {
+                IslandItem last = card();
+                last.playing = false;
+                retired.put(controller.getSessionToken(), last);
+            }
+            release();
+        }
+
         void release() {
             try {
                 controller.unregisterCallback(this);
@@ -298,8 +323,10 @@ public final class MediaSource {
 
         @Override
         public void onSessionDestroyed() {
+            if (sessions.remove(controller.getSessionToken()) != null) {
+                retire();
+            }
             release();
-            sessions.remove(controller.getSessionToken());
             forgetGonePlayers();
             onChange.run();
         }

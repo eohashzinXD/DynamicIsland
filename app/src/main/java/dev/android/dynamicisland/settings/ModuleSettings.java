@@ -73,6 +73,8 @@ public final class ModuleSettings {
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
     private static volatile RuleConfig rulesConfig = RuleConfig.DEFAULT;
+    /** Told (on the reload thread) when the user's rules changed, so cards already showing can follow. */
+    private static volatile Runnable onRulesChanged;
     private static volatile boolean eventToggles = true;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
@@ -86,6 +88,10 @@ public final class ModuleSettings {
     private static String lastLogged;
 
     private ModuleSettings() {
+    }
+
+    public static void setOnRulesChanged(Runnable listener) {
+        onRulesChanged = listener;
     }
 
     /** Starts the background reload loop on first use; later calls do nothing. */
@@ -136,7 +142,12 @@ public final class ModuleSettings {
             progressNotifications = prefs.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             hideProgressOriginals = prefs.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
             smartRules = prefs.getBoolean(KEY_SMART_RULES, true);
+            RuleConfig before = rulesConfig;
             rulesConfig = readRulesConfig(prefs);
+            Runnable listener = onRulesChanged;
+            if (listener != null && rulesConfig.revision != before.revision) {
+                listener.run();
+            }
             eventToggles = prefs.getBoolean(KEY_EVENT_TOGGLES, true);
             privacyIndicator = prefs.getBoolean(KEY_PRIVACY, true);
             privacyLocation = prefs.getBoolean(KEY_PRIVACY_LOCATION, false);

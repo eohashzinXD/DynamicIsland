@@ -136,6 +136,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final RectF pillRect = new RectF();
 
     private boolean frameScheduled;
+    private static final int MAX_FAILED_FRAMES = 3;
+    private int failedFrames;
     private long lastFrameNanos;
 
     public IslandView(Context context, IslandHost host) {
@@ -303,6 +305,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     public void reveal() {
+        if (scene.suppressed) {
+            return; // suppressed again while the reveal delay ran; leaving it stays the job of setSuppressed(false)
+        }
         springs.suppress.snapTo(1.0f);
         if (scene.primary != null && scene.mode != Mode.EXPANDED) {
             director.reveal();
@@ -418,9 +423,14 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public void doFrame(long frameTimeNanos) {
         try {
             step(frameTimeNanos);
+            failedFrames = 0;
         } catch (Throwable t) {
             lastFrameNanos = 0L;
             XLog.once("IslandView.doFrame", t);
+            if (++failedFrames <= MAX_FAILED_FRAMES) {
+                scheduleFrame(); // one bad frame must not freeze the animations for good
+            }
+            return;
         }
     }
 

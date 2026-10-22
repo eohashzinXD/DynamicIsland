@@ -35,6 +35,7 @@ public class SettingsRenderTest {
         }
         show(activity, field(activity, "animation"), "open", prefix + "animationPage");
         show(activity, rules, "listPage", prefix + "rulesList");
+        show(activity, field(rules, "wizard"), "page", prefix + "ruleWizard");
         show(activity, rules, "testPage", prefix + "rulesTest");
         java.util.List<android.widget.EditText> fields = new java.util.ArrayList<>();
         collect(activity.findViewById(android.R.id.content), fields);

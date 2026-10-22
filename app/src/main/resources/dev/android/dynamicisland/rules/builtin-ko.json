@@ -292,12 +292,12 @@
     },
     {
      "stage": 1,
-     "pattern": "배터리(?:가|는)?\\s*(\\d{1,3})\\s*%",
+     "pattern": "배터리(?:가|는)?\\s*(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
      "percent_group": 1
     },
     {
      "stage": 1,
-     "pattern": "battery (?:is |at |low: )?(\\d{1,3})\\s*%",
+     "pattern": "battery (?:is |at |low: )?(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
      "percent_group": 1
     }
    ],
@@ -322,7 +322,7 @@
    "signals": [
     {
      "stage": 2,
-     "pattern": "(연결(됨|되었)|connected\\b|pair(ed)?\\b)"
+     "pattern": "(연결(됨|되었)|(?<![a-z])(?<!not )(?<!n't )connected\\b|(?<![a-z])pair(ed)?\\b)"
     },
     {
      "stage": 1,
@@ -342,6 +342,24 @@
     {
      "stage": 1,
      "pattern": "(릴레이 실행 중|relay (is )?running)"
+    }
+   ],
+   "show_progress": false,
+   "hide_original": true
+  },
+  {
+   "id": "assistant",
+   "max_stage": 1,
+   "ttl_min": 10,
+   "package_hints": [],
+   "text_triggers": [
+    "어시스턴트의 요청을 처리"
+   ],
+   "exclude_patterns": [],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(요청을 처리하는 중|처리하는 중)"
     }
    ],
    "show_progress": false,
@@ -409,10 +427,18 @@
    "en": {
     "1": "Running"
    }
+  },
+  "assistant": {
+   "ko": {
+    "1": "처리 중"
+   },
+   "en": {
+    "1": "Working"
+   }
   }
  },
  "external_device_name_patterns": [
-  "(?:connected|connecting|pair(?:ed|ing))\\s*(?:to)?\\s*[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?(?=\\s|$|[,.!])",
+  "(?<![a-z])(?:connected|connecting|pair(?:ed|ing))\\s*(?:to)?\\s*[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?(?=\\s|$|[,.!])",
   "[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?\\s*(?:이\\(가\\)|이|가)?\\s*연결(?:됨|되었습니다)"
  ],
  "otp_strong_triggers": [
@@ -423,5 +449,5 @@
  ],
  "text_progress_include_context_pattern": "(다운로드 중|다운로드 진행|진행도|progress|파일 조각|오프라인 지도|리소스)",
  "text_progress_exclude_context_pattern": "(관세|금리|할인율|수수료|정확도|득점)",
- "navigation_distance_pattern": "(\\d+(?:[.,]\\d+)?\\s?(?:km|m|킬로미터|미터))"
+ "navigation_distance_pattern": "(\\d+(?:[.,]\\d+)?\\s?(?:km|m(?![a-z])|킬로미터|미터))"
 }

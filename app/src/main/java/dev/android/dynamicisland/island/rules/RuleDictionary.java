@@ -33,6 +33,14 @@ public final class RuleDictionary {
     static final int MAX_WORDS = 4000;
     static final int MAX_PATTERNS = 400;
 
+    private static int highestStage(List<Signal> signals) {
+        int highest = 0;
+        for (Signal signal : signals) {
+            highest = Math.max(highest, signal.stage);
+        }
+        return highest;
+    }
+
     private static final RuleDictionary EMPTY = new RuleDictionary(
             Collections.emptyList(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(),
             Collections.emptySet(), null, Collections.emptySet(), null, null, null, null, null, 80,
@@ -238,7 +246,7 @@ public final class RuleDictionary {
                 }
             }
             // a rule without signals reads nothing yet, but its apps and words still join the rule of the same id
-            out.add(new SmartRule(id, Math.max(1, item.optInt("max_stage", 1)), words(item, "package_hints"),
+            out.add(new SmartRule(id, Math.max(Math.max(1, item.optInt("max_stage", 1)), highestStage(signals)), words(item, "package_hints"),
                     words(item, "text_triggers"), patterns(item.optJSONArray("exclude_patterns"), true), signals,
                     Math.max(0, item.optInt("ttl_min", 0)), Math.max(0, item.optInt("final_ttl_min", 0)),
                     Math.max(0, item.optInt("cooldown_min", 0)), Options.parse(item)));

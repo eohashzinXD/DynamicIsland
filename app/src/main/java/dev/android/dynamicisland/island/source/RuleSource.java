@@ -67,6 +67,8 @@ public final class RuleSource {
     };
     private final Map<String, IslandItem> items = new LinkedHashMap<>();
     private long lastNotify;
+    /** The notifications of the latest update, read again when the rules change. */
+    private List<StatusBarNotification> lastSnapshot;
     /** Asks for a new look at the cards when the next one expires. */
     private final Runnable expiryTick;
     /** Wall clock; replaced in tests. */
@@ -81,10 +83,16 @@ public final class RuleSource {
         this.main = main;
         this.onChange = onChange;
         this.expiryTick = () -> onChange.run();
+        ModuleSettings.setOnRulesChanged(() -> main.post(() -> {
+            if (lastSnapshot != null) {
+                update(lastSnapshot); // the user edited a rule: cards on screen are read again with it
+            }
+        }));
     }
 
     /** Called every time the notification list was rebuilt. */
     public void update(List<StatusBarNotification> snapshot) {
+        lastSnapshot = snapshot;
         Map<String, IslandItem> fresh = new LinkedHashMap<>();
         if (ModuleSettings.smartRules()) {
             RuleDictionary rules = RuleStore.current();
@@ -377,6 +385,8 @@ public final class RuleSource {
             if (next == null || next.stage != old.stage || !String.valueOf(next.title).equals(String.valueOf(old.title))
                     || !String.valueOf(next.subtitle).equals(String.valueOf(old.subtitle))
                     || !String.valueOf(next.trailingText).equals(String.valueOf(old.trailingText))
+                    || next.accent != old.accent || Float.compare(next.progress, old.progress) != 0
+                    || next.expiresAtWall != old.expiresAtWall || next.trailing != old.trailing
                     || next.postTime != old.postTime || !java.util.Objects.equals(next.contentIntent, old.contentIntent)) {
                 return false;
             }

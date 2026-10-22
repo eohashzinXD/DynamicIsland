@@ -61,14 +61,13 @@ final class MediaPlayerBinding {
     }
 
     /**
-     * The island item to draw for this player, or null when the stock player must show (screen locked,
-     * touch exploration on, options open, no session known to the island).
+     * The island item to draw for this player, or null when the stock player must show (touch exploration on,
+     * options open, no session known to the island). The lock screen shows the same themed player as the shade.
      */
     IslandItem item(View player) {
         Context ctx = player.getContext();
-        KeyguardManager keyguard = ctx.getSystemService(KeyguardManager.class);
         AccessibilityManager accessibility = ctx.getSystemService(AccessibilityManager.class);
-        if ((keyguard != null && keyguard.isKeyguardLocked()) || (accessibility != null && accessibility.isTouchExplorationEnabled())) {
+        if (accessibility != null && accessibility.isTouchExplorationEnabled()) {
             return null;
         }
         Object mediaPanel = panel.get();
@@ -208,6 +207,10 @@ final class MediaPlayerBinding {
 
     /** A tap on the card body: opens the media app through the island and collapses the shade. */
     private void openApp(View player, IslandItem item) {
+        KeyguardManager keyguard = player.getContext().getSystemService(KeyguardManager.class);
+        if (keyguard != null && keyguard.isKeyguardLocked()) {
+            return; // the buttons and the seek bar work on the lock screen; opening the app has to wait for the unlock
+        }
         IslandController source = IslandController.get();
         XLog.i("shade media open " + item.packageName + " intent=" + (item.contentIntent != null));
         if (source != null) {

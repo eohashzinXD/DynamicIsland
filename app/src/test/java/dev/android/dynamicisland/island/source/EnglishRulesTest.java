@@ -111,4 +111,32 @@ public class EnglishRulesTest {
         assertTrue(!hit.rule.showsProgress());
         assertTrue(hit.rule.hidesOriginal());
     }
+
+    @Test
+    public void disconnectedAndDischargedAreNotTheOppositeStage() {
+        RuleSource.Hit gone = hit("com.samsung.android.app.watchmanager", "Galaxy Buds disconnected");
+        assertTrue(gone == null || gone.stage != 2 || !"external_device".equals(gone.rule.id));
+        RuleSource.Hit flat = hit("com.samsung.android.app.watchmanager", "Watch discharged");
+        assertTrue(flat == null || flat.stage != 3);
+    }
+
+    @Test
+    public void milesAreNotCutToMeters() {
+        RuleSource.Hit h = hit("com.google.android.apps.maps", "Turn left in 0.5 miles onto Main St");
+        assertTrue(h != null && h.rule.id.equals("navigation"));
+    }
+
+    @Test
+    public void assistantRequestBecomesACardForAnyApp() {
+        expect("com.example.unknown", "처리하는 중... 어시스턴트의 요청을 처리하는 중", "assistant", 1);
+        assertEquals("처리 중", rules.statusText("assistant", 1, Locale.KOREAN));
+    }
+
+    @Test
+    public void onlyALowBatteryIsALowBatteryCard() {
+        RuleSource.Hit low = hit("com.android.bluetooth", "Buds battery is 15%");
+        assertTrue(low != null && low.rule.id.equals("battery"));
+        RuleSource.Hit fine = hit("com.android.bluetooth", "Buds battery is 85%");
+        assertTrue(fine == null || !fine.rule.id.equals("battery"));
+    }
 }

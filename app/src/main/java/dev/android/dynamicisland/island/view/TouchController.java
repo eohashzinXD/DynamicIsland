@@ -223,7 +223,7 @@ final class TouchController {
             return;
         }
         boolean onIsland = downOnPill || downOnBubble;
-        if (scene.mode == Mode.EXPANDED && downCard != null) {
+        if (scene.mode == Mode.EXPANDED && downCardAlive()) {
             dragStack(dx, dy);
         } else if (scene.mode == Mode.COMPACT && onIsland && dy > touchSlop && Math.abs(dy) > Math.abs(dx)) {
             handOverToShade(e);
@@ -366,12 +366,17 @@ final class TouchController {
         view.scheduleFrame();
     }
 
+    /** The pressed card is still there: its item may have been dismissed (call ended) while the finger was down. */
+    private boolean downCardAlive() {
+        return downCard != null && !downCard.leaving && scene.cards.contains(downCard);
+    }
+
     private void tap(float x, float y) {
         if (scene.mode == Mode.COMPACT) {
             director.expandFromPill();
             return;
         }
-        if (scene.mode != Mode.EXPANDED || downCard == null) {
+        if (scene.mode != Mode.EXPANDED || !downCardAlive()) {
             return;
         }
         Card c = downCard;

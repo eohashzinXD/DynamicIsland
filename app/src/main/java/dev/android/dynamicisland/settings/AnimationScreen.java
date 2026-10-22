@@ -25,6 +25,7 @@ final class AnimationScreen {
     private final SharedPreferences prefs;
     /** The choice on screen; it is saved by Apply. */
     private boolean pendingLegacy;
+    private boolean opened;
 
     AnimationScreen(SettingsActivity activity, OneUi ui, SharedPreferences prefs) {
         this.activity = activity;
@@ -38,7 +39,10 @@ final class AnimationScreen {
 
     /** Builds the page; the choice starts at what is saved. */
     void open() {
-        pendingLegacy = savedLegacy();
+        if (!opened) {
+            opened = true; // coming back from another app must not drop a choice that is not applied yet
+            pendingLegacy = savedLegacy();
+        }
         page();
     }
 
@@ -136,71 +140,139 @@ final class AnimationScreen {
     }
 
     /**
-     * A small drawing of a phone with the pill and two cards. In the new animation the first card is in front and
-     * every shape wears an outline; in the legacy one the lower card is in front and there is no outline.
+     * A looping, slowed-down and exaggerated picture of what the two animations do: the pill opens into two cards and
+     * closes again. In the new animation the first card is in front, every shape wears an outline and the pill grows
+     * back while the cards fold in; in the legacy one the lower card is in front, there is no outline while the shapes
+     * move, and the pill shrinks to a dot before it springs back at the very end.
      */
     private final class Sketch extends View {
+        private static final long PERIOD_MS = 4800;
         private final boolean legacy;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF r = new RectF();
+        private final RectF pillRect = new RectF();
 
         Sketch(boolean legacy) {
             super(activity);
             this.legacy = legacy;
         }
 
+        private float clamp(float v) {
+            return Math.max(0f, Math.min(1f, v));
+        }
+
+        private float easeOut(float t) {
+            float u = 1f - clamp(t);
+            return 1f - u * u * u;
+        }
+
+        private float easeOutBack(float t) {
+            float u = clamp(t) - 1f;
+            return 1f + 2.4f * u * u * u + 1.4f * u * u;
+        }
+
         @Override
         protected void onDraw(Canvas c) {
             float w = getWidth();
             float h = getHeight();
+            float cycle = (android.os.SystemClock.uptimeMillis() % PERIOD_MS) / (float) PERIOD_MS;
+            // idle, open, hold, close, idle
+            float open = clamp((cycle - 0.12f) / 0.26f);
+            float close = clamp((cycle - 0.62f) / 0.28f);
+
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(ui.dark ? 0xff2a2a30 : 0xffe4e4ea);
             r.set(0, 0, w, h);
             c.drawRoundRect(r, w * 0.14f, w * 0.14f, paint);
+
             float pad = w * 0.1f;
             float pillH = h * 0.075f;
             float top = h * 0.07f;
-            // two overlapping cards below the pill; the new animation keeps the first one in front
             float firstTop = top + pillH + h * 0.04f;
             float secondTop = firstTop + h * 0.16f;
-            if (legacy) {
-                card(c, pad, firstTop, w - pad, firstTop + h * 0.2f, 0xff1c1c20, 0xffffb02e);
-                card(c, pad, secondTop, w - pad, secondTop + h * 0.2f, 0xff000000, 0xffff5a8a);
+            float cardH = h * 0.2f;
+
+            // how open each card is; the second one follows the first
+            float openFirst = easeOut(open / 0.8f);
+            float openSecond = easeOut((open - 0.2f) / 0.8f);
+            float closeFirst = easeOut((close - 0.15f) / 0.85f);
+            float closeSecond = easeOut(close / 0.85f);
+            float first = openFirst * (1f - closeFirst);
+            float second = openSecond * (1f - closeSecond);
+
+            // the pill gathers while the cards are out
+            float gather = 1f - 0.45f * openFirst;
+            float factor;
+            if (close <= 0f) {
+                factor = gather;
+            } else if (!legacy) {
+                factor = 0.55f + 0.45f * easeOutBack(close / 0.6f);
+            } else if (close < 0.65f) {
+                factor = 0.55f - 0.35f * (close / 0.65f);
             } else {
-                card(c, pad, secondTop, w - pad, secondTop + h * 0.2f, 0xff1c1c20, 0xffff5a8a);
-                card(c, pad, firstTop, w - pad, firstTop + h * 0.2f, 0xff000000, 0xffffb02e);
+                factor = 0.2f + 0.8f * easeOutBack((close - 0.65f) / 0.35f);
             }
-            // the pill
+            float pillW = w * 0.4f * factor;
+            pillRect.set(w / 2f - pillW / 2f, top, w / 2f + pillW / 2f, top + pillH);
+
+            if (legacy) {
+                card(c, pad, firstTop, w - pad, cardH, first, 0xff1c1c20, 0xffffb02e);
+                card(c, pad, secondTop, w - pad, cardH, second, 0xff000000, 0xffff5a8a);
+            } else {
+                card(c, pad, secondTop, w - pad, cardH, second, 0xff1c1c20, 0xffff5a8a);
+                card(c, pad, firstTop, w - pad, cardH, first, 0xff000000, 0xffffb02e);
+            }
+
+            paint.setStyle(Paint.Style.FILL);
             paint.setColor(0xff000000);
-            r.set(w * 0.3f, top, w * 0.7f, top + pillH);
-            c.drawRoundRect(r, pillH / 2, pillH / 2, paint);
-            if (!legacy) {
-                outline(c, r, pillH / 2);
+            c.drawRoundRect(pillRect, pillH / 2, pillH / 2, paint);
+            if (!legacy || (open <= 0f && close >= 1f) || cycle < 0.12f || cycle > 0.9f) {
+                outline(c, pillRect, pillH / 2, 1f);
+            }
+            if (isShown()) {
+                postInvalidateOnAnimation();
             }
         }
 
-        /** One card; what is drawn later lies on top. */
-        private void card(Canvas c, float l, float t, float rr, float b, int body, int mark) {
+        /** One card grown out of the pill; {@code amount} 0 = still the pill, 1 = fully open. */
+        private void card(Canvas c, float l, float t, float rr, float cardH, float amount, int body, int mark) {
+            if (amount <= 0.01f) {
+                return;
+            }
+            float pillCenter = getWidth() / 2f;
+            float pillTop = pillRect.top;
+            float left = pillCenter + ((l - pillCenter) * amount) - (pillRect.width() / 2f) * (1f - amount);
+            float right = pillCenter + ((rr - pillCenter) * amount) + (pillRect.width() / 2f) * (1f - amount);
+            float top = pillTop + ((t - pillTop) * amount);
+            float bottom = top + (pillRect.height() + ((cardH - pillRect.height()) * amount));
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(body);
-            r.set(l, t, rr, b);
-            float radius = (b - t) * 0.3f;
+            r.set(left, top, right, bottom);
+            float radius = (bottom - top) * 0.3f;
             c.drawRoundRect(r, radius, radius, paint);
             if (!legacy) {
-                outline(c, r, radius);
+                outline(c, r, radius, 1f);
+            } else if (amount > 0.92f) {
+                outline(c, r, radius, 0f);
             }
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(mark);
-            c.drawRoundRect(l + (rr - l) * 0.12f, t + (b - t) * 0.22f, l + (rr - l) * 0.3f, t + (b - t) * 0.5f, 6, 6, paint);
-            paint.setColor(0xffd0d0d8);
-            c.drawRoundRect(l + (rr - l) * 0.38f, t + (b - t) * 0.26f, l + (rr - l) * 0.85f, t + (b - t) * 0.36f, 4, 4, paint);
-            c.drawRoundRect(l + (rr - l) * 0.38f, t + (b - t) * 0.5f, l + (rr - l) * 0.7f, t + (b - t) * 0.6f, 4, 4, paint);
+            if (amount > 0.6f) {
+                float a = clamp((amount - 0.6f) / 0.4f);
+                float cw = right - left;
+                float ch = bottom - top;
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((mark & 0x00ffffff) | ((int) (255 * a) << 24));
+                c.drawRoundRect(left + cw * 0.12f, top + ch * 0.22f, left + cw * 0.3f, top + ch * 0.5f, 6, 6, paint);
+                paint.setColor(0x00d0d0d8 | ((int) (255 * a) << 24));
+                c.drawRoundRect(left + cw * 0.38f, top + ch * 0.26f, left + cw * 0.85f, top + ch * 0.36f, 4, 4, paint);
+                c.drawRoundRect(left + cw * 0.38f, top + ch * 0.5f, left + cw * 0.7f, top + ch * 0.6f, 4, 4, paint);
+            }
         }
 
-        private void outline(Canvas c, RectF shape, float radius) {
+        /** {@code settled} 0 draws the bright outline of a moving shape, 1 the same one; the legacy card only gets a faint one. */
+        private void outline(Canvas c, RectF shape, float radius, float settled) {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(Math.max(2f, getWidth() * 0.012f));
-            paint.setColor(0x99ffffff);
+            paint.setColor(legacy ? 0x44ffffff : 0x99ffffff);
             c.drawRoundRect(shape, radius, radius, paint);
         }
     }

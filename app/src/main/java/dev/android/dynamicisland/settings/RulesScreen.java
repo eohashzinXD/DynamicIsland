@@ -49,12 +49,14 @@ final class RulesScreen {
     private final OneUi ui;
     private final SharedPreferences prefs;
     private final RuleEditor editor;
+    private final RuleWizard wizard;
 
     RulesScreen(SettingsActivity activity, OneUi ui, SharedPreferences prefs) {
         this.activity = activity;
         this.ui = ui;
         this.prefs = prefs;
         this.editor = new RuleEditor(activity, ui, this);
+        this.wizard = new RuleWizard(activity, ui, this, editor);
     }
 
     // ---------------------------------------------------------------- state
@@ -128,7 +130,7 @@ final class RulesScreen {
             ui.ruleRow(cards, ruleName(rule.id), ruleSummary(rule), !off.contains(rule.id), on -> setEnabled(rule.id, on),
                     () -> activity.open(() -> rulePage(rule.id)));
         }
-        ui.actionRow(cards, str(R.string.rule_new), str(R.string.rule_new_sum), this::newRuleDialog);
+        ui.actionRow(cards, str(R.string.rule_new), str(R.string.rule_new_sum), () -> activity.open(wizard::page));
 
         ui.category(activity.page(), str(R.string.group_rule_tools));
         LinearLayout tools = ui.card(activity.page());
@@ -164,7 +166,7 @@ final class RulesScreen {
 
     // ---------------------------------------------------------------- one rule
 
-    private void rulePage(String id) {
+    void rulePage(String id) {
         activity.subPage(ruleName(id));
         RuleDictionary all = everything();
         RuleDictionary.SmartRule rule = all.rule(id);
@@ -460,32 +462,6 @@ final class RulesScreen {
         }
     }
 
-    // ---------------------------------------------------------------- creating a rule
-
-    private void newRuleDialog() {
-        EditText input = field(str(R.string.rule_new_name), null, false);
-        AlertDialog dialog = new AlertDialog.Builder(activity).setTitle(R.string.rule_new)
-                .setMessage(R.string.rule_new_help).setView(new FrameHolder(activity, ui, input).view)
-                .setPositiveButton(R.string.rule_create, null).setNegativeButton(android.R.string.cancel, null).show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String name = input.getText().toString().trim();
-            String id = UserRules.slug(name);
-            if (id.isEmpty() || everything().rule(id) != null) {
-                Toast.makeText(activity, R.string.rule_new_bad, Toast.LENGTH_LONG).show();
-                return;
-            }
-            UserRules rules = user();
-            rules.create(id);
-            rules.setMaxStage(id, 2);
-            for (int stage = 0; stage <= 2; stage++) {
-                rules.setLabel(id, stage, stage == 0 ? name : "");
-            }
-            save(rules);
-            dialog.dismiss();
-            activity.open(() -> rulePage(id));
-        });
-    }
-
     // ---------------------------------------------------------------- import, export, reset
 
     private void exportRules() {
@@ -606,7 +582,7 @@ final class RulesScreen {
     }
 
     /** One installed app with a launcher icon, chosen from a list. */
-    private void pickApp(Picked picked) {
+    void pickApp(Picked picked) {
         new Thread(() -> {
             PackageManager pm = activity.getPackageManager();
             Map<String, String> labels = new TreeMap<>();
@@ -620,9 +596,14 @@ final class RulesScreen {
             for (int i = 0; i < names.length; i++) {
                 names[i] = rows.get(i).getValue() + "\n" + rows.get(i).getKey();
             }
-            activity.runOnUiThread(() -> new AlertDialog.Builder(activity).setTitle(R.string.test_pick_app)
-                    .setItems(names, (d, which) -> picked.on(rows.get(which).getKey()))
-                    .setNegativeButton(android.R.string.cancel, null).show());
+            activity.runOnUiThread(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+                new AlertDialog.Builder(activity).setTitle(R.string.test_pick_app)
+                        .setItems(names, (d, which) -> picked.on(rows.get(which).getKey()))
+                        .setNegativeButton(android.R.string.cancel, null).show();
+            });
         }, "pick-app").start();
     }
 }

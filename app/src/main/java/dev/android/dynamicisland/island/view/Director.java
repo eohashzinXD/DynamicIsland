@@ -469,6 +469,8 @@ final class Director {
     private void startLeaving(Card c, long at) {
         c.leaving = true;
         c.leaveAt = at;
+        c.leaveFromH = c.h.value();
+        c.leaveFromW = c.w.value();
         c.launched = false;
         c.targetCy = m.cy;
         if (!legacy() && scene.mode == Mode.COMPACT && scene.mainIn != null) {
@@ -508,10 +510,12 @@ final class Director {
                 launch(c);
             }
             // non-short-circuit on purpose: every spring must be stepped
-            active = active | !c.launched | c.cy.step(dt) | c.w.step(dt) | c.h.step(dt) | c.dx.step(dt);
-            if (c.blurOnAt != 0 && t - c.blurOnAt < BLUR_SETTLE_MS) {
-                active = true;
+            boolean moving = !c.launched | c.cy.step(dt) | c.w.step(dt) | c.h.step(dt) | c.dx.step(dt);
+            if (moving) {
+                c.blurOnAt = t;
             }
+            // frames go on a little after the last movement so the blur window catches up with the card
+            active |= moving || t - c.blurOnAt < BLUR_SETTLE_MS;
             boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f)
                     && (legacy() ? c.h.value() < m.pillH * 0.95f
                     : Math.abs(c.h.value() - c.targetH) < m.dp(3.0f) && Math.abs(c.w.value() - c.targetW) < m.dp(6.0f)
@@ -521,8 +525,8 @@ final class Director {
                 if (scene.blur != null) {
                     scene.blur.release(c);
                 }
-            } else {
-                active = true;
+            } else if (c.leaving) {
+                active = true; // a leaving card has to reach "gone" even if its springs rest early
             }
         }
         if (scene.cards.isEmpty() && scene.mode != Mode.EXPANDED) {

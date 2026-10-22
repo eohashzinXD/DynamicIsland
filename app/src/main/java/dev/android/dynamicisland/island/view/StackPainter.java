@@ -27,10 +27,15 @@ final class StackPainter {
     private static final float CONTENT_SCALE_FROM = 0.95f;
     /** How long a leaving card's content takes to fade while it shrinks with the card. */
     private static final float LEAVING_CONTENT_FADE_MS = 90.0f;
+    /** Fold progress at which a leaving card's content starts to fade. */
+    private static final float FOLD_FADE_FROM = 0.6f;
+    /** Opening progress at which a new card's content is fully there. */
+    private static final float OPEN_FADE_TO = 0.25f;
     /** A card that is leaving reports this "elapsed" time so its content is fully shown while it fades. */
     private static final long LEAVING_CONTENT_ELAPSED_MS = 2305843009213693951L;
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
+    private static final float GLASS_FROM = 0.1f;
     /** Necks thinner than this are not drawn; they reach full opacity this much wider. */
     private static final float NECK_FADE_FROM_DP = 4.0f;
     private static final float NECK_FADE_RANGE_DP = 6.0f;
@@ -66,9 +71,31 @@ final class StackPainter {
     /** Fade of a card's content: in once the card is nearly open, out quickly when it leaves. */
     static float contentAlpha(Card c, long t, float opening) {
         if (c.leaving) {
-            return 1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS);
+            if (ModuleSettings.legacyAnimation()) {
+                return 1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS);
+            }
+            // the content stays while the card folds (it shrinks with it) and only melts into the pill at the end,
+            // instead of the card travelling back as an empty shape
+            return 1.0f - clamp01((foldProgress(c) - FOLD_FADE_FROM) / (1.0f - FOLD_FADE_FROM));
+        }
+        if (!ModuleSettings.legacyAnimation()) {
+            // the mirror of folding: the content grows with the card from the first moment instead of appearing in an empty shape
+            return clamp01(opening / OPEN_FADE_TO);
         }
         return clamp01((opening - 0.85f) / IslandView.PAUSED_SPEED) * clamp01((t - c.contentStart) / 150.0f);
+    }
+
+    /** How far a leaving card has folded towards the size it is going to (0 = not yet, 1 = there). */
+    private static float foldProgress(Card c) {
+        if (!c.launched) {
+            return 0.0f;
+        }
+        float spanH = c.leaveFromH - c.targetH;
+        if (spanH > 1.0f) {
+            return clamp01((c.leaveFromH - c.h.value()) / spanH);
+        }
+        float spanW = c.leaveFromW - c.targetW;
+        return spanW > 1.0f ? clamp01((c.leaveFromW - c.w.value()) / spanW) : 1.0f;
     }
 
     /** A liquid neck fades out as its waist gets thin, so it never shows as a hair-thin line. */
@@ -79,11 +106,12 @@ final class StackPainter {
     /** The card's fill: the pill's black while it pours out, turning into the card colour (and glass) as it opens. */
     int fillColor(float opening) {
         boolean glass = scene.blur != null && scene.blur.available();
-        float settled = clamp01((opening - 0.82f) / 0.18f);
-        float tint = lerp(1.0f, glass ? 0.46f : 0.9f, settled);
         float material = Easing.easeInOut(clamp01((opening - CARD_MATERIAL_FROM) / (1.0f - CARD_MATERIAL_FROM)));
         int fill = Colors.blend(Colors.BLACK, glass ? Colors.CARD_GLASS : Colors.CARD_SOLID, material);
-        return Colors.withAlpha(fill, lerp(1.0f, tint, material));
+        // the see-through glass comes in over the whole opening: squeezing it into the last stretch made the black
+        // turn transparent in one jump
+        float glassIn = Easing.easeInOut(clamp01((opening - GLASS_FROM) / (1.0f - GLASS_FROM)));
+        return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn));
     }
 
     /** Blur callback: paints a card into its blur slot, whose canvas origin is the slot, not the view. */
@@ -181,7 +209,7 @@ final class StackPainter {
         clip.addRoundRect(r, corner, corner, Path.Direction.CW);
         canvas.clipPath(clip);
         drawBackground(c.body, canvas, r, alpha);
-        if (!c.leaving && alpha < 1.0f) {
+        if (!c.leaving && alpha < 1.0f && ModuleSettings.legacyAnimation()) {
             // the content rises into place and settles from a slightly smaller size while it fades in
             float settle = easeOutBack(alpha);
             float scale = CONTENT_SCALE_FROM + ((1.0f - CONTENT_SCALE_FROM) * settle);
