@@ -10,17 +10,16 @@ import dev.android.dynamicisland.island.view.IslandView;
 
 /**
  * A card with one big slider in the style of the iOS control centre: a fat rounded track filled with white up to the
- * value, the item's icon in a coloured disc at its start, the value as a number at its end, and the action buttons
+ * value, the item's icon at its start, the value as a number at its end, and the action buttons
  * (turn off) below. Used for the flashlight's
  * brightness. While the slider is dragged the view keeps this body in {@code owner.sliderBody} and the dragged
  * position in {@code owner.sliderFraction}, which is shown instead of the item's value.
  */
 public final class SliderBody extends CardBody {
-    private static final float DISC_INSET_DP = 6.0f;
     private static final float VALUE_INSET_DP = 18.0f;
     private static final float TRACK_HEIGHT_DP = 52.0f;
     private static final float DRAG_GROW = 1.05f;
-    private static final float ICON_DP = 22.0f;
+    private static final float ICON_DP = 26.0f;
     private static final float ROW_SLIDE_DP = 8.0f;
     private static final int ICON_ON_FILL = 0xFF2C2C2E;
     private static final float HIT_EXTRA_DP = 14.0f;
@@ -128,17 +127,13 @@ public final class SliderBody extends CardBody {
         }
     }
 
-    /** The item's icon on a disc of its colour, at the start of the bar (always on the filled part). */
-    private void drawDisc(Canvas c, float left, float top, float height, float alpha) {
-        float inset = owner.dp(DISC_INSET_DP);
-        float d = height - (inset * 2.0f);
-        int accent = item.accent == -1 ? Colors.WHITE : item.accent;
-        owner.fillPaint.setColor(Colors.withAlpha(accent, alpha));
-        c.drawCircle(left + inset + (d / 2.0f), top + (height / 2.0f), d / 2.0f, owner.fillPaint);
-        if (item.icon != null) {
-            float size = owner.dp(ICON_DP);
-            owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, left + inset + ((d - size) / 2.0f), top + ((height - size) / 2.0f), size, alpha, 0.0f);
+    /** The item's icon at the start of the bar, on the part that is always filled. */
+    private void drawIcon(Canvas c, float left, float top, float height, float alpha) {
+        if (item.icon == null) {
+            return;
         }
+        float size = owner.dp(ICON_DP);
+        owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, left + ((height - size) / 2.0f), top + ((height - size) / 2.0f), size, alpha, 0.0f);
     }
 
     private String valueText(float step) {
@@ -199,7 +194,7 @@ public final class SliderBody extends CardBody {
         drawStepDots(c, left, right, top, height, fillRight, alpha, valueLeft(right, snapped(value)));
         c.restore();
         drawValue(c, left, right, top, height, fillRight, value, alpha);
-        drawDisc(c, left, top, height, alpha);
+        drawIcon(c, left, top, height, alpha);
         c.restoreToCount(save);
     }
 }
