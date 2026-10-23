@@ -25,6 +25,12 @@ import dev.android.dynamicisland.xposed.XLog;
 final class LiveCardView extends FrameLayout {
     private static final long SECOND_MS = 1000;
 
+    /** True while the card shows the app's own RemoteViews instead of a card drawn by the island. */
+    boolean hasRemoteContent() {
+        IslandItem item = current;
+        return item != null && item.remoteView != null;
+    }
+
     private final String key;
     private final CardRowState owner;
     private final IslandView renderer;

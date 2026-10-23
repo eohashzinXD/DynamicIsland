@@ -102,7 +102,8 @@ public final class ShadeCardTheme {
     }
 
     private static boolean isIslandRow(View row) {
-        return ShadeLiveCards.isCardRow(row) || ShadeMediaPlayer.activeRow(row);
+        // a card that hosts the app's own views keeps the system theme: the app's text colours are made for it
+        return ShadeLiveCards.isDrawnCardRow(row) || ShadeMediaPlayer.activeRow(row);
     }
 
     private static boolean isLightTheme(View v) {
