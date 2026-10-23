@@ -48,6 +48,15 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         setWillNotDraw(true);
     }
 
+    /**
+     * The slots are placed by hand every frame ({@code setLeftTopRightBottom}), their layout params say 0 x 0. A layout
+     * pass, which every added or removed slot asks for, would put all of them back to 0 x 0 for a frame, and every blur
+     * on screen dropped out at once whenever one card came or went.
+     */
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    }
+
     static boolean isSupported() {
         return SemBlur.isSupported();
     }
