@@ -4,22 +4,23 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.text.StaticLayout;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 
 /**
  * A card with one big slider in the style of the iOS control centre: a fat rounded track filled with white up to the
- * value, the item's icon on the filled part, and the action buttons (turn off) below. Used for the flashlight's
+ * value, the item's icon in a coloured disc at its start, the value as a number at its end, and the action buttons
+ * (turn off) below. Used for the flashlight's
  * brightness. While the slider is dragged the view keeps this body in {@code owner.sliderBody} and the dragged
  * position in {@code owner.sliderFraction}, which is shown instead of the item's value.
  */
 public final class SliderBody extends CardBody {
-    private static final float TILE_DP = 40.0f;
+    private static final float DISC_INSET_DP = 6.0f;
+    private static final float VALUE_INSET_DP = 18.0f;
     private static final float TRACK_HEIGHT_DP = 52.0f;
     private static final float DRAG_GROW = 1.05f;
-    private static final float ICON_DP = 24.0f;
+    private static final float ICON_DP = 22.0f;
     private static final float ROW_SLIDE_DP = 8.0f;
     private static final int ICON_ON_FILL = 0xFF2C2C2E;
     private static final float HIT_EXTRA_DP = 14.0f;
@@ -31,9 +32,6 @@ public final class SliderBody extends CardBody {
     private static final float SETTLE_SWING = 10.0f;
 
     final float pad;
-    final StaticLayout title;
-    final StaticLayout subtitle;
-    private final int textWidth;
     final float trackLeft;
     final float trackRight;
     final float trackTop;
@@ -43,12 +41,8 @@ public final class SliderBody extends CardBody {
     public SliderBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
         pad = owner.dp(18.0f);
-        float tile = owner.dp(TILE_DP);
-        textWidth = Math.max(1, Math.round(w - (pad * 2.0f) - tile - owner.dp(14.0f) - owner.dp(56.0f)));
-        title = item.title == null ? null : IslandView.layout(item.title, owner.mediaTitlePaint(), textWidth, 1);
-        subtitle = item.subtitle == null ? null : IslandView.layout(item.subtitle, owner.mediaArtistPaint(), textWidth, 1);
         trackH = owner.dp(TRACK_HEIGHT_DP);
-        trackTop = pad + tile + owner.dp(16.0f);
+        trackTop = pad;
         trackLeft = pad;
         trackRight = w - pad;
         float buttonsTop = trackTop + trackH + owner.dp(14.0f);
@@ -108,53 +102,14 @@ public final class SliderBody extends CardBody {
 
     @Override
     public void draw(Canvas c, float x, float y, float alpha, long elapsed) {
-        float topRow = rowAlpha(elapsed, 0);
-        float topDy = (1.0f - topRow) * owner.dp(ROW_SLIDE_DP);
-        drawHeader(c, x, y + topDy, alpha * topRow);
-        float sliderRow = rowAlpha(elapsed, 1);
+        float sliderRow = rowAlpha(elapsed, 0);
         drawSlider(c, x, y + ((1.0f - sliderRow) * owner.dp(ROW_SLIDE_DP)), alpha * sliderRow);
-        float buttonsRow = rowAlpha(elapsed, 2);
+        float buttonsRow = rowAlpha(elapsed, 1);
         drawButtons(c, x, y + ((1.0f - buttonsRow) * owner.dp(ROW_SLIDE_DP)), alpha * buttonsRow);
     }
 
-    private void drawHeader(Canvas c, float x, float y, float alpha) {
-        // the texts follow the bar while it is dragged (the step under the finger), not the last value the phone reported
-        float step = snapped(IslandView.clamp01(owner.sliderBody == this ? owner.sliderFraction : item.sliderValue));
-        StaticLayout subtitle = item.sliderSubtitle != null
-                ? IslandView.layout(item.sliderSubtitle.apply(step), owner.mediaArtistPaint(), textWidth, 1) : this.subtitle;
-        String trailing = item.sliderTrailing != null ? item.sliderTrailing.apply(step)
-                : (item.trailingText == null ? null : item.trailingText.toString());
-        float tile = owner.dp(TILE_DP);
-        owner.tmpRect.set(x + pad, y + pad, x + pad + tile, y + pad + tile);
-        int accent = item.accent == -1 ? Colors.WHITE : item.accent;
-        owner.fillPaint.setColor(Colors.withAlpha(accent, alpha));
-        c.drawRoundRect(owner.tmpRect, tile * 0.32f, tile * 0.32f, owner.fillPaint);
-        if (item.icon != null) {
-            float size = tile * 0.6f;
-            owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, x + pad + ((tile - size) / 2.0f), y + pad + ((tile - size) / 2.0f), size, alpha, 0.0f);
-        }
-        float textX = x + pad + tile + owner.dp(14.0f);
-        float textHeight = (title != null ? title.getHeight() : 0) + (subtitle != null ? owner.dp(2.0f) + subtitle.getHeight() : 0.0f);
-        float lineY = y + pad + ((tile - textHeight) / 2.0f);
-        if (title != null) {
-            owner.mediaTitlePaint().setColor(Colors.withAlpha(Colors.WHITE, alpha));
-            IslandView.drawLayout(c, title, textX, lineY);
-            lineY += title.getHeight() + owner.dp(2.0f);
-        }
-        if (subtitle != null) {
-            owner.mediaArtistPaint().setColor(Colors.withAlpha(Colors.TEXT_ARTIST, alpha));
-            IslandView.drawLayout(c, subtitle, textX, lineY);
-        }
-        if (trailing != null) {
-            owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, alpha));
-            String text = trailing;
-            Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
-            c.drawText(text, x + w - pad - owner.smallPaint.measureText(text), y + pad + (tile / 2.0f) - ((fm.ascent + fm.descent) / 2.0f), owner.smallPaint);
-        }
-    }
-
     /** Small dots where the steps are, so the levels can be seen on the bar. */
-    private void drawStepDots(Canvas c, float left, float right, float top, float height, float fillRight, float alpha) {
+    private void drawStepDots(Canvas c, float left, float right, float top, float height, float fillRight, float alpha, float valueLeft) {
         int steps = item.sliderSteps;
         if (steps < 2 || steps > STEP_DOTS_MAX) {
             return;
@@ -164,10 +119,57 @@ public final class SliderBody extends CardBody {
             // a dot sits just inside the end of the fill the bar has at that step, so the fill's edge always rests at one
             float edge = left + height + ((i / (float) (steps - 1)) * ((right - left) - height));
             float x = edge - owner.dp(DOT_INSET_DP);
+            if (x > valueLeft - owner.dp(8.0f)) {
+                continue; // the number sits there
+            }
             boolean covered = edge <= fillRight + 0.5f;
             owner.fillPaint.setColor(Colors.withAlpha(covered ? ICON_ON_FILL : Colors.WHITE, (covered ? 0.28f : 0.45f) * alpha));
             c.drawCircle(x, top + (height / 2.0f), radius, owner.fillPaint);
         }
+    }
+
+    /** The item's icon on a disc of its colour, at the start of the bar (always on the filled part). */
+    private void drawDisc(Canvas c, float left, float top, float height, float alpha) {
+        float inset = owner.dp(DISC_INSET_DP);
+        float d = height - (inset * 2.0f);
+        int accent = item.accent == -1 ? Colors.WHITE : item.accent;
+        owner.fillPaint.setColor(Colors.withAlpha(accent, alpha));
+        c.drawCircle(left + inset + (d / 2.0f), top + (height / 2.0f), d / 2.0f, owner.fillPaint);
+        if (item.icon != null) {
+            float size = owner.dp(ICON_DP);
+            owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, left + inset + ((d - size) / 2.0f), top + ((height - size) / 2.0f), size, alpha, 0.0f);
+        }
+    }
+
+    private String valueText(float step) {
+        return item.sliderTrailing != null ? item.sliderTrailing.apply(step) : (item.trailingText == null ? null : item.trailingText.toString());
+    }
+
+    private float valueLeft(float right, float step) {
+        String text = valueText(step);
+        return text == null ? right : right - owner.dp(VALUE_INSET_DP) - owner.smallPaint.measureText(text);
+    }
+
+    /** The value as a number at the end of the bar: dark where the fill is under it, light where the track is. */
+    private void drawValue(Canvas c, float left, float right, float top, float height, float fillRight, float value, float alpha) {
+        float step = snapped(value);
+        String text = valueText(step);
+        if (text == null) {
+            return;
+        }
+        Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
+        float x = right - owner.dp(VALUE_INSET_DP) - owner.smallPaint.measureText(text);
+        float baseline = top + (height / 2.0f) - ((fm.ascent + fm.descent) / 2.0f);
+        c.save();
+        c.clipRect(left, top, fillRight, top + height);
+        owner.smallPaint.setColor(Colors.withAlpha(ICON_ON_FILL, alpha));
+        c.drawText(text, x, baseline, owner.smallPaint);
+        c.restore();
+        c.save();
+        c.clipRect(fillRight, top, right, top + height);
+        owner.smallPaint.setColor(Colors.withAlpha(Colors.WHITE, 0.9f * alpha));
+        c.drawText(text, x, baseline, owner.smallPaint);
+        c.restore();
     }
 
     private void drawSlider(Canvas c, float x, float y, float alpha) {
@@ -194,12 +196,10 @@ public final class SliderBody extends CardBody {
         float fillRight = left + height + (value * ((right - left) - height));
         owner.fillPaint.setColor(Colors.withAlpha(Colors.WHITE, 0.94f * alpha));
         c.drawRect(left, top, fillRight, top + height, owner.fillPaint);
-        drawStepDots(c, left, right, top, height, fillRight, alpha);
+        drawStepDots(c, left, right, top, height, fillRight, alpha, valueLeft(right, snapped(value)));
         c.restore();
-        if (item.icon != null) {
-            float size = owner.dp(ICON_DP);
-            owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, left + ((height - size) / 2.0f), top + ((height - size) / 2.0f), size, alpha, 0.0f);
-        }
+        drawValue(c, left, right, top, height, fillRight, value, alpha);
+        drawDisc(c, left, top, height, alpha);
         c.restoreToCount(save);
     }
 }
