@@ -129,6 +129,13 @@ public final class RecorderNotificationSource {
                 }
             }
         }
+        if (it.actions.isEmpty() && n.contentIntent != null) {
+            // the recorder stops when its notification is tapped ("tap to stop"): the card gets that as a stop button
+            boolean ko = "ko".equals(Locale.getDefault().getLanguage());
+            it.actions.add(new IslandItem.Action(ko ? "중지" : "Stop", null, n.contentIntent, null, true));
+            it.subtitle = ko ? "녹화 중" : "Recording"; // the notification's own text says "tap to stop", which the button does now
+            it.contentIntent = null; // tapping the card must not stop the recording
+        }
         return it;
     }
 }
