@@ -86,6 +86,12 @@ public final class SystemUiHooks {
         if (Build.VERSION.SDK_INT == 36 || !binderStyle) {
             runGroup("aosp call chips", () -> hookAndroid16Chips(cl));
         }
+        // AOSP-style System UI (Nothing OS): no Samsung ongoing-activity classes, the stock chips are the duplicates
+        if (!Refl.hasClass(OA_CONTROLLER, cl) && AospChips.present(cl)) {
+            Diagnostics.fact("stock chips", "AOSP chip bundle");
+            castBundle = AospChips.feed(); // the island reads the models from it once it exists
+            runGroup("aosp stock chips", () -> AospChips.install(cl, () -> callController != null));
+        }
         runGroup("shade performance", () -> ShadePerf.install(cl));
         runGroup("shade live cards", () -> ShadeLiveCards.install(cl));
         runGroup("duplicate originals", () -> HideDuplicated.install(cl));
@@ -98,6 +104,11 @@ public final class SystemUiHooks {
         }
         runGroup("heads-up", () -> HeadsUpHooks.install(cl));
         reportUnattached();
+    }
+
+    /** Tells {@link AospChips} whether the island shows the call, so that the stock call chip can go. */
+    interface CallCoverage {
+        boolean covered();
     }
 
     /** True when {@code className} exists and declares a method called {@code method}. */

@@ -32,6 +32,15 @@ What differs from One UI 8 and how the module handles it (found by comparing the
 - **Shade.** The blurred notification cards (`isBlurBackground`) do not exist, so the card theme and the media player takeover are not installed and the stock rows stay (diagnostics: `shade rows`).
 - **Not available.** The launcher exit animation (`IOnGoingChipListener`) and the screen-record / cast chip model are missing; the module skips them.
 
+## Nothing OS / AOSP-style System UI (lowest priority)
+
+Android 16 System UI without any Samsung class (checked against a Nothing OS build, not run on a device). Chosen at start-up when `OngoingActivityController` is absent and `OngoingActivityChipsViewModel` exists (diagnostics: `stock chips`).
+
+- **Stock chips.** The status bar chips for calls, screen recording, screen sharing and casting duplicated the island. `OngoingActivityChipsViewModel.rankChips` / `pickMostImportantChip` get their bundle with those chips swapped for an empty one, so neither the view nor the Compose chip row sees them. The call chip goes only once the island has the call controller.
+- **Island cards.** The swapped-out models are handed to the screen-record / cast source (same field names as the bundle; the timer comes from `startTimeMs`). No stop button yet: the stock stop action needs the chip view.
+- **Left alone.** Promoted (live) app notifications keep their chip: the island has no card for them.
+- **Everything Samsung-specific** (capsule, flashlight level, ongoing-activity reader, blur) is skipped by the same feature checks as on One UI 7.
+
 ## Name alternatives
 
 Any class, method or field name in a `Refl` call may be written `"new|old"`: the first that exists on the running build is used, and a name that was found only under an older alternative appears in the report as `older names used`. Put the newest System UI's name first.

@@ -102,6 +102,9 @@ public final class CastSource {
         it.appName = title;
         it.packageName = (String) Refl.get(model, "managingPackageName");
         Clock clock = readClock(Refl.get(model, "content"));
+        if (clock == null) {
+            clock = aospClock(model);
+        }
         if (clock != null) {
             it.trailing = IslandItem.Trailing.CHRONOMETER;
             it.chronoBase = clock.base;
@@ -142,6 +145,16 @@ public final class CastSource {
             this.base = base;
             this.countDown = countDown;
         }
+    }
+
+    /** AOSP chip models are the timer themselves; {@code startTimeMs} is on the elapsed-realtime clock. */
+    private static Clock aospClock(Object model) {
+        Object start = model.getClass().getName().endsWith("$Timer") ? Refl.get(model, "startTimeMs") : null;
+        if (!(start instanceof Long)) {
+            return null;
+        }
+        long age = SystemClock.elapsedRealtime() - (Long) start;
+        return new Clock(System.currentTimeMillis() - age, false);
     }
 
     /** The timer in a chip's content: running (up or down) or paused at a duration; null for anything else. */
