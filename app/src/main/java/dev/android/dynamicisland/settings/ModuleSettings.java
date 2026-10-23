@@ -24,6 +24,7 @@ public final class ModuleSettings {
     public static final String KEY_AUTO_COLLAPSE_S = "auto_collapse_s";
     public static final String KEY_CARD_HEADER = "card_header";
     public static final String KEY_VISUALIZER = "visualizer";
+    public static final String KEY_COLOR_ICONS = "compact_color_icons";
     public static final String KEY_EVENT_CHARGING = "event_charging";
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
@@ -109,6 +110,7 @@ public final class ModuleSettings {
     private static volatile int autoCollapseS = DEF_AUTO_COLLAPSE_S;
     private static volatile boolean cardHeader = true;
     private static volatile boolean visualizer = true;
+    private static volatile boolean colorIcons;
     private static volatile boolean eventCharging = true;
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
@@ -381,6 +383,7 @@ public final class ModuleSettings {
             autoCollapseS = source.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
             cardHeader = source.getBoolean(KEY_CARD_HEADER, true);
             visualizer = source.getBoolean(KEY_VISUALIZER, true);
+            colorIcons = source.getBoolean(KEY_COLOR_ICONS, false);
             eventCharging = source.getBoolean(KEY_EVENT_CHARGING, true);
             eventRinger = source.getBoolean(KEY_EVENT_RINGER, true);
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
@@ -451,7 +454,7 @@ public final class ModuleSettings {
 
     private static String switchSignature() {
         return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
-                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + cardHeader
+                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
 
@@ -507,6 +510,12 @@ public final class ModuleSettings {
     public static boolean cardHeader() {
         ensureStarted();
         return cardHeader;
+    }
+
+    /** Keep the real colours of an app's icon or a team's logo in the small pill, instead of a grey version of it. */
+    public static boolean colorIcons() {
+        ensureStarted();
+        return colorIcons;
     }
 
     /** Drive the waveform from the audio output instead of random bars. */

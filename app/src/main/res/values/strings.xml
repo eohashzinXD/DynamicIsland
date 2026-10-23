@@ -5,6 +5,8 @@
     <string name="settings_hint">Enable the module for System UI in LSPosed. Changes apply within a few seconds.</string>
     <string name="setting_card_header">Card header</string>
     <string name="setting_card_header_desc">Show the app name and time above live notification cards.</string>
+    <string name="setting_color_icons">Coloured icons in the small island</string>
+    <string name="setting_color_icons_desc">Keep the real colours of an app icon or a team logo when the island is small. Off shows them in grey.</string>
     <string name="setting_visualizer">Audio waveform</string>
     <string name="setting_visualizer_desc">Drive the music waveform from the real audio output. Off uses a gentle animation instead.</string>
     <string name="setting_paused_timeout">Keep paused music for</string>

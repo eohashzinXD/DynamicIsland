@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
  * The small pieces the pill, the bubble and the cards share: the leading icon, the trailing text / ring /
@@ -53,12 +54,19 @@ final class IconPainter {
             return;
         }
         float top = midY - (size / 2.0f);
-        if (!item.iconIsImage) {
+        if (!item.iconIsImage && ModuleSettings.colorIcons() && item.icon instanceof android.graphics.drawable.BitmapDrawable) {
+            // a picture the app gave as a symbol (a team logo): tinting it would leave a flat white shape
+            drawDrawable(c, item.icon, true, 0, left, top, size, alpha, size * 0.26f);
+        } else if (!item.iconIsImage) {
             drawDrawable(c, item.icon, false, item.kind == IslandItem.Kind.CALL ? item.accent : -1, left, top, size, alpha, 0.0f);
         } else if (!item.isMedia) {
-            item.icon.setColorFilter(GRAYSCALE);
-            drawDrawable(c, item.icon, true, 0, left, top, size, alpha, size * 0.26f);
-            item.icon.setColorFilter(null);
+            if (ModuleSettings.colorIcons()) {
+                drawDrawable(c, item.icon, true, 0, left, top, size, alpha, size * 0.26f);
+            } else {
+                item.icon.setColorFilter(GRAYSCALE);
+                drawDrawable(c, item.icon, true, 0, left, top, size, alpha, size * 0.26f);
+                item.icon.setColorFilter(null);
+            }
         } else if (item.cardImage != null) {
             // same flipping album art as the card, so the pill animates on track changes
             mediaFx.obtain(item).drawArt(c, left, top, size, alpha, size * 0.26f, IslandView.now());

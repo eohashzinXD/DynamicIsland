@@ -5,6 +5,8 @@
     <string name="settings_hint">LSPosed에서 시스템 UI에 모듈을 활성화하세요. 변경 사항은 몇 초 안에 적용됩니다.</string>
     <string name="setting_card_header">카드 헤더</string>
     <string name="setting_card_header_desc">라이브 알림 카드 위에 앱 이름과 시간을 표시합니다.</string>
+    <string name="setting_color_icons">작은 아일랜드에서 아이콘 색 유지</string>
+    <string name="setting_color_icons_desc">아일랜드가 작아졌을 때 앱 아이콘이나 팀 로고의 원래 색을 그대로 보여 줍니다. 끄면 회색으로 보입니다.</string>
     <string name="setting_visualizer">오디오 파형</string>
     <string name="setting_visualizer_desc">음악 파형을 실제 오디오 출력으로 구동합니다. 끄면 부드러운 애니메이션을 사용합니다.</string>
     <string name="setting_paused_timeout">일시정지된 음악 유지 시간</string>
