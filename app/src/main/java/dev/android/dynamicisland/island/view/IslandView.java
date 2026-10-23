@@ -112,11 +112,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public float seekFraction;
 
     // layout values the content classes read; copies of the final ones in Metrics
-    final float bubbleR;
+    float bubbleR;
     final float holeGap;
     final float innerGap;
-    final float leadSize;
-    final float minPillW;
+    float leadSize;
+    float minPillW;
     final float padding;
     float holeD;
     private float markerX = -1.0f;
@@ -260,12 +260,27 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     /** Tells the view where the camera hole is; call whenever the display geometry may have changed. */
+    /** The size the user set: height in percent, narrowest and widest in dp (0 = automatic). */
+    public void setPillSize(int heightPercent, int minWidthDp, int maxWidthDp) {
+        if (metrics.applySize(heightPercent, minWidthDp, maxWidthDp)) {
+            afterMetricsChanged();
+        }
+    }
+
     public void setGeometry(int screenWidth, float centerX, float centerY, float holeDiameter, boolean isTablet) {
         if (!metrics.update(screenWidth, centerX, centerY, holeDiameter, isTablet)) {
             return;
         }
+        afterMetricsChanged();
+    }
+
+    private void afterMetricsChanged() {
         holeD = metrics.holeD;
         maxPillW = metrics.maxPillW;
+        // the size the user set reaches the content classes through these copies
+        minPillW = metrics.minPillW;
+        leadSize = metrics.leadSize;
+        bubbleR = metrics.bubbleR;
         if (scene.mode == Mode.COMPACT && scene.primary != null) {
             director.refreshMain();
             scheduleFrame();

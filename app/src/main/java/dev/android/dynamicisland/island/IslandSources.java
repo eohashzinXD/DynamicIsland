@@ -135,7 +135,9 @@ final class IslandSources {
         it.icon = GlyphIcon.of(GlyphIcon.Kind.HOTSPOT);
         it.accent = 0xFF3E91FF;
         it.trailing = IslandItem.Trailing.TEXT;
-        it.trailingText = ko ? "미리보기" : "Preview";
+        it.trailingText = ModuleSettings.previewSampleLong()
+                ? (ko ? "미리보기 · 알림 글이 길면 이만큼까지 넓어집니다" : "Preview · a long text stretches the pill this far")
+                : (ko ? "미리보기" : "Preview");
         it.postTime = SystemClock.uptimeMillis();
         return it;
     }

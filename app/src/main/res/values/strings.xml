@@ -265,4 +265,13 @@
     <string name="hole_size">Size</string>
     <string name="hole_x">Sideways</string>
     <string name="hole_y">Up and down</string>
+    <string name="size_title">Island size</string>
+    <string name="size_height">Height</string>
+    <string name="size_min">Narrowest</string>
+    <string name="size_max">Widest</string>
+    <string name="size_keep">Keep the widest width</string>
+    <string name="size_keep_sum">The island does not shrink again after it has grown, until it hides</string>
+    <string name="size_normal">Normal</string>
+    <string name="size_auto">Automatic</string>
+    <string name="size_note">The island on the real status bar takes the size as you drag. A higher pill grows its icons with it. With a height change the island keeps its text away from the camera hole as before.</string>
 </resources>

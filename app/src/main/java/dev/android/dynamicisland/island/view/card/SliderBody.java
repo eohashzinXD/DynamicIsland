@@ -33,6 +33,7 @@ public final class SliderBody extends CardBody {
     final float pad;
     final StaticLayout title;
     final StaticLayout subtitle;
+    private final int textWidth;
     final float trackLeft;
     final float trackRight;
     final float trackTop;
@@ -43,7 +44,7 @@ public final class SliderBody extends CardBody {
         super(owner, item, w);
         pad = owner.dp(18.0f);
         float tile = owner.dp(TILE_DP);
-        int textWidth = Math.max(1, Math.round(w - (pad * 2.0f) - tile - owner.dp(14.0f) - owner.dp(56.0f)));
+        textWidth = Math.max(1, Math.round(w - (pad * 2.0f) - tile - owner.dp(14.0f) - owner.dp(56.0f)));
         title = item.title == null ? null : IslandView.layout(item.title, owner.mediaTitlePaint(), textWidth, 1);
         subtitle = item.subtitle == null ? null : IslandView.layout(item.subtitle, owner.mediaArtistPaint(), textWidth, 1);
         trackH = owner.dp(TRACK_HEIGHT_DP);
@@ -117,6 +118,12 @@ public final class SliderBody extends CardBody {
     }
 
     private void drawHeader(Canvas c, float x, float y, float alpha) {
+        // the texts follow the bar while it is dragged (the step under the finger), not the last value the phone reported
+        float step = snapped(IslandView.clamp01(owner.sliderBody == this ? owner.sliderFraction : item.sliderValue));
+        StaticLayout subtitle = item.sliderSubtitle != null
+                ? IslandView.layout(item.sliderSubtitle.apply(step), owner.mediaArtistPaint(), textWidth, 1) : this.subtitle;
+        String trailing = item.sliderTrailing != null ? item.sliderTrailing.apply(step)
+                : (item.trailingText == null ? null : item.trailingText.toString());
         float tile = owner.dp(TILE_DP);
         owner.tmpRect.set(x + pad, y + pad, x + pad + tile, y + pad + tile);
         int accent = item.accent == -1 ? Colors.WHITE : item.accent;
@@ -138,9 +145,9 @@ public final class SliderBody extends CardBody {
             owner.mediaArtistPaint().setColor(Colors.withAlpha(Colors.TEXT_ARTIST, alpha));
             IslandView.drawLayout(c, subtitle, textX, lineY);
         }
-        if (item.trailingText != null) {
+        if (trailing != null) {
             owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, alpha));
-            String text = item.trailingText.toString();
+            String text = trailing;
             Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
             c.drawText(text, x + w - pad - owner.smallPaint.measureText(text), y + pad + (tile / 2.0f) - ((fm.ascent + fm.descent) / 2.0f), owner.smallPaint);
         }

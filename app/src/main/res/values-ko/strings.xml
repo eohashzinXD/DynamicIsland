@@ -265,4 +265,13 @@
     <string name="hole_size">크기</string>
     <string name="hole_x">좌우</string>
     <string name="hole_y">위아래</string>
+    <string name="size_title">아일랜드 크기</string>
+    <string name="size_height">높이</string>
+    <string name="size_min">최소 너비</string>
+    <string name="size_max">최대 너비</string>
+    <string name="size_keep">가장 넓어진 너비 유지</string>
+    <string name="size_keep_sum">한 번 넓어진 아일랜드가 숨을 때까지 다시 줄어들지 않습니다</string>
+    <string name="size_normal">기본</string>
+    <string name="size_auto">자동</string>
+    <string name="size_note">슬라이더를 끄는 동안 실제 상태바의 아일랜드가 크기를 따라옵니다. 알약이 높아지면 아이콘도 같이 커집니다. 높이를 바꿔도 글씨는 카메라 구멍을 피해 씁니다.</string>
 </resources>

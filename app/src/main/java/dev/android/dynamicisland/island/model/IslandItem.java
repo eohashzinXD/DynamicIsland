@@ -111,6 +111,9 @@ public final class IslandItem {
     public float sliderValue = -1.0f;
     public int sliderSteps;
     public java.util.function.Consumer<Float> sliderChange;
+    /** Texts that follow the slider while it is dragged (the value is the step the finger is on, 0..1); null = fixed texts. */
+    public java.util.function.Function<Float, String> sliderTrailing;
+    public java.util.function.Function<Float, String> sliderSubtitle;
 
     /** What the compact pill shows at its trailing edge. */
     public Trailing trailing = Trailing.NONE;

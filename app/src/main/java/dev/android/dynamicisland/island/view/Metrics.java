@@ -11,15 +11,15 @@ final class Metrics {
 
     private final float density;
 
-    final float pillH;
+    float pillH;
     final float padding;
     final float holeGap;
     final float innerGap;
-    final float leadSize;
-    final float bubbleR;
+    float leadSize;
+    float bubbleR;
     final float bubbleGap;
-    final float minPillW;
-    final float ringSize;
+    float minPillW;
+    float ringSize;
     final float waveBarW;
     final float waveGap;
     final float outlineW;
@@ -29,6 +29,8 @@ final class Metrics {
     float cardMargin;
     float cardMaxW;
     float maxPillW;
+    /** The user's widest pill in px, 0 = automatic. */
+    private float userMaxW;
     int screenW;
     float cx;
     float cy;
@@ -55,6 +57,36 @@ final class Metrics {
         cardMaxW = dp(420.0f);
     }
 
+    /**
+     * Sets the size the user asked for: the pill's height as a percent change (its icons grow with it), the narrowest
+     * and the widest it gets in dp (0 = automatic). Returns false when nothing changed.
+     */
+    boolean applySize(int heightPercent, int minWidthDp, int maxWidthDp) {
+        float scale = 1.0f + (heightPercent / 100.0f);
+        float newH = dp(30.0f) * scale;
+        float newMin = Math.max(dp(64.0f), dp(minWidthDp));
+        float newMax = maxWidthDp > 0 ? dp(maxWidthDp) : 0.0f;
+        if (newMax > 0.0f) {
+            newMin = Math.min(newMin, newMax); // the narrowest never passes the widest
+        }
+        if (Math.abs(pillH - newH) < 0.5f && Math.abs(minPillW - newMin) < 0.5f && Math.abs(userMaxW - newMax) < 0.5f) {
+            return false;
+        }
+        pillH = newH;
+        leadSize = dp(20.0f) * scale;
+        ringSize = dp(17.0f) * scale;
+        bubbleR = dp(15.0f) * scale;
+        minPillW = newMin;
+        userMaxW = newMax;
+        recomputeMaxWidth();
+        return true;
+    }
+
+    private void recomputeMaxWidth() {
+        float automatic = Math.min(screenW * IslandView.PAUSED_GLOW, dp(tablet ? 340.0f : 300.0f));
+        maxPillW = userMaxW > 0.0f ? Math.max(minPillW, Math.min(userMaxW, screenW * 0.96f)) : Math.max(minPillW, automatic);
+    }
+
     float dp(float v) {
         return density * v;
     }
@@ -71,7 +103,7 @@ final class Metrics {
         cy = centerY;
         holeD = holeDiameter;
         tablet = isTablet;
-        maxPillW = Math.min(screenWidth * IslandView.PAUSED_GLOW, dp(isTablet ? 340.0f : 300.0f));
+        recomputeMaxWidth();
         cardMargin = dp(isTablet ? 16.0f : 12.0f);
         cardMaxW = dp(isTablet ? 380.0f : 420.0f);
         return true;

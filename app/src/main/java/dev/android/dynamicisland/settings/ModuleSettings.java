@@ -36,14 +36,8 @@ public final class ModuleSettings {
     public static final String KEY_PILL_PREVIEW_UNTIL = "pill_preview_until";
     /** The settings app tells System UI about a position it is trying out, so the real island moves at once. */
     public static final String ACTION_PILL_PREVIEW = "dev.android.dynamicisland.action.PILL_PREVIEW";
-    public static final String EXTRA_ANCHOR = "anchor";
-    public static final String EXTRA_X_DP = "x_dp";
-    public static final String EXTRA_Y_DP = "y_dp";
     public static final String EXTRA_ACTIVE = "active";
-    public static final String EXTRA_HOLE_MODE = "hole_mode";
-    public static final String EXTRA_HOLE_D_DP = "hole_d_dp";
-    public static final String EXTRA_HOLE_X_DP = "hole_x_dp";
-    public static final String EXTRA_HOLE_Y_DP = "hole_y_dp";
+    public static final String EXTRA_SAMPLE_LONG = "sample_long";
     /** A tried-out position counts for this long without another message (the page sends a heartbeat). */
     private static final long PREVIEW_MS = 6000;
     /** The camera hole the island grows from: found from the display cutout, set by hand, or none at all. */
@@ -60,6 +54,16 @@ public final class ModuleSettings {
     public static final int HOLE_X_MAX_DP = 200;
     public static final int HOLE_Y_MIN_DP = -24;
     public static final int HOLE_Y_MAX_DP = 48;
+    /** The size of the pill: height in percent of the normal one, the narrowest and widest it gets (0 = automatic), and whether it keeps its widest width. */
+    public static final String KEY_PILL_H_PCT = "pill_h_pct";
+    public static final String KEY_PILL_MIN_W_DP = "pill_min_w_dp";
+    public static final String KEY_PILL_MAX_W_DP = "pill_max_w_dp";
+    public static final String KEY_PILL_KEEP_WIDTH = "pill_keep_width";
+    public static final int PILL_H_MIN_PCT = -20;
+    public static final int PILL_H_MAX_PCT = 40;
+    public static final int PILL_MIN_W_MAX_DP = 200;
+    public static final int PILL_MAX_W_MIN_DP = 100;
+    public static final int PILL_MAX_W_MAX_DP = 420;
     public static final int ANCHOR_AUTO = 0;
     public static final int ANCHOR_CENTER = 1;
     public static final int ANCHOR_LEFT = 2;
@@ -120,7 +124,12 @@ public final class ModuleSettings {
     private static volatile int holeDDp = HOLE_D_DEFAULT_DP;
     private static volatile int holeXDp;
     private static volatile int holeYDp;
+    private static volatile int pillHPct;
+    private static volatile int pillMinWDp;
+    private static volatile int pillMaxWDp;
+    private static volatile boolean keepPillWidth;
     private static volatile long previewUntil;
+    private static volatile boolean sampleLong;
     private static volatile long previewWallUntil;
     private static volatile RuleConfig rulesConfig = RuleConfig.DEFAULT;
     /** Told (on the reload thread) when the user's rules changed, so cards already showing can follow. */
@@ -148,14 +157,20 @@ public final class ModuleSettings {
      * Takes a position the settings app is trying out. While the preview lasts the island shows a sample item, and
      * the saved settings do not override the position (they are written when the finger lets go).
      */
-    public static void applyPlacementPreview(int anchor, int xDp, int yDp, int mode, int holeD, int holeX, int holeY, boolean active) {
-        holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, mode));
-        holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, holeD));
-        holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, holeX));
-        holeYDp = Math.max(HOLE_Y_MIN_DP, Math.min(HOLE_Y_MAX_DP, holeY));
-        pillAnchor = Math.max(ANCHOR_AUTO, Math.min(ANCHOR_RIGHT, anchor));
-        pillXDp = Math.max(-PILL_X_MAX_DP, Math.min(PILL_X_MAX_DP, xDp));
-        pillYDp = Math.max(PILL_Y_MIN_DP, Math.min(PILL_Y_MAX_DP, yDp));
+    public static void applyPlacementPreview(android.content.Intent i) {
+        holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, i.getIntExtra(KEY_HOLE_MODE, holeMode)));
+        holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, i.getIntExtra(KEY_HOLE_D_DP, holeDDp)));
+        holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, i.getIntExtra(KEY_HOLE_X_DP, holeXDp)));
+        holeYDp = Math.max(HOLE_Y_MIN_DP, Math.min(HOLE_Y_MAX_DP, i.getIntExtra(KEY_HOLE_Y_DP, holeYDp)));
+        pillAnchor = Math.max(ANCHOR_AUTO, Math.min(ANCHOR_RIGHT, i.getIntExtra(KEY_PILL_ANCHOR, pillAnchor)));
+        pillXDp = Math.max(-PILL_X_MAX_DP, Math.min(PILL_X_MAX_DP, i.getIntExtra(KEY_PILL_X_DP, pillXDp)));
+        pillYDp = Math.max(PILL_Y_MIN_DP, Math.min(PILL_Y_MAX_DP, i.getIntExtra(KEY_PILL_Y_DP, pillYDp)));
+        pillHPct = Math.max(PILL_H_MIN_PCT, Math.min(PILL_H_MAX_PCT, i.getIntExtra(KEY_PILL_H_PCT, pillHPct)));
+        pillMinWDp = Math.max(0, Math.min(PILL_MIN_W_MAX_DP, i.getIntExtra(KEY_PILL_MIN_W_DP, pillMinWDp)));
+        pillMaxWDp = clampMaxWidth(i.getIntExtra(KEY_PILL_MAX_W_DP, pillMaxWDp));
+        keepPillWidth = i.getBooleanExtra(KEY_PILL_KEEP_WIDTH, keepPillWidth);
+        sampleLong = i.getBooleanExtra(EXTRA_SAMPLE_LONG, false);
+        boolean active = i.getBooleanExtra(EXTRA_ACTIVE, true);
         previewUntil = active ? android.os.SystemClock.uptimeMillis() + PREVIEW_MS : 0L;
         Runnable listener = onPlacementChanged;
         if (listener != null) {
@@ -164,8 +179,41 @@ public final class ModuleSettings {
     }
 
     /** True while the settings app is moving the island: it shows a sample item so there is something to move. */
+    /** The sample item holds a long text, so the pill grows as wide as it is allowed to. */
+    public static boolean previewSampleLong() {
+        return sampleLong;
+    }
+
     public static boolean placementPreviewActive() {
         return android.os.SystemClock.uptimeMillis() < previewUntil || System.currentTimeMillis() < previewWallUntil;
+    }
+
+    private static int clampMaxWidth(int dp) {
+        return dp < PILL_MAX_W_MIN_DP ? 0 : Math.min(PILL_MAX_W_MAX_DP, dp);
+    }
+
+    /** Height of the pill in percent of the normal one, minus 0: -20..+40. */
+    public static int pillHeightPercent() {
+        ensureStarted();
+        return pillHPct;
+    }
+
+    /** The narrowest the pill gets in dp, 0 = automatic. */
+    public static int pillMinWidthDp() {
+        ensureStarted();
+        return pillMinWDp;
+    }
+
+    /** The widest the pill gets in dp, 0 = automatic. */
+    public static int pillMaxWidthDp() {
+        ensureStarted();
+        return pillMaxWDp;
+    }
+
+    /** The pill does not shrink again once it has grown, until it hides. */
+    public static boolean keepPillWidth() {
+        ensureStarted();
+        return keepPillWidth;
     }
 
     public static int holeMode() {
@@ -260,6 +308,7 @@ public final class ModuleSettings {
             progressNotifications = prefs.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             hideProgressOriginals = prefs.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
             smartRules = prefs.getBoolean(KEY_SMART_RULES, true);
+            int sizeBefore = pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000;
             int holeBefore = holeMode * 1_000_000 + holeDDp * 10_000 + holeXDp * 100 + holeYDp;
             int anchorBefore = pillAnchor;
             int xBefore = pillXDp;
@@ -270,6 +319,10 @@ public final class ModuleSettings {
                 pillAnchor = Math.max(ANCHOR_AUTO, Math.min(ANCHOR_RIGHT, prefs.getInt(KEY_PILL_ANCHOR, ANCHOR_AUTO)));
                 pillXDp = Math.max(-PILL_X_MAX_DP, Math.min(PILL_X_MAX_DP, prefs.getInt(KEY_PILL_X_DP, 0)));
                 pillYDp = Math.max(PILL_Y_MIN_DP, Math.min(PILL_Y_MAX_DP, prefs.getInt(KEY_PILL_Y_DP, 0)));
+                pillHPct = Math.max(PILL_H_MIN_PCT, Math.min(PILL_H_MAX_PCT, prefs.getInt(KEY_PILL_H_PCT, 0)));
+                pillMinWDp = Math.max(0, Math.min(PILL_MIN_W_MAX_DP, prefs.getInt(KEY_PILL_MIN_W_DP, 0)));
+                pillMaxWDp = clampMaxWidth(prefs.getInt(KEY_PILL_MAX_W_DP, 0));
+                keepPillWidth = prefs.getBoolean(KEY_PILL_KEEP_WIDTH, false);
                 holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, prefs.getInt(KEY_HOLE_MODE, HOLE_AUTO)));
                 holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, prefs.getInt(KEY_HOLE_D_DP, HOLE_D_DEFAULT_DP)));
                 holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, prefs.getInt(KEY_HOLE_X_DP, 0)));
@@ -278,6 +331,7 @@ public final class ModuleSettings {
             Runnable placementListener = onPlacementChanged;
             if (placementListener != null && (anchorBefore != pillAnchor || xBefore != pillXDp || yBefore != pillYDp
                     || previewBefore != placementPreviewActive()
+                    || sizeBefore != pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000
                     || holeBefore != holeMode * 1_000_000 + holeDDp * 10_000 + holeXDp * 100 + holeYDp)) {
                 placementListener.run();
             }
@@ -309,7 +363,7 @@ public final class ModuleSettings {
                 + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
-                + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
+                + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
                 + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         if (!now.equals(lastLogged)) {

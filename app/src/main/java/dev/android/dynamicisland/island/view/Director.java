@@ -132,7 +132,7 @@ final class Director {
             appear(primary, hint == IslandView.HINT_FROM_LEFT);
         } else {
             switchCompact(oldPrimary, primary, hint);
-            sp.width.animateTo(scene.mainIn.content.desiredWidth(), Motion.PILL_RESIZE);
+            sp.width.animateTo(scene.pillWidthFor(scene.mainIn.content), Motion.PILL_RESIZE);
             sp.height.animateTo(m.pillH, Motion.PILL_RESIZE);
         }
         updateBubble(oldSecondary, scene.secondary);
@@ -186,7 +186,8 @@ final class Director {
         scene.mainIn = scene.mainIn == null
                 ? Layer.shown(new CompactContent(view, primary))
                 : Layer.shownLike(new CompactContent(view, primary), scene.mainIn);
-        sp.width.animateTo(scene.mainIn.content.desiredWidth(), Motion.PILL_RESIZE);
+        sp.width.animateTo(scene.pillWidthFor(scene.mainIn.content), Motion.PILL_RESIZE);
+        sp.height.animateTo(m.pillH, Motion.PILL_RESIZE);
     }
 
     void refreshBubble() {
@@ -236,6 +237,7 @@ final class Director {
     /** Shows the island again for the current primary item (after being suppressed). */
     void reveal() {
         scene.mode = Mode.HIDDEN;
+        scene.keptWidth = 0.0f; // the next pill starts from its own width
         appear(scene.primary, false);
     }
 
@@ -259,7 +261,7 @@ final class Director {
         }
         scene.mainOut = null;
         scene.mainIn = Layer.incoming(new CompactContent(view, primary), IslandView.now(), legacy() ? LEGACY_APPEAR_IN_MS : APPEAR_IN_MS).slide(fromLeft ? -1 : 0);
-        sp.width.animateTo(scene.mainIn.content.desiredWidth(), Motion.PILL_GROW);
+        sp.width.animateTo(scene.pillWidthFor(scene.mainIn.content), Motion.PILL_GROW);
         sp.height.animateTo(m.pillH, Motion.PILL_DROP);
         host.onWindowHeightNeeded(m.compactWindowHeight());
     }
@@ -379,7 +381,7 @@ final class Director {
         if (scene.mode != Mode.COMPACT || scene.mainIn == null) {
             return;
         }
-        sp.width.animateTo(scene.mainIn.content.desiredWidth(), Motion.PILL_REGROW);
+        sp.width.animateTo(scene.pillWidthFor(scene.mainIn.content), Motion.PILL_REGROW);
         sp.height.animateTo(m.pillH, Motion.PILL_REGROW);
         sp.split.animateTo(scene.secondary != null ? 1.0f : 0.0f, Motion.BUBBLE_SPLIT);
         view.scheduleFrame();
@@ -480,7 +482,7 @@ final class Director {
         c.targetCy = m.cy;
         if (!legacy() && scene.mode == Mode.COMPACT && scene.mainIn != null) {
             // closing the stack: the card folds into the shape the pill is growing back to, so nothing pops when it ends
-            c.targetW = Math.max(m.pillH, scene.mainIn.content.desiredWidth());
+            c.targetW = Math.max(m.pillH, scene.pillWidthFor(scene.mainIn.content));
             c.targetH = m.pillH;
         } else {
             c.targetW = m.pillH * 1.6f;
@@ -556,7 +558,7 @@ final class Director {
         if (scene.mode != Mode.COMPACT || scene.mainIn == null) {
             return true;
         }
-        return Math.abs(sp.width.value() - scene.mainIn.content.desiredWidth()) < m.dp(4.0f)
+        return Math.abs(sp.width.value() - scene.pillWidthFor(scene.mainIn.content)) < m.dp(4.0f)
                 && Math.abs(sp.height.value() - m.pillH) < m.dp(3.0f);
     }
 

@@ -69,7 +69,7 @@ final class SecondTicker {
         }
         CompactContent content = (CompactContent) main.content;
         if (content.item.trailing == IslandItem.Trailing.CHRONOMETER && content.remeasure()) {
-            scene.springs.width.animateTo(content.desiredWidth(), Motion.PILL_RESIZE);
+            scene.springs.width.animateTo(scene.pillWidthFor(content), Motion.PILL_RESIZE);
             view.scheduleFrame();
         }
     }

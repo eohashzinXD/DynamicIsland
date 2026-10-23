@@ -126,12 +126,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                     if (!ModuleSettings.PACKAGE.equals(getSentFromPackage())) {
                         return; // only the module's own settings app may move the island
                     }
-                    ModuleSettings.applyPlacementPreview(intent.getIntExtra(ModuleSettings.EXTRA_ANCHOR, 0),
-                            intent.getIntExtra(ModuleSettings.EXTRA_X_DP, 0), intent.getIntExtra(ModuleSettings.EXTRA_Y_DP, 0),
-                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_MODE, ModuleSettings.HOLE_AUTO),
-                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP),
-                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_X_DP, 0), intent.getIntExtra(ModuleSettings.EXTRA_HOLE_Y_DP, 0),
-                            intent.getBooleanExtra(ModuleSettings.EXTRA_ACTIVE, true));
+                    ModuleSettings.applyPlacementPreview(intent);
                     requestRefresh();
                 }
             }, new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW), Context.RECEIVER_EXPORTED);

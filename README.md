@@ -135,6 +135,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 ### Settings app
 
 - A One UI style hub with grouped cards and sub pages: **Display and motion**, **Notification cards**, **System events**, **App control**, **Rules** and **Tools** (restart System UI with root, diagnostics), in Korean and English, light and dark. Changes apply within a few seconds without a reboot.
+- **Island position:** put the island on the camera hole (default), in the middle, or on the left or right of the status bar, and shift it sideways or up and down. The island on the real status bar moves while you drag the sliders. The **camera hole** can be found automatically, set by hand (size and place, shown as a blue ring on the real screen) or turned off. Text inside the pill keeps away from the hole.
 - Four kinds of settings: switches, values that open a choice, links to sub pages and actions. A switch that is off dims what depends on it.
 
 ### Reliability
@@ -162,6 +163,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 | Page | What it holds |
 |---|---|
+| Island position | Where the island sits, shift, camera hole (automatic, by hand or none) |
 | Display and motion | Card header, audio waveform, haptics, auto-collapse and paused-music timers |
 | Notification cards | Notifications in the island, progress cards, verification codes, voice-chat calls |
 | System events | Charging, sound mode, Bluetooth, setting changes, privacy indicators |

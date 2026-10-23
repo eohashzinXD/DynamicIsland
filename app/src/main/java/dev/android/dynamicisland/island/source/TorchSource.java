@@ -172,6 +172,8 @@ public final class TorchSource {
         it.sliderValue = (level - 1) / (float) (maxLevel - 1);
         it.sliderSteps = maxLevel <= MAX_STEPS ? maxLevel : 0;
         it.sliderChange = this::setFraction;
+        it.sliderTrailing = v -> Math.round(100.0f * levelFor(v) / maxLevel) + "%";
+        it.sliderSubtitle = v -> t("밝기 " + levelFor(v) + " / " + maxLevel, "Brightness " + levelFor(v) + " of " + maxLevel);
         it.actions.add(new IslandItem.Action(t("끄기", "Turn off"), null, null, this::turnOff, false));
         it.postTime = onSince;
         return it;
@@ -186,9 +188,13 @@ public final class TorchSource {
         handlesTorch = true;
     }
 
+    private int levelFor(float fraction) {
+        return 1 + Math.round(Math.max(0.0f, Math.min(1.0f, fraction)) * (maxLevel - 1));
+    }
+
     /** Sets the brightness from a slider position 0..1. */
     void setFraction(float fraction) {
-        int wanted = 1 + Math.round(Math.max(0.0f, Math.min(1.0f, fraction)) * (maxLevel - 1));
+        int wanted = levelFor(fraction);
         if (wanted == level && on) {
             return;
         }
@@ -200,6 +206,7 @@ public final class TorchSource {
                 cameras.turnOnTorchWithStrengthLevel(cameraId, wanted);
             }
             level = wanted;
+            onChange.run(); // the card's texts and the pill follow now, not when the camera reports the new level
         } catch (Throwable t) {
             XLog.e("flashlight level not set", t);
         }

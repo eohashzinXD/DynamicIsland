@@ -1,6 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,8 @@ final class Scene {
     float shade;
     /** The host fades the whole window surface itself for the pulled shade. */
     boolean surfaceFade;
+    /** The widest the pill has been since it appeared, kept when the user asked it not to shrink again. */
+    float keptWidth;
 
     Scene(Springs springs) {
         this.springs = springs;
@@ -72,5 +75,19 @@ final class Scene {
             out.add(minimized.get(j));
         }
         return out;
+    }
+
+    /**
+     * The width the pill should have for {@code content}: its own, or the widest it has been since it appeared when the
+     * user asked it to keep its width.
+     */
+    float pillWidthFor(Content content) {
+        float width = content.desiredWidth();
+        if (!ModuleSettings.keepPillWidth()) {
+            keptWidth = 0.0f;
+            return width;
+        }
+        keptWidth = Math.max(keptWidth, width);
+        return keptWidth;
     }
 }
