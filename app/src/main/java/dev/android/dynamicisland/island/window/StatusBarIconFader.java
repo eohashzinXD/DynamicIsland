@@ -32,6 +32,10 @@ public final class StatusBarIconFader {
     /** Extra gap (dp) that keeps an already hidden icon hidden, so it does not flicker at the edge. */
     private static final float HYSTERESIS_DP = 4.0f;
     private static final String SYSTEM_UI = "com.android.systemui";
+    private static final String PUSHED_GROUP_ID = "notificationIcons";
+    /** Containers that start to the right of the notification icons; they are where the pushed row has to stop. */
+    private static final String[] LIMIT_IDS = {"system_icons", "statusIcons", "battery"};
+    private static final long PUSH_MS = 220;
 
     /** Single status-bar views faded as a unit. */
     private static final String[] LEAF_IDS = {"clock", "battery", "networkSpeed", "knox_status_bar_custom_text_container", "user_switcher_container", "carrier_logo_container", "operator_name_frame"};
@@ -60,6 +64,11 @@ public final class StatusBarIconFader {
     private boolean mobileLogged;
     /** The candidate list must be rebuilt before the next {@link #apply()}. */
     private boolean dirty = true;
+    /** The notification icon row: pushed aside by the island instead of being faded under it. */
+    private ViewGroup pushedRow;
+    private float pushTarget;
+    /** Screen x that a pushed icon must not reach; icons past it fade out instead of running into the system icons. */
+    private float overflowLimit = Float.MAX_VALUE;
 
     public StatusBarIconFader(float density) {
         this.density = density;
@@ -112,6 +121,7 @@ public final class StatusBarIconFader {
 
     /** Cancels every running fade and shows all icons again. */
     void resetAll() {
+        restoreRow();
         for (Map.Entry<View, IconAlphaFade> entry : fades.entrySet()) {
             entry.getValue().cancel();
             entry.getKey().setTransitionAlpha(1.0f);
@@ -121,6 +131,15 @@ public final class StatusBarIconFader {
             eraser.reset();
         }
         dateErasers.clear();
+    }
+
+    private void restoreRow() {
+        if (pushedRow != null) {
+            pushedRow.animate().cancel();
+            pushedRow.setTranslationX(0.0f);
+        }
+        pushTarget = 0.0f;
+        overflowLimit = Float.MAX_VALUE;
     }
 
     private void onStatusBarLayout() {
@@ -136,6 +155,7 @@ public final class StatusBarIconFader {
             if (dirty) {
                 collect();
             }
+            updatePush();
             for (View candidate : candidates) {
                 updateCandidate(candidate);
             }
@@ -143,6 +163,59 @@ public final class StatusBarIconFader {
             // runs from a global layout listener: an exception here would take System UI down
             XLog.once("StatusBarIconFader.apply", t);
         }
+    }
+
+    // ---- pushing the notification icons aside ---------------------------------------------------
+
+    /**
+     * The island over the notification icons moves the whole row out of its way (it slides to the island's
+     * far side) instead of hiding the icons; what no longer fits before the system icons fades.
+     */
+    private void updatePush() {
+        ViewGroup row = pushedRow;
+        if (row == null || !row.isAttachedToWindow() || row.getWidth() == 0) {
+            overflowLimit = Float.MAX_VALUE;
+            return;
+        }
+        row.getLocationOnScreen(screenPos);
+        float margin = density * COVER_MARGIN_DP;
+        float baseLeft = screenPos[0] - row.getTranslationX();
+        float baseRight = baseLeft + contentWidth(row);
+        float target = 0.0f;
+        boolean sharesRows = islandActive && screenPos[1] < island.bottom && screenPos[1] + row.getHeight() > island.top;
+        if (sharesRows && island.right + margin > baseLeft && island.left - margin < baseRight && baseRight > baseLeft) {
+            target = island.right + margin - baseLeft;
+        }
+        if (target != pushTarget) {
+            pushTarget = target;
+            row.animate().cancel();
+            row.animate().translationX(target).setDuration(PUSH_MS).start();
+        }
+        overflowLimit = target > 0.0f ? limitX() : Float.MAX_VALUE;
+    }
+
+    /** Right end of the visible icons, relative to the row. */
+    private static float contentWidth(ViewGroup row) {
+        float right = 0.0f;
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View child = row.getChildAt(i);
+            if (child.getVisibility() == View.VISIBLE) {
+                right = Math.max(right, child.getLeft() + child.getWidth());
+            }
+        }
+        return right;
+    }
+
+    private float limitX() {
+        float limit = Float.MAX_VALUE;
+        for (String id : LIMIT_IDS) {
+            View view = find(statusBar, id);
+            if (view != null && view.isAttachedToWindow() && view.getWidth() > 0) {
+                view.getLocationOnScreen(screenPos);
+                limit = Math.min(limit, screenPos[0] - density * COVER_MARGIN_DP);
+            }
+        }
+        return limit;
     }
 
     // ---- per-icon decision ---------------------------------------------------------------------
@@ -162,6 +235,7 @@ public final class StatusBarIconFader {
                     screenPos[0] + icon.getWidth() * icon.getScaleX(),
                     screenPos[1] + icon.getHeight() * icon.getScaleY());
             float wholeMargin = wasHidden ? stickyMargin : margin;
+            boolean inPushedRow = icon.getParent() == pushedRow;
             boolean sharesRows = iconBounds.bottom > island.top && iconBounds.top < island.bottom;
             dateX = dateStart(icon);
             if (dateX > 0.0f) {
@@ -171,6 +245,8 @@ public final class StatusBarIconFader {
                 float dateMargin = (eraser != null && eraser.isHiding()) ? stickyMargin : margin;
                 dateCovered = sharesRows && iconBounds.right > island.left - dateMargin && splitScreenX < island.right + dateMargin;
                 covered = !sharesRows && splitScreenX > island.left - wholeMargin && iconBounds.left < island.right + wholeMargin;
+            } else if (inPushedRow && pushTarget > 0.0f) {
+                covered = iconBounds.right > overflowLimit; // pushed past the island: only what runs into the system icons goes
             } else {
                 covered = sharesRows && iconBounds.right > island.left - wholeMargin && iconBounds.left < island.right + wholeMargin;
             }
@@ -233,6 +309,11 @@ public final class StatusBarIconFader {
             if (leaf != null) {
                 found.add(leaf);
             }
+        }
+        View row = find(statusBar, PUSHED_GROUP_ID);
+        if (row != pushedRow) {
+            restoreRow();
+            pushedRow = row instanceof ViewGroup ? (ViewGroup) row : null;
         }
         for (String id : GROUP_IDS) {
             View group = find(statusBar, id);
