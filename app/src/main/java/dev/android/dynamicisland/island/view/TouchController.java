@@ -25,6 +25,7 @@ final class TouchController {
     private static final float SWIPE_MIN_DP = 26.0f;
     private static final float SWIPE_DOMINANCE = 1.2f;
     private static final float SWIPE_UP_DISMISS_DP = 48.0f;
+    private static final float SWIPE_UP_CLOSE_DP = 30.0f;
     private static final int HAPTIC_SEEK_DONE = HapticFeedbackConstants.CLOCK_TICK;
     private static final int HAPTIC_CONFIRM = HapticFeedbackConstants.CONTEXT_CLICK;
 
@@ -283,6 +284,12 @@ final class TouchController {
                     other.dx.animateTo((0.12f * pull) / (Math.abs(other.order - downCard.order) + 1), 0.25f, 0.8f);
                 }
             }
+        } else if (dy < -m.dp(SWIPE_UP_CLOSE_DP)) {
+            // a swipe up closes the cards right away, without waiting for the finger to lift
+            releaseStack();
+            ignoreGesture = true;
+            director.collapse();
+            return;
         } else {
             sp.stackDy.snapTo(rubber(dy, m.dp(dy > 0.0f ? 90.0f : 60.0f)));
             sp.stackDx.snapTo(rubber(dx, m.dp(24.0f)));

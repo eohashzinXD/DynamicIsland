@@ -328,6 +328,15 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     @Override
+    public void onPeekClosed() {
+        IslandItem showing = sources.peeks.showing();
+        if (showing != null) {
+            sources.peeks.dismiss(showing);
+        }
+        requestRefresh();
+    }
+
+    @Override
     public void onExpandedChanged(boolean expanded) {
         haptics.tick();
         IslandWindow window = placement.window();

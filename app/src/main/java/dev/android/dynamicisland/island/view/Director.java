@@ -357,12 +357,16 @@ final class Director {
         if (scene.mode != Mode.EXPANDED) {
             return;
         }
+        boolean peek = scene.peekOpen;
         scene.peekOpen = false;
         cancelAutoCollapse();
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
         view.scheduleFrame();
-        if (scene.primary == null) {
+        if (peek) {
+            host.onPeekClosed(); // a notification popup is not kept as a pill: it goes away with its card
+        }
+        if (scene.primary == null || (peek && scene.primary.kind == IslandItem.Kind.PEEK)) {
             collapseCards(true);
             scene.mode = Mode.COMPACT;
             goHidden(false);
