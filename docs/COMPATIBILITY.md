@@ -27,6 +27,7 @@ Names are matched by name only (any class), so a hit from the script is a hint, 
 What differs from One UI 8 and how the module handles it (found by comparing the symbols with `scripts/check_systemui.py`):
 
 - **Hiding the stock capsule.** One UI 7 has no status bar binder; the module makes `OngoingActivityController.shouldVisible` answer "no" and stops the chip animation controller from showing the capsule (`animateChipShow`, `showView`, `nudgeAnimation`). Chosen at start-up by whether the binder class exists (diagnostics: `chip style`).
+- **One UI 8.0 (Android 16, no status bar binder).** Handled by the same path: besides `shouldVisible` the capsule parent is kept hidden by `updateParentViewVisibility`, which this build calls from many places, and the clock nudge is `clockViewNudgeAnimation`. Checked against System UI v16 (36) by symbol only.
 - **Calls.** There is no Samsung call controller; the AOSP `OngoingCallController` is used, as on Android 16. Its call info has no package, app name or icon, so the package comes from the notification key and the label from the package manager.
 - **Heads-up.** `HeadsUpManagerImpl` is called `HeadsUpManagerPhone` (written as `new|old` alternatives, see below).
 - **Shade.** The blurred notification cards (`isBlurBackground`) do not exist, so the card theme and the media player takeover are not installed and the stock rows stay (diagnostics: `shade rows`).

@@ -279,7 +279,7 @@ public final class SystemUiHooks {
     }
 
     /**
-     * One UI 7: the capsule shows when {@code OngoingActivityController.shouldVisible} says so (the status bar fragment
+     * One UI 7 and 8.0: the capsule shows when {@code OngoingActivityController.shouldVisible} says so (the status bar fragment
      * asks it) and is animated in by the chip animation controller, so both are stopped for the capsule view.
      */
     private static void hookCapsuleHidingOneUi7(ClassLoader cl) {
@@ -287,7 +287,12 @@ public final class SystemUiHooks {
         for (String show : new String[]{"animateChipShow", "showView"}) {
             Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, show, SafeHook.before(show, SystemUiHooks::keepCapsuleGone));
         }
-        Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, "nudgeAnimation", SafeHook.before("nudgeAnimation", param -> param.setResult(null)));
+        for (String nudge : new String[]{"nudgeAnimation", "clockViewNudgeAnimation"}) {
+            Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, nudge, SafeHook.before(nudge, param -> param.setResult(null)));
+        }
+        // One UI 8.0 has no status bar binder either, but its controller sets the capsule's parent visible from many places
+        // (media changes, heads-up, state and configuration changes) without asking shouldVisible
+        Refl.hookAll(cl, OA_CONTROLLER, "updateParentViewVisibility", SafeHook.before("updateParentViewVisibility", SystemUiHooks::keepChipParentGone));
     }
 
     /**
@@ -355,7 +360,7 @@ public final class SystemUiHooks {
     /** Android 16: the status bar fragment animates the cast and call chips in, and the AOSP call controller is used. */
     private static void hookAndroid16Chips(ClassLoader cl) {
         Refl.hookAll(cl, STATUS_BAR_FRAGMENT, "animateShow",
-                SafeHook.before("animateShow (A16)", param -> goneIfChipView(param, idCapsule, idCastChip, idCallChip)));
+                SafeHook.before("animateShow (A16)", param -> goneIfChipView(param, idCapsule, idCapsuleContainer, idChipsContainer, idCastChip, idCallChip)));
         Refl.hookConstructors(cl, AOSP_CALL_CONTROLLER, SafeHook.after("call ctor (A16)", SystemUiHooks::captureCallController));
         refreshAfter(cl, AOSP_CALL_CONTROLLER, "call change (A16)", CALL_CHANGE_METHODS);
     }
