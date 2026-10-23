@@ -81,7 +81,7 @@ final class PillPainter {
         LiquidBridge cardBridge = bridge.update(t, pill, r);
         boolean pillVisible = pill.width() > IslandView.MIN_VISIBLE_SIZE && pill.height() > IslandView.MIN_VISIBLE_SIZE;
 
-        if (((pillVisible && scene.mode == Mode.COMPACT) || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
+        if (((pillVisible && scene.mode == Mode.COMPACT && sp.pillBlob.value() > 0.05f) || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
             drawOutline(canvas, pill, r, pillVisible, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
         }
 
@@ -167,7 +167,8 @@ final class PillPainter {
     }
 
     private void drawLayer(Canvas canvas, Layer layer, RectF shape, long t) {
-        float alpha = layer.alpha(t);
+        // the content goes with the pill's body: a pill that is out of sight (the cards are folding back into it) shows nothing
+        float alpha = layer.alpha(t) * clamp01(sp.pillBlob.value());
         if (alpha <= IslandView.MIN_VISIBLE_ALPHA) {
             return;
         }

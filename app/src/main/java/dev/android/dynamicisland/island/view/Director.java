@@ -41,6 +41,9 @@ final class Director {
     private static final long LEGACY_REGROW_DELAY_MS = 420;
     /** A closing card waits for the pill to grow back at most this long before it is dropped anyway. */
     private static final long PILL_SETTLE_TIMEOUT_MS = 1200;
+    /** How close a folding card has to be to the pill's size before the pill is drawn again. */
+    private static final float PILL_TAKEOVER_H_DP = 12.0f;
+    private static final float PILL_TAKEOVER_W_DP = 40.0f;
     private static final long FADE_PILL_BLOB_DELAY_MS = 260;
 
     /** Horizontal speed kick (dp) when the shown item changes towards the given side. */
@@ -366,7 +369,11 @@ final class Director {
         scene.held = false;
         cancelAutoCollapse();
         view.removeCallbacks(fadePillBlob);
-        sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
+        if (legacy() || scene.cards.isEmpty()) {
+            sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
+        }
+        // otherwise the pill stays out of sight while the cards fold: the card itself is the pill on its way back, and
+        // stepCards brings the pill in when the card arrives, so there is one pill instead of a pill and a card
         view.scheduleFrame();
         if (peek) {
             host.onPeekClosed(); // a notification popup is not kept as a pill: it goes away with its card
@@ -558,6 +565,10 @@ final class Director {
                 active = true; // a leaving card has to reach "gone" even if its springs rest early
             }
         }
+        if (scene.mode == Mode.COMPACT && sp.pillBlob.target() < 1.0f && cardsArrived()) {
+            sp.pillBlob.animateTo(1.0f, 0.08f, 1.0f);
+            active = true;
+        }
         if (scene.cards.isEmpty() && scene.mode != Mode.EXPANDED) {
             host.onWindowHeightNeeded(m.compactWindowHeight());
             if (scene.mode == Mode.COMPACT) {
@@ -573,6 +584,17 @@ final class Director {
             }
         }
         return active;
+    }
+
+    /** True once every card is gone or has folded to (nearly) the pill's shape, so the pill can take over from it. */
+    private boolean cardsArrived() {
+        for (Card c : scene.cards) {
+            if (!c.leaving || !c.launched || Math.abs(c.h.value() - c.targetH) > m.dp(PILL_TAKEOVER_H_DP)
+                    || Math.abs(c.w.value() - c.targetW) > m.dp(PILL_TAKEOVER_W_DP)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** While the stack closes the card keeps covering the pill until the pill itself has grown back, so no step shows. */

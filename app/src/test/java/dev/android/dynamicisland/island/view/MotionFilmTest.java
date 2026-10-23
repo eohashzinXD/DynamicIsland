@@ -97,11 +97,14 @@ public class MotionFilmTest {
                 view.dispatchTouchEvent(MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, W / 2f, 66f, 0));
                 view.dispatchTouchEvent(MotionEvent.obtain(t, t + 40, MotionEvent.ACTION_UP, W / 2f, 66f, 0));
             }
+            if (frame == 76) {
+                fire(view, "fadePillBlobNow"); // a view that is not attached never runs the delayed fade of the pill
+            }
             if (frame == 160) {
                 view.collapse();
             }
             if (frame == 164) {
-                fire(view, "regrowPillNow");
+                fireTask(view, "regrowPill"); // what the 70 ms timer after collapse() runs on a device
             }
             if (frame == 230) {
                 view.setItems(new ArrayList<>(), 0, new ArrayList<>());
@@ -147,6 +150,20 @@ public class MotionFilmTest {
             java.lang.reflect.Method m = director.getClass().getDeclaredMethod(method);
             m.setAccessible(true);
             m.invoke(director);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /** Runs a delayed Runnable field of the director now. */
+    private static void fireTask(IslandView view, String field) {
+        try {
+            java.lang.reflect.Field f = IslandView.class.getDeclaredField("director");
+            f.setAccessible(true);
+            Object director = f.get(view);
+            java.lang.reflect.Field task = director.getClass().getDeclaredField(field);
+            task.setAccessible(true);
+            ((Runnable) task.get(director)).run();
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }
