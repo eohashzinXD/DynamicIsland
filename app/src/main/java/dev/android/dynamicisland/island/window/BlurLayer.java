@@ -22,8 +22,12 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     private static final int BLUR_RADIUS = 120;
     /** Faint dark tint under the blur so bright wallpapers do not wash the card out. */
     private static final int BLUR_TINT = 0x14000000;
-    /** Corner radius changes smaller than this (px) do not rebuild the blur info. */
-    private static final float CORNER_EPSILON = 1.0f;
+    /**
+     * Corner radius changes smaller than this (dp) do not rebuild the blur info. A card that opens or folds changes its
+     * radius every frame (it is half its height while it is small); rebuilding the blur each time made it drop out for
+     * a frame or two, which showed as the card turning see-through and unblurred.
+     */
+    private static final float CORNER_EPSILON_DP = 8.0f;
     /** Slots narrower or shorter than this (px) are hidden instead of blurred. */
     private static final float MIN_SLOT_SIZE = 2.0f;
 
@@ -138,7 +142,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         }
 
         private void refreshBlur(float corner) {
-            if (blurApplied && Math.abs(corner - blurCorner) < CORNER_EPSILON) {
+            if (blurApplied && Math.abs(corner - blurCorner) < CORNER_EPSILON_DP * getResources().getDisplayMetrics().density) {
                 return;
             }
             try {
