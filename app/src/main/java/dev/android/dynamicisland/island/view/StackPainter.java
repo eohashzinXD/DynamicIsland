@@ -27,8 +27,8 @@ final class StackPainter {
     private static final float CONTENT_SCALE_FROM = 0.95f;
     /** How long a leaving card's content takes to fade while it shrinks with the card. */
     private static final float LEAVING_CONTENT_FADE_MS = 90.0f;
-    /** Fold progress at which a leaving card's content starts to fade. */
-    private static final float FOLD_FADE_FROM = 0.6f;
+    /** Fold progress by which a leaving card's content is gone: it fades first, then the empty shape folds into the pill. */
+    private static final float FOLD_FADE_TO = 0.38f;
     /** Opening progress at which a new card's content is fully there. */
     private static final float OPEN_FADE_TO = 0.25f;
     /** A card that is leaving reports this "elapsed" time so its content is fully shown while it fades. */
@@ -74,9 +74,9 @@ final class StackPainter {
             if (ModuleSettings.legacyAnimation()) {
                 return 1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS);
             }
-            // the content stays while the card folds (it shrinks with it) and only melts into the pill at the end,
-            // instead of the card travelling back as an empty shape
-            return 1.0f - clamp01((foldProgress(c) - FOLD_FADE_FROM) / (1.0f - FOLD_FADE_FROM));
+            // the content stays crisp and fades out in the first part of the fold, while the card is still large; what
+            // travels back into the pill is the plain shape, which does not leave a smear of tiny text behind
+            return 1.0f - Easing.easeInOut(clamp01(foldProgress(c) / FOLD_FADE_TO));
         }
         if (!ModuleSettings.legacyAnimation()) {
             // the mirror of folding: the content grows with the card from the first moment instead of appearing in an empty shape
@@ -218,9 +218,14 @@ final class StackPainter {
         }
         // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
         // when it leaves) instead of keeping its laid-out size and being cut off at the edges
-        canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
         long elapsed = c.leaving ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
-        drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
+        if (c.leaving && !ModuleSettings.legacyAnimation()) {
+            // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
+            drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
+        } else {
+            canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
+            drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
+        }
         canvas.restoreToCount(save);
     }
 

@@ -27,9 +27,9 @@ public final class Motion {
     /** A card growing to full height. */
     public static final Motion CARD_GROW = new Motion(0.5f, 0.64f);
     /** A card being drawn back up into the pill. */
-    public static final Motion CARD_RETURN = new Motion(0.36f, 0.84f);
+    public static final Motion CARD_RETURN = new Motion(0.3f, 0.9f);
     /** A card narrowing and flattening on its way back. */
-    public static final Motion CARD_FOLD = new Motion(0.28f, 0.9f);
+    public static final Motion CARD_FOLD = new Motion(0.3f, 0.9f);
 
     /** The bubble splitting off the pill. */
     public static final Motion BUBBLE_SPLIT = new Motion(0.46f, 0.56f);

@@ -570,8 +570,10 @@ final class Director {
         if (scene.mode != Mode.COMPACT || scene.mainIn == null) {
             return true;
         }
-        return Math.abs(sp.width.value() - scene.pillWidthFor(scene.mainIn.content)) < m.dp(4.0f)
-                && Math.abs(sp.height.value() - m.pillH) < m.dp(3.0f);
+        // close enough that the black card handing over to the pill does not show; waiting for the pill's last wobble
+        // left an empty dark smear around the island for a third of a second
+        return Math.abs(sp.width.value() - scene.pillWidthFor(scene.mainIn.content)) < m.dp(8.0f)
+                && Math.abs(sp.height.value() - m.pillH) < m.dp(4.0f);
     }
 
     /** True when the user chose the animations of 0.1.3 and before. */
