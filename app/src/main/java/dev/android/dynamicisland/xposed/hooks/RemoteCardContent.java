@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.xposed.hooks;
 
+import android.content.res.Configuration;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -58,6 +59,14 @@ final class RemoteCardContent {
         }
     }
 
+    /** The card is dark in every theme; in the light theme the app's dark text would vanish on it. */
+    private void lightenForCard() {
+        boolean night = (host.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        if (!night && view != null) {
+            DarkRemote.lighten(view);
+        }
+    }
+
     private View bind(RemoteViews rv) {
         if (view != null && source == rv) {
             return view;
@@ -66,6 +75,7 @@ final class RemoteCardContent {
             try {
                 rv.reapply(host.getContext(), view);
                 source = rv;
+                lightenForCard();
                 return view;
             } catch (Throwable ignored) {
                 // the stale view cannot take the update: inflate a fresh one below
@@ -76,6 +86,7 @@ final class RemoteCardContent {
         }
         view = rv.apply(host.getContext(), host);
         source = rv;
+        lightenForCard();
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(pad, pad, pad, pad);

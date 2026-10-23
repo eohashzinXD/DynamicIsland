@@ -79,12 +79,6 @@ final class CardRowState {
         return layout == null ? null : EXPOSED.get(layout);
     }
 
-    /** True when the card in this content view is the app's own RemoteViews, whose colours are made for the system theme. */
-    static boolean hostsRemote(Object layout) {
-        Object child = layout == null ? null : Refl.get(layout, "mContractedChild");
-        return child instanceof LiveCardView && ((LiveCardView) child).hasRemoteContent();
-    }
-
     /** True when the content view holds a card or is in the middle of a rebind that will bring it back. */
     static boolean owns(Object layout) {
         return layout != null && (installedIn(layout) != null || EXPOSED.containsKey(layout));

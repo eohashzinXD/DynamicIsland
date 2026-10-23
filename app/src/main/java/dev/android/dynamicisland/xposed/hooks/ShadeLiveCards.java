@@ -54,11 +54,6 @@ public final class ShadeLiveCards {
     }
 
     /** True when the row's content view currently holds (or is just rebinding) one of our cards. */
-    static boolean isDrawnCardRow(View row) {
-        Object layout = Refl.get(row, "mPrivateLayout");
-        return CardRowState.owns(layout) && !CardRowState.hostsRemote(layout);
-    }
-
     static boolean isCardRow(View row) {
         return CardRowState.owns(Refl.get(row, "mPrivateLayout"));
     }
