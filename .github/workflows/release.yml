@@ -66,14 +66,17 @@ jobs:
           sha256sum "$apk" | tee "$apk.sha256"
           # notes come from docs/release-notes/<version>.md when it exists, else they are generated from the commits
           notes_file="docs/release-notes/${VERSION}.md"
+          # a version with a suffix (0.1.6-dev2) is published as a pre-release
+          pre=""
+          case "$VERSION" in *-*) pre="--prerelease" ;; esac
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "$apk" "$apk.sha256" --clobber
-            gh release edit "$TAG" --title "Dynamic Island ${VERSION}"
+            gh release edit "$TAG" --title "Dynamic Island ${VERSION}" $pre
             if [ -f "$notes_file" ]; then
               gh release edit "$TAG" --notes-file "$notes_file"
             fi
           elif [ -f "$notes_file" ]; then
-            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --notes-file "$notes_file"
+            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --notes-file "$notes_file" $pre
           else
-            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --generate-notes
+            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --generate-notes $pre
           fi

@@ -84,6 +84,8 @@ public final class SystemUiHooks {
     private static void reportUnattached() {
         Set<String> failed = Refl.hookFailures();
         Diagnostics.fact("hooks not attached", failed.isEmpty() ? "none" : failed.toString());
+        Set<String> older = Refl.fallbacksUsed();
+        Diagnostics.fact("older names used", older.isEmpty() ? "none" : older.toString());
         String installed = "SystemUI hooks installed (SDK " + Build.VERSION.SDK_INT + ")";
         XLog.i(failed.isEmpty() ? installed : installed + ", " + failed.size() + " hook(s) did not attach: " + failed);
     }
@@ -151,12 +153,29 @@ public final class SystemUiHooks {
 
     /** Records which System UI build the module runs in, for the report. */
     private static void describeSystemUi(Application app) {
+        Diagnostics.fact("one ui", oneUiVersion() + " (android sdk " + Build.VERSION.SDK_INT + ")");
         try {
             PackageInfo info = app.getPackageManager().getPackageInfo(SUI, 0);
             Diagnostics.fact("system ui", info.versionName + " (" + info.getLongVersionCode() + ")");
         } catch (Throwable t) {
             Diagnostics.fact("system ui", "unknown: " + t.getClass().getSimpleName());
         }
+    }
+
+    /** The One UI version Samsung keeps in a system property as a number (80000 = 8.0, 70100 = 7.1), or "unknown". */
+    private static String oneUiVersion() {
+        try {
+            Object value = Class.forName("android.os.SystemProperties").getMethod("get", String.class, String.class)
+                    .invoke(null, "ro.build.version.oneui", "");
+            String text = String.valueOf(value);
+            if (text.matches("\\d{5,6}")) {
+                int number = Integer.parseInt(text);
+                return (number / 10000) + "." + ((number % 10000) / 100) + " (" + text + ")";
+            }
+        } catch (Throwable ignored) {
+            // not a Samsung build, or the property is hidden
+        }
+        return "unknown";
     }
 
     private static void resolveIds(Resources res) {

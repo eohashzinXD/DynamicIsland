@@ -31,24 +31,57 @@ public final class Refl {
 
     // ---- classes -------------------------------------------------------------------------------
 
+    /**
+     * Every name this class works with may list alternatives separated by {@code |}, the newest System UI build's
+     * name first ("new.Name|old.Name"): the first one that exists on the running build is used, so one source line
+     * serves several One UI versions. Alternatives other than the first that were used are kept for the report.
+     */
+    private static final String ALTERNATIVE_SEPARATOR = "\\|";
+    private static final Set<String> FALLBACKS_USED = ConcurrentHashMap.newKeySet();
+
+    private static String[] alternatives(String names) {
+        return names.indexOf('|') < 0 ? new String[] {names} : names.split(ALTERNATIVE_SEPARATOR);
+    }
+
+    private static void noteFallback(String names, int index) {
+        if (index > 0 && FALLBACKS_USED.add(names)) {
+            String[] all = alternatives(names);
+            XLog.i("older name used: " + all[index] + " (not " + all[0] + ")");
+        }
+    }
+
+    /** The names that were found only under an older alternative, for the diagnostics report. */
+    public static Set<String> fallbacksUsed() {
+        return new TreeSet<>(FALLBACKS_USED);
+    }
+
     /** Loads a class without initializing it; null (logged once) when {@code cl} does not have it. */
     public static Class<?> findClass(String name, ClassLoader cl) {
-        try {
-            return Class.forName(name, false, cl);
-        } catch (Throwable t) {
-            noteMiss("class:" + name, "class not found: " + name);
-            return null;
+        String[] all = alternatives(name);
+        for (int i = 0; i < all.length; i++) {
+            try {
+                Class<?> found = Class.forName(all[i], false, cl);
+                noteFallback(name, i);
+                return found;
+            } catch (Throwable t) {
+                // try the next alternative
+            }
         }
+        noteMiss("class:" + name, "class not found: " + name);
+        return null;
     }
 
     /** True when the class exists in {@code cl}; unlike {@link #findClass} it never logs. */
     public static boolean hasClass(String name, ClassLoader cl) {
-        try {
-            Class.forName(name, false, cl);
-            return true;
-        } catch (Throwable t) {
-            return false;
+        for (String candidate : alternatives(name)) {
+            try {
+                Class.forName(candidate, false, cl);
+                return true;
+            } catch (Throwable t) {
+                // try the next alternative
+            }
         }
+        return false;
     }
 
     /** Hooks that did not attach, so a System UI update that renamed something is obvious in the log. */
@@ -71,15 +104,19 @@ public final class Refl {
         if (known != null) {
             return known;
         }
-        Class<?> level = cls;
-        while (level != null) {
-            try {
-                Field found = level.getDeclaredField(name);
-                found.setAccessible(true);
-                FIELD_CACHE.put(key, found);
-                return found;
-            } catch (NoSuchFieldException notHere) {
-                level = level.getSuperclass();
+        String[] all = alternatives(name);
+        for (int i = 0; i < all.length; i++) {
+            Class<?> level = cls;
+            while (level != null) {
+                try {
+                    Field found = level.getDeclaredField(all[i]);
+                    found.setAccessible(true);
+                    FIELD_CACHE.put(key, found);
+                    noteFallback(name, i);
+                    return found;
+                } catch (NoSuchFieldException notHere) {
+                    level = level.getSuperclass();
+                }
             }
         }
         noteMiss("field:" + key, "field not found: " + key);
@@ -151,12 +188,16 @@ public final class Refl {
         if (known != null) {
             return known;
         }
-        for (Class<?> level = cls; level != null; level = level.getSuperclass()) {
-            for (Method candidate : level.getDeclaredMethods()) {
-                if (candidate.getParameterCount() == paramCount && candidate.getName().equals(name)) {
-                    candidate.setAccessible(true);
-                    METHOD_CACHE.put(key, candidate);
-                    return candidate;
+        String[] all = alternatives(name);
+        for (int i = 0; i < all.length; i++) {
+            for (Class<?> level = cls; level != null; level = level.getSuperclass()) {
+                for (Method candidate : level.getDeclaredMethods()) {
+                    if (candidate.getParameterCount() == paramCount && candidate.getName().equals(all[i])) {
+                        candidate.setAccessible(true);
+                        METHOD_CACHE.put(key, candidate);
+                        noteFallback(name, i);
+                        return candidate;
+                    }
                 }
             }
         }
@@ -200,14 +241,7 @@ public final class Refl {
         if (cls == null) {
             return 0;
         }
-        int hooked = 0;
-        for (Method m : cls.getDeclaredMethods()) {
-            if (!m.getName().equals(name) || Modifier.isAbstract(m.getModifiers())) {
-                continue;
-            }
-            XposedBridge.hookMethod(m, hook);
-            hooked++;
-        }
+        int hooked = hookFirstAlternative(cls, name, hook);
         if (hooked == 0) {
             UNATTACHED.add(cls.getName() + "#" + name);
             XLog.i("nothing to hook: " + cls.getName() + "#" + name);
@@ -215,17 +249,47 @@ public final class Refl {
         return hooked;
     }
 
+    /** Hooks the methods of the first method-name alternative that exists on {@code cls}. */
+    private static int hookFirstAlternative(Class<?> cls, String names, XC_MethodHook hook) {
+        String[] all = alternatives(names);
+        for (int i = 0; i < all.length; i++) {
+            int hooked = 0;
+            for (Method m : cls.getDeclaredMethods()) {
+                if (!m.getName().equals(all[i]) || Modifier.isAbstract(m.getModifiers())) {
+                    continue;
+                }
+                XposedBridge.hookMethod(m, hook);
+                hooked++;
+            }
+            if (hooked > 0) {
+                noteFallback(names, i);
+                return hooked;
+            }
+        }
+        return 0;
+    }
+
+    /** Class and method names may both list alternatives (see {@link #findClass}); the first pair that hooks wins. */
     public static int hookAll(ClassLoader cl, String className, String name, XC_MethodHook hook) {
-        Class<?> cls = findClass(className, cl);
-        if (cls != null) {
-            return hookAll(cls, name, hook);
+        String[] classes = alternatives(className);
+        for (int i = 0; i < classes.length; i++) {
+            Class<?> cls = hasClass(classes[i], cl) ? findClass(classes[i], cl) : null;
+            if (cls == null) {
+                continue;
+            }
+            int hooked = hookFirstAlternative(cls, name, hook);
+            if (hooked > 0) {
+                noteFallback(className, i);
+                return hooked;
+            }
         }
         UNATTACHED.add(className + "#" + name);
+        XLog.i("nothing to hook: " + className + "#" + name);
         return 0;
     }
 
     public static int hookConstructors(ClassLoader cl, String className, XC_MethodHook hook) {
-        Class<?> cls = findClass(className, cl);
+        Class<?> cls = findClass(className, cl); // alternatives are tried by findClass
         if (cls == null) {
             UNATTACHED.add(className + "#<init>");
             return 0;
