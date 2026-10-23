@@ -135,6 +135,8 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         private boolean blurApplied;
         /** Corner radius the current blur was built with. */
         private float blurCorner;
+        /** Corner radius of the previous frame: when it stops moving, the blur is rebuilt with the exact value. */
+        private float lastCorner = -1.0f;
 
         Slot(Context context, Object owner) {
             super(context);
@@ -160,8 +162,16 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         }
 
         private void refreshBlur(float corner) {
-            if (blurApplied && Math.abs(corner - blurCorner) < CORNER_EPSILON_DP * getResources().getDisplayMetrics().density) {
-                return;
+            float density = getResources().getDisplayMetrics().density;
+            boolean steady = Math.abs(corner - lastCorner) < 0.25f * density;
+            lastCorner = corner;
+            if (blurApplied) {
+                float off = Math.abs(corner - blurCorner);
+                // while the radius is moving a rough blur is fine; once it settles it must match the card, or the
+                // blur sticks out of the card's corners
+                if (off < CORNER_EPSILON_DP * density && (!steady || off < 0.5f * density)) {
+                    return;
+                }
             }
             try {
                 SemBlur.apply(this, BLUR_RADIUS, corner, BLUR_TINT);
