@@ -133,6 +133,7 @@ final class IslandSources {
             // System UI's own "flashlight in use" notification would show next to the brightness card
             items.removeIf(it -> TorchSource.isStockNotification(it.key) || TorchSource.isStockNotification(it.sourceKey));
         }
+        SwitchGate.apply(items);
         ItemDedupe.apply(items, HideDuplicated::copyKeysOf);
         return out;
     }
