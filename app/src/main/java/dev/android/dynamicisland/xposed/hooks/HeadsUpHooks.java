@@ -27,6 +27,8 @@ public final class HeadsUpHooks {
 
     static void install(ClassLoader cl) {
         Refl.hookAll(cl, MANAGER, "shouldHeadsUpBecomePinned", SafeHook.after("heads-up to island", HeadsUpHooks::afterPinDecision));
+        // Android 17 also pins from a delayed runnable (several banners in a row) without asking the method above again
+        Refl.hookAll(cl, MANAGER, "setEntryPinned", SafeHook.before("heads-up pin to island", HeadsUpHooks::beforeSetPinned));
     }
 
     /** Removes the stock banner of {@code key} when it is up: the island shows the notification now. */
@@ -49,6 +51,25 @@ public final class HeadsUpHooks {
         } catch (Throwable t) {
             XLog.once("HeadsUpHooks.dismissStock", t);
             return "failed: " + t.getClass().getSimpleName();
+        }
+    }
+
+    /** Before {@code setEntryPinned(entry, status, reason)}: a system pin the island takes over becomes "not pinned". */
+    private static void beforeSetPinned(XC_MethodHook.MethodHookParam p) {
+        if (p.args.length < 2 || p.args[0] == null || p.args[1] == null || !"PinnedBySystem".equals(String.valueOf(p.args[1]))) {
+            return;
+        }
+        Object notificationEntry = Refl.get(p.args[0], "mEntry");
+        Object sbn = notificationEntry == null ? null : Refl.get(notificationEntry, "mSbn");
+        Object notPinned = Refl.getStatic(p.args[1].getClass(), "NotPinned");
+        IslandController controller = IslandController.get();
+        if (notPinned != null && controller != null && sbn instanceof StatusBarNotification
+                && controller.peekHeadsUp((StatusBarNotification) sbn)) {
+            if (askedLogs < MAX_ASKED_LOGS) {
+                askedLogs++;
+                XLog.event("heads-up pin by system taken over: " + ((StatusBarNotification) sbn).getPackageName());
+            }
+            p.args[1] = notPinned;
         }
     }
 

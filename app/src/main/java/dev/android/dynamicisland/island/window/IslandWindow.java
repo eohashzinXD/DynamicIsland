@@ -221,10 +221,11 @@ public final class IslandWindow {
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                             | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.LEFT;
-            lp.x = margin;
-            lp.y = requestedHeight + Math.round(density * 6.0f);
-            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+            // like the input line of a chat app: at the bottom, riding on top of the keyboard where it is seen
+            lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            lp.y = Math.round(density * 8.0f);
+            lp.setFitInsetsTypes(WindowInsets.Type.ime() | WindowInsets.Type.navigationBars());
+            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
             lp.windowAnimations = 0;
             lp.setTitle("DynamicIslandReply");
             Field privateFlags = WindowManager.LayoutParams.class.getField("privateFlags");
