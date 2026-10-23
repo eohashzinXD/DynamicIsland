@@ -99,12 +99,16 @@ final class Director {
     /** (Re)starts the countdown after which the open stack closes by itself. */
     void scheduleAutoCollapse(long ms) {
         view.removeCallbacks(autoCollapse);
-        view.postDelayed(autoCollapse, ms);
+        if (!scene.held) {
+            view.postDelayed(autoCollapse, ms);
+        }
     }
 
     /** Like {@link #scheduleAutoCollapse} with the user's setting, but without cancelling an earlier countdown. */
     void postAutoCollapse() {
-        view.postDelayed(autoCollapse, ModuleSettings.autoCollapseMs());
+        if (!scene.held) {
+            view.postDelayed(autoCollapse, ModuleSettings.autoCollapseMs());
+        }
     }
 
     // ---- the item list ---------------------------------------------------------------------------------------------
@@ -359,6 +363,7 @@ final class Director {
         }
         boolean peek = scene.peekOpen;
         scene.peekOpen = false;
+        scene.held = false;
         cancelAutoCollapse();
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);

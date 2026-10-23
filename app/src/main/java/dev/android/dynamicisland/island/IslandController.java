@@ -307,28 +307,41 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         }
         boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
         CharSequence name = item.title == null ? "" : item.title;
+        long originalExpiry = item.expiresAtUptime;
         boolean shown = window.showReply(ko ? name + "에게 답장" : "Reply to " + name, ko ? "전송" : "Send", new IslandWindow.ReplyListener() {
             @Override
             public void onSend(CharSequence text) {
                 launcher.sendReply(action, text);
-                window.hideReply();
-                placement.view().collapse();
+                endReply(window);
             }
 
             @Override
             public void onDismiss() {
-                window.hideReply();
-                placement.view().collapse();
+                endReply(window);
             }
         });
         if (shown) {
-            placement.view().holdOpen();
+            // the timers stop while the user types: the card's own countdown and the popup's lifetime
+            item.expiresAtUptime = Long.MAX_VALUE / 2;
+            placement.view().setHeld(true);
+        } else {
+            item.expiresAtUptime = originalExpiry;
         }
         return shown;
     }
 
+    private void endReply(IslandWindow window) {
+        window.hideReply();
+        placement.view().setHeld(false);
+        placement.view().collapse();
+    }
+
     @Override
     public void onPeekClosed() {
+        IslandWindow window = placement.window();
+        if (window != null && window.isReplying()) {
+            window.hideReply(); // the card was closed under the reply field (a swipe): the field goes with it
+        }
         IslandItem showing = sources.peeks.showing();
         if (showing != null) {
             sources.peeks.dismiss(showing);

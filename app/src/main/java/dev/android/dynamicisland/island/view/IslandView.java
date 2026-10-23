@@ -422,9 +422,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         return scene.mode == Mode.EXPANDED && scene.peekOpen;
     }
 
-    /** Keeps the open card from closing by itself (while the user types a reply). */
-    public void holdOpen() {
-        director.cancelAutoCollapse();
+    /** While held (the user types a reply) the open card does not close by itself; releasing does not close it either. */
+    public void setHeld(boolean held) {
+        scene.held = held;
+        if (held) {
+            director.cancelAutoCollapse();
+        }
     }
 
     public void collapse() {
