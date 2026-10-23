@@ -12,6 +12,7 @@ import dev.android.dynamicisland.island.source.MediaSource;
 import dev.android.dynamicisland.island.source.OaSource;
 import dev.android.dynamicisland.island.source.PeekSource;
 import dev.android.dynamicisland.island.source.PrivacySource;
+import dev.android.dynamicisland.island.source.PromotedSource;
 import dev.android.dynamicisland.island.source.ProgressSource;
 import dev.android.dynamicisland.island.source.RuleSource;
 import dev.android.dynamicisland.island.source.TorchSource;
@@ -49,6 +50,7 @@ final class IslandSources {
     final TorchSource torch;
     final PrivacySource privacy;
     final ProgressSource progress;
+    final PromotedSource promoted;
     final RuleSource rules;
     final CallSource calls;
     final PeekSource peeks;
@@ -64,6 +66,8 @@ final class IslandSources {
         torch = new TorchSource(ctx, main, onChange);
         privacy = new PrivacySource(ctx, main, onChange);
         progress = new ProgressSource(ctx, main, onChange);
+        promoted = new PromotedSource(ctx, main, onChange);
+        promoted.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules = new RuleSource(ctx, main, onChange);
         progress.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
@@ -112,6 +116,7 @@ final class IslandSources {
             main.postDelayed(onChange, PREVIEW_RECHECK_MS); // so the sample goes away when the page stops asking for it
         }
         guarded("privacy", () -> privacy.collect(items, foreground));
+        guarded("live notifications", () -> promoted.collect(items, foreground));
         guarded("progress", () -> progress.collect(items, foreground));
         guarded("rules", () -> rules.collect(items, foreground));
         guarded("calls", () -> calls.collect(items, foreground));

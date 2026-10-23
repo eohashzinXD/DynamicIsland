@@ -1,6 +1,7 @@
 package dev.android.dynamicisland.xposed.hooks;
 
 import dev.android.dynamicisland.island.IslandController;
+import dev.android.dynamicisland.island.source.PromotedSource;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.SafeHook;
 import de.robv.android.xposed.XC_MethodHook;
@@ -50,6 +51,7 @@ final class AospChips {
         } catch (Throwable t) {
             return; // no way to build an empty chip: leave the stock chips alone
         }
+        PromotedSource.setEnabled(true); // the live notification chips go too, the island has cards for them
         XC_MethodHook hook = SafeHook.before("chip bundle", param -> cover(param, calls));
         Refl.hookAll(cl, VIEW_MODEL, "rankChips", hook);
         Refl.hookAll(cl, VIEW_MODEL, "pickMostImportantChip", hook);
@@ -57,7 +59,7 @@ final class AospChips {
 
     private static void cover(XC_MethodHook.MethodHookParam param, SystemUiHooks.CallCoverage calls) {
         Object bundle = param.args.length > 0 ? param.args[0] : null;
-        if (bundle != null && takeOut(bundle, calls.covered())) {
+        if (bundle != null && takeOut(bundle, calls.covered(), true)) {
             IslandController island = IslandController.get();
             if (island != null) {
                 island.setCastBundle(FEED);
@@ -66,7 +68,7 @@ final class AospChips {
     }
 
     /** Swaps the covered chips of {@code bundle} for the empty one; true when the island's models changed. */
-    static boolean takeOut(Object bundle, boolean callCovered) {
+    static boolean takeOut(Object bundle, boolean callCovered, boolean notifsCovered) {
         boolean changed = false;
         for (String slot : SLOTS) {
             Object model = Refl.get(bundle, slot);
@@ -81,6 +83,10 @@ final class AospChips {
         }
         if (callCovered && isActive(Refl.get(bundle, "call"))) {
             Refl.set(bundle, "call", hidden);
+        }
+        Object notifs = Refl.get(bundle, "notifs");
+        if (notifsCovered && notifs instanceof java.util.List && !((java.util.List<?>) notifs).isEmpty()) {
+            Refl.set(bundle, "notifs", java.util.Collections.emptyList());
         }
         return changed;
     }

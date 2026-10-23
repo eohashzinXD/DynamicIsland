@@ -38,8 +38,9 @@ Android 16 System UI without any Samsung class (checked against a Nothing OS bui
 
 - **Stock chips.** The status bar chips for calls, screen recording, screen sharing and casting duplicated the island. `OngoingActivityChipsViewModel.rankChips` / `pickMostImportantChip` get their bundle with those chips swapped for an empty one, so neither the view nor the Compose chip row sees them. The call chip goes only once the island has the call controller.
 - **Island cards.** The swapped-out models are handed to the screen-record / cast source (same field names as the bundle; the timer comes from `startTimeMs`). No stop button yet: the stock stop action needs the chip view.
-- **Left alone.** Promoted (live) app notifications keep their chip: the island has no card for them.
-- **Everything Samsung-specific** (capsule, flashlight level, ongoing-activity reader, blur) is skipped by the same feature checks as on One UI 7.
+- **Live notifications.** Promoted ongoing notifications (`isPromotedOngoing`, or the `requestPromotedOngoing` extra) become island cards (`PromotedSource`: title, text, chronometer or short critical text, progress, actions), their stock chips are removed from the bundle too, and the notification row in the shade is hidden like the progress ones. Calls and media keep their own sources.
+- **Blur** is not touched: it is used wherever `SemBlurInfo` exists and only switched off when Samsung's own feature flag says so.
+- **Everything else Samsung-specific** (capsule, flashlight level, ongoing-activity reader) is skipped by the same feature checks as on One UI 7.
 
 ## Name alternatives
 

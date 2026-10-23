@@ -178,6 +178,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** True when the island shows a card for this notification and the setting asks to drop the shade row. */
     public boolean hidesOriginal(String notificationKey) {
         return (ModuleSettings.hideProgressOriginals() && sources.progress.isShownOnIsland(notificationKey))
+                || (ModuleSettings.hideProgressOriginals() && sources.promoted.isShownOnIsland(notificationKey))
                 || sources.rules.isShownOnIsland(notificationKey)
                 || (sources.torch.replacesStockNotification() && TorchSource.isStockNotification(notificationKey))
                 || (ModuleSettings.hideProgressOriginals() && sources.cast.hidesOriginal(notificationKey));
@@ -191,6 +192,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                 allowed.add(sbn);
             }
         }
+        sources.promoted.update(allowed);
         sources.progress.update(allowed);
         sources.rules.update(allowed);
         List<StatusBarNotification> forCodes = new ArrayList<>(allowed);

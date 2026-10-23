@@ -68,7 +68,7 @@ public final class ProgressSource {
             if (fresh.size() >= MAX_ITEMS) {
                 break;
             }
-            IslandItem it = build(sbn);
+            IslandItem it = PromotedSource.enabled() && PromotedSource.isPromoted(sbn) ? null : build(sbn);
             if (it != null && packages.add(sbn.getPackageName())) {
                 fresh.put(it.key, it);
             }

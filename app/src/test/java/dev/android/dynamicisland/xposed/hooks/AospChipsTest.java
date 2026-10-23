@@ -13,6 +13,7 @@ public class AospChipsTest {
         Object shareToApp = new Inactive();
         Object castToOtherDevice = new Inactive();
         Object call = new Inactive();
+        Object notifs = new java.util.ArrayList<Object>(java.util.Arrays.asList(new Active()));
     }
 
     static final class Inactive {
@@ -32,11 +33,21 @@ public class AospChipsTest {
         bundle.screenRecord = record;
         bundle.call = new Active();
 
-        assertTrue(AospChips.takeOut(bundle, true));
+        assertTrue(AospChips.takeOut(bundle, true, true));
 
         assertSame(empty, bundle.screenRecord);
         assertSame(empty, bundle.call);
         assertSame(record, feed.screenRecord);
+    }
+
+    @Test
+    public void liveNotificationChipsAreTakenOut() {
+        AospChips.reset(empty);
+        Bundle bundle = new Bundle();
+
+        AospChips.takeOut(bundle, true, true);
+
+        assertTrue(((java.util.List<?>) bundle.notifs).isEmpty());
     }
 
     @Test
@@ -46,7 +57,7 @@ public class AospChipsTest {
         Active call = new Active();
         bundle.call = call;
 
-        AospChips.takeOut(bundle, false);
+        AospChips.takeOut(bundle, false, true);
 
         assertSame(call, bundle.call);
     }
@@ -57,9 +68,9 @@ public class AospChipsTest {
         Bundle bundle = new Bundle();
         Active cast = new Active();
         bundle.castToOtherDevice = cast;
-        AospChips.takeOut(bundle, true);
+        AospChips.takeOut(bundle, true, true);
 
-        assertFalse(AospChips.takeOut(bundle, true));
+        assertFalse(AospChips.takeOut(bundle, true, true));
         assertSame(cast, feed.castToOtherDevice);
     }
 
@@ -68,10 +79,10 @@ public class AospChipsTest {
         AospChips.reset(empty);
         Bundle bundle = new Bundle();
         bundle.shareToApp = new Active();
-        AospChips.takeOut(bundle, true);
+        AospChips.takeOut(bundle, true, true);
 
         Bundle later = new Bundle();
-        assertTrue(AospChips.takeOut(later, true));
+        assertTrue(AospChips.takeOut(later, true, true));
         assertNotSame(bundle.shareToApp, feed.shareToApp);
         assertSame(null, feed.shareToApp);
     }
