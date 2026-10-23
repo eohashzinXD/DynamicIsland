@@ -163,8 +163,7 @@ public final class TorchSource {
         it.kind = IslandItem.Kind.EVENT;
         it.iconIsImage = false;
         it.pillColor = 0;
-        it.title = t("손전등 켜짐", "Flashlight on");
-        it.subtitle = t("밝기 " + level + " / " + maxLevel, "Brightness " + level + " of " + maxLevel);
+        it.title = t("손전등", "Flashlight");
         it.icon = GlyphIcon.of(GlyphIcon.Kind.TORCH);
         it.accent = YELLOW;
         it.trailing = IslandItem.Trailing.TEXT;
@@ -173,7 +172,6 @@ public final class TorchSource {
         it.sliderSteps = maxLevel <= MAX_STEPS ? maxLevel : 0;
         it.sliderChange = this::setFraction;
         it.sliderTrailing = v -> Math.round(100.0f * levelFor(v) / maxLevel) + "%";
-        it.sliderSubtitle = v -> t("밝기 " + levelFor(v) + " / " + maxLevel, "Brightness " + levelFor(v) + " of " + maxLevel);
         it.actions.add(new IslandItem.Action(t("끄기", "Turn off"), null, null, this::turnOff, false));
         it.postTime = onSince;
         return it;

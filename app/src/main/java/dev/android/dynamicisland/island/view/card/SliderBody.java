@@ -4,7 +4,9 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.text.TextUtils;
 import dev.android.dynamicisland.island.graphics.Colors;
+import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 
@@ -17,6 +19,8 @@ import dev.android.dynamicisland.island.view.IslandView;
  */
 public final class SliderBody extends CardBody {
     private static final float VALUE_INSET_DP = 18.0f;
+    private static final float HEADER_BUTTON_DP = 34.0f;
+    private static final float HEADER_GAP_DP = 12.0f;
     private static final float TRACK_HEIGHT_DP = 52.0f;
     private static final float DRAG_GROW = 1.05f;
     private static final float ICON_DP = 26.0f;
@@ -31,6 +35,7 @@ public final class SliderBody extends CardBody {
     private static final float SETTLE_SWING = 10.0f;
 
     final float pad;
+    private final String label;
     final float trackLeft;
     final float trackRight;
     final float trackTop;
@@ -40,13 +45,22 @@ public final class SliderBody extends CardBody {
     public SliderBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
         pad = owner.dp(18.0f);
+        float headerH = owner.dp(HEADER_BUTTON_DP);
+        label = item.title == null ? null : TextUtils.ellipsize(item.title, owner.smallPaint, w - (pad * 2.0f) - headerH - owner.dp(12.0f), TextUtils.TruncateAt.END).toString();
+        if (!item.actions.isEmpty()) {
+            Btn off = new Btn();
+            off.r.set(w - pad - headerH, pad, w - pad, pad + headerH);
+            off.circle = true;
+            off.bg = Colors.TRACK;
+            off.glyph = Glyphs.POWER;
+            off.action = item.actions.get(0);
+            buttons.add(off);
+        }
         trackH = owner.dp(TRACK_HEIGHT_DP);
-        trackTop = pad;
+        trackTop = pad + headerH + owner.dp(HEADER_GAP_DP);
         trackLeft = pad;
         trackRight = w - pad;
-        float buttonsTop = trackTop + trackH + owner.dp(14.0f);
-        float buttonRow = layoutTextButtons(buttonsTop, pad);
-        h = (buttonRow > 0.0f ? buttonsTop + buttonRow : trackTop + trackH) + pad;
+        h = trackTop + trackH + pad;
     }
 
     /** Whether ({@code lx}, {@code ly}) in body coordinates is on the slider and the item has one. */
@@ -101,10 +115,11 @@ public final class SliderBody extends CardBody {
 
     @Override
     public void draw(Canvas c, float x, float y, float alpha, long elapsed) {
-        float sliderRow = rowAlpha(elapsed, 0);
+        float topRow = rowAlpha(elapsed, 0);
+        drawLabel(c, x, y + ((1.0f - topRow) * owner.dp(ROW_SLIDE_DP)), alpha * topRow);
+        drawButtons(c, x, y + ((1.0f - topRow) * owner.dp(ROW_SLIDE_DP)), alpha * topRow);
+        float sliderRow = rowAlpha(elapsed, 1);
         drawSlider(c, x, y + ((1.0f - sliderRow) * owner.dp(ROW_SLIDE_DP)), alpha * sliderRow);
-        float buttonsRow = rowAlpha(elapsed, 1);
-        drawButtons(c, x, y + ((1.0f - buttonsRow) * owner.dp(ROW_SLIDE_DP)), alpha * buttonsRow);
     }
 
     /** Small dots where the steps are, so the levels can be seen on the bar. */
@@ -134,6 +149,16 @@ public final class SliderBody extends CardBody {
         }
         float size = owner.dp(ICON_DP);
         owner.drawDrawable(c, item.icon, false, ICON_ON_FILL, left + ((height - size) / 2.0f), top + ((height - size) / 2.0f), size, alpha, 0.0f);
+    }
+
+    /** The small name of what the card controls, at the top left. */
+    private void drawLabel(Canvas c, float x, float y, float alpha) {
+        if (label == null) {
+            return;
+        }
+        owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, alpha));
+        Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
+        c.drawText(label, x + pad, y + pad + (owner.dp(HEADER_BUTTON_DP) / 2.0f) - ((fm.ascent + fm.descent) / 2.0f), owner.smallPaint);
     }
 
     private String valueText(float step) {

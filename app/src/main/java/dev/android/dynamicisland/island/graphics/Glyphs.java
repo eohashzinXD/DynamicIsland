@@ -26,6 +26,7 @@ public final class Glyphs {
     public static final int SPEAKER = 10;
     public static final int COPY = 11;
     public static final int CHECK = 12;
+    public static final int POWER = 13;
 
     private static final Path PATH = new Path();
     private static final RectF R = new RectF();
@@ -83,11 +84,27 @@ public final class Glyphs {
             case CHECK:
                 check(canvas, cx, cy, size, paint);
                 break;
+            case POWER:
+                power(canvas, cx, cy, size, paint);
+                break;
             default:
                 break;
         }
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(0.0f);
+    }
+
+    /** The power symbol: an open ring with a bar through its top gap. */
+    private static void power(Canvas canvas, float cx, float cy, float size, Paint paint) {
+        float stroke = 0.12f * size;
+        float radius = 0.36f * size;
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(stroke);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        R.set(cx - radius, cy - radius + (0.04f * size), cx + radius, cy + radius + (0.04f * size));
+        canvas.drawArc(R, -60.0f, 300.0f, false, paint);
+        canvas.drawLine(cx, cy - (0.44f * size), cx, cy - (0.06f * size), paint);
+        paint.setStrokeCap(Paint.Cap.BUTT);
     }
 
     private static void play(Canvas canvas, float cx, float cy, float size, Paint paint) {
