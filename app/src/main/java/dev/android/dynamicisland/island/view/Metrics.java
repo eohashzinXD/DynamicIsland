@@ -64,7 +64,7 @@ final class Metrics {
     boolean applySize(int heightPercent, int minWidthDp, int maxWidthDp) {
         float scale = 1.0f + (heightPercent / 100.0f);
         float newH = dp(30.0f) * scale;
-        float newMin = Math.max(dp(64.0f), dp(minWidthDp));
+        float newMin = Math.min(Math.max(dp(64.0f), dp(minWidthDp)), Math.max(dp(64.0f), screenW * 0.96f));
         float newMax = maxWidthDp > 0 ? dp(maxWidthDp) : 0.0f;
         if (newMax > 0.0f) {
             newMin = Math.min(newMin, newMax); // the narrowest never passes the widest

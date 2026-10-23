@@ -61,7 +61,7 @@ public final class ModuleSettings {
     public static final String KEY_PILL_KEEP_WIDTH = "pill_keep_width";
     public static final int PILL_H_MIN_PCT = -20;
     public static final int PILL_H_MAX_PCT = 40;
-    public static final int PILL_MIN_W_MAX_DP = 200;
+    public static final int PILL_MIN_W_MAX_DP = 420;
     public static final int PILL_MAX_W_MIN_DP = 100;
     public static final int PILL_MAX_W_MAX_DP = 420;
     public static final int ANCHOR_AUTO = 0;

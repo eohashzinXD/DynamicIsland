@@ -236,8 +236,8 @@
     <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">Credits</string>
     <string name="hub_credits_text">Inspired by @cryyear\'s DynamicIsland (github.com/Spottq) and reimplemented. Rule file format by LiveBridge. Xposed API by rovo89 (Apache-2.0).</string>
-    <string name="pos_title">Island position</string>
-    <string name="pos_sum">Move the island on the status bar</string>
+    <string name="pos_title">Island position and size</string>
+    <string name="pos_sum">Move and resize the island, set the camera hole</string>
     <string name="pos_where">Where</string>
     <string name="pos_auto">On the camera hole</string>
     <string name="pos_auto_desc">The default: the island sits on the camera and grows out of it</string>
