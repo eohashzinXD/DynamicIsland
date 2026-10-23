@@ -46,11 +46,16 @@ final class PillPainter {
         this.bridge = bridge;
     }
 
+    private static boolean legacyMerge() {
+        return ModuleSettings.legacyAnimation();
+    }
+
     /** Draws pill and bubble; {@code pill} is the pill's rectangle for this frame. */
     void draw(Canvas canvas, RectF pill, long t) {
         float r = pill.height() / 2.0f;
         float split = sp.split.value();
-        boolean hasBubble = split > 0.003f && scene.mode != Mode.EXPANDED;
+        // the bubble also stays while a stack opens: it merges back into the pill instead of vanishing in one frame
+        boolean hasBubble = split > 0.003f && (scene.mode != Mode.EXPANDED || !legacyMerge());
         boolean hasNeck = false;
         float neckAlpha = 0.0f;
         float bubbleX = 0.0f;
