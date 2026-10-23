@@ -145,7 +145,7 @@ public final class ShadeLiveCards {
         if (!(row instanceof View)) {
             return;
         }
-        String key = (String) Refl.call(Refl.get(row, "mEntryAdapter"), "getKey");
+        String key = (String) Refl.call(Refl.get(row, "mEntryAdapter|mEntry"), "getKey");
         IslandItem item = item(key);
         Object layout = Refl.get(row, "mPrivateLayout");
         if (item == null || !(layout instanceof ViewGroup)) {

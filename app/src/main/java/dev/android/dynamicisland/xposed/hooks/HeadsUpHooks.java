@@ -14,7 +14,7 @@ import dev.android.dynamicisland.xposed.SafeHook;
  * The island only claims notifications it is ready to display right now, everything else stays stock.
  */
 public final class HeadsUpHooks {
-    private static final String MANAGER = "com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl";
+    private static final String MANAGER = "com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl|com.android.systemui.statusbar.phone.HeadsUpManagerPhone";
 
     private HeadsUpHooks() {
     }

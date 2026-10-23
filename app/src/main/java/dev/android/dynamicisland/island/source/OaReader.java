@@ -74,6 +74,9 @@ final class OaReader {
     /** Data of a Now Bar card that exists only there (no status bar chip), by notification key. */
     Object nowBarOnly(String notificationKey) {
         Object map = Refl.getStatic(helper, "onlyShownNowbarItemMap");
-        return map instanceof Map ? ((Map<?, ?>) map).get(notificationKey) : null;
+        if (map instanceof Map) {
+            return ((Map<?, ?>) map).get(notificationKey);
+        }
+        return findByNotificationKey(notificationKey); // One UI 7 keeps no separate map: its card data is in the lists
     }
 }

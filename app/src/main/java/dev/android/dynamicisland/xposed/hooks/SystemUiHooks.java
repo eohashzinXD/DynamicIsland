@@ -31,6 +31,8 @@ public final class SystemUiHooks {
     private static final String CALL_PACKAGE = SUI + ".statusbar.phone.ongoingcall.";
     private static final String SAMSUNG_CALL_CONTROLLER = CALL_PACKAGE + "SamsungOngoingCallController";
     private static final String AOSP_CALL_CONTROLLER = CALL_PACKAGE + "OngoingCallController";
+    private static final String STATUS_BAR_BINDER = SUI + ".statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinderImpl";
+    private static final String STATUS_BAR_FRAGMENT = SUI + ".statusbar.phone.fragment.CollapsedStatusBarFragment";
     private static final String STATUS_BAR_VIEW_CONTROLLER = SUI + ".statusbar.phone.PhoneStatusBarViewController";
     private static final String CAST_PACKAGE = SUI + ".statusbar.phone.ongoingcast.";
     /** Call controller methods after which the call chip state may have changed. */
@@ -62,23 +64,52 @@ public final class SystemUiHooks {
         // every group on its own: one that cannot attach on a System UI build must not take the others with it
         runGroup("init", () -> hookInit(cl));
         runGroup("status bar view", () -> hookStatusBarView(cl));
-        runGroup("capsule hiding", () -> hookCapsuleHiding(cl));
+        // One UI 8 and 9 hide the chips through the status bar binder; One UI 7 has none and its own chip controllers
+        boolean binderStyle = Refl.hasClass(STATUS_BAR_BINDER, cl);
+        Diagnostics.fact("chip style", binderStyle ? "binder (One UI 8+)" : "fragment (One UI 7)");
+        runGroup("capsule hiding", () -> {
+            if (binderStyle) {
+                hookCapsuleHiding(cl);
+            } else {
+                hookCapsuleHidingOneUi7(cl);
+            }
+        });
         runGroup("data changes", () -> hookDataChanges(cl));
         runGroup("calls", () -> hookCalls(cl));
         runGroup("cast", () -> hookCast(cl));
         runGroup("signals", () -> hookSignals(cl));
         // Android 16 only: newer System UI builds (One UI 9 / SDK 37) ship the AOSP chip classes too,
         // but hooking them there is exactly what the original module avoided.
-        if (Build.VERSION.SDK_INT == 36) {
-            runGroup("android 16 chips", () -> hookAndroid16Chips(cl));
+        // One UI 7 has no Samsung call controller either: it uses the same AOSP one
+        if (Build.VERSION.SDK_INT == 36 || !binderStyle) {
+            runGroup("aosp call chips", () -> hookAndroid16Chips(cl));
         }
         runGroup("shade performance", () -> ShadePerf.install(cl));
         runGroup("shade live cards", () -> ShadeLiveCards.install(cl));
         runGroup("duplicate originals", () -> HideDuplicated.install(cl));
-        runGroup("shade card theme", () -> ShadeCardTheme.install(cl));
-        runGroup("shade media player", () -> ShadeMediaPlayer.install(cl));
+        // the blurred shade cards and the media player takeover are built on rows that One UI 8 introduced
+        boolean blurRows = declares(cl, "com.android.systemui.statusbar.notification.row.ActivatableNotificationView", "isBlurBackground");
+        Diagnostics.fact("shade rows", blurRows ? "blur cards (One UI 8+)" : "stock rows (One UI 7): card theme and media takeover off");
+        if (blurRows) {
+            runGroup("shade card theme", () -> ShadeCardTheme.install(cl));
+            runGroup("shade media player", () -> ShadeMediaPlayer.install(cl));
+        }
         runGroup("heads-up", () -> HeadsUpHooks.install(cl));
         reportUnattached();
+    }
+
+    /** True when {@code className} exists and declares a method called {@code method}. */
+    private static boolean declares(ClassLoader cl, String className, String method) {
+        Class<?> cls = Refl.hasClass(className, cl) ? Refl.findClass(className, cl) : null;
+        if (cls == null) {
+            return false;
+        }
+        for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
+            if (m.getName().equals(method)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void reportUnattached() {
@@ -220,7 +251,7 @@ public final class SystemUiHooks {
      * bar: the island shows the same information, so the stock chip would be a duplicate.
      */
     private static void hookCapsuleHiding(ClassLoader cl) {
-        Refl.hookAll(cl, "com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinderImpl", "adjustVisibility",
+        Refl.hookAll(cl, STATUS_BAR_BINDER, "adjustVisibility",
                 SafeHook.before("adjustVisibility", param -> goneIfChipView(param, idCapsuleContainer, idChipsContainer, idCastChip, idCallChip)));
         Refl.hookAll(cl, OA_CONTROLLER, "updateParentViewVisibility", SafeHook.before("updateParentViewVisibility", SystemUiHooks::keepChipParentGone));
         Refl.hookAll(cl, OA_CONTROLLER, "isChipExpandCondition", SafeHook.before("isChipExpandCondition", param -> param.setResult(Boolean.FALSE)));
@@ -229,6 +260,18 @@ public final class SystemUiHooks {
         }
         Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, "animateChipShow", SafeHook.before("animateChipShow", SystemUiHooks::keepCapsuleGone));
         Refl.hookAll(cl, OA_CONTROLLER, "sendChipInfoForAppExitAnimation", SafeHook.before("sendChipInfoForAppExitAnimation", SystemUiHooks::redirectExitAnimation));
+    }
+
+    /**
+     * One UI 7: the capsule shows when {@code OngoingActivityController.shouldVisible} says so (the status bar fragment
+     * asks it) and is animated in by the chip animation controller, so both are stopped for the capsule view.
+     */
+    private static void hookCapsuleHidingOneUi7(ClassLoader cl) {
+        Refl.hookAll(cl, OA_CONTROLLER, "shouldVisible", SafeHook.before("shouldVisible", param -> param.setResult(Boolean.FALSE)));
+        for (String show : new String[]{"animateChipShow", "showView"}) {
+            Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, show, SafeHook.before(show, SystemUiHooks::keepCapsuleGone));
+        }
+        Refl.hookAll(cl, CHIP_ANIMATION_CONTROLLER, "nudgeAnimation", SafeHook.before("nudgeAnimation", param -> param.setResult(null)));
     }
 
     /**
@@ -295,8 +338,8 @@ public final class SystemUiHooks {
 
     /** Android 16: the status bar fragment animates the cast and call chips in, and the AOSP call controller is used. */
     private static void hookAndroid16Chips(ClassLoader cl) {
-        Refl.hookAll(cl, SUI + ".statusbar.phone.fragment.CollapsedStatusBarFragment", "animateShow",
-                SafeHook.before("animateShow (A16)", param -> goneIfChipView(param, idCastChip, idCallChip)));
+        Refl.hookAll(cl, STATUS_BAR_FRAGMENT, "animateShow",
+                SafeHook.before("animateShow (A16)", param -> goneIfChipView(param, idCapsule, idCastChip, idCallChip)));
         Refl.hookConstructors(cl, AOSP_CALL_CONTROLLER, SafeHook.after("call ctor (A16)", SystemUiHooks::captureCallController));
         refreshAfter(cl, AOSP_CALL_CONTROLLER, "call change (A16)", CALL_CHANGE_METHODS);
     }
@@ -326,6 +369,9 @@ public final class SystemUiHooks {
 
     /** Captures Samsung's call controller and follows its call chip. */
     private static void hookCalls(ClassLoader cl) {
+        if (!Refl.hasClass(SAMSUNG_CALL_CONTROLLER, cl)) {
+            return; // One UI 7 and Android 16 builds without it use the AOSP call controller (see hookAndroid16Chips)
+        }
         Refl.hookConstructors(cl, SAMSUNG_CALL_CONTROLLER, SafeHook.after("call ctor", SystemUiHooks::captureCallController));
         refreshAfter(cl, SAMSUNG_CALL_CONTROLLER, "call change", CALL_CHANGE_METHODS);
     }

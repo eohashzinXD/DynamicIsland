@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioDeviceInfo;
@@ -61,6 +62,9 @@ final class CallCardBuilder {
             return;
         }
         String pkg = (String) Refl.get(info, "packageName");
+        if (pkg == null) {
+            pkg = packageOfKey(key); // One UI 7 does not keep the package on the call info
+        }
         if (pkg != null) {
             packages.add(pkg);
         }
@@ -92,6 +96,9 @@ final class CallCardBuilder {
         it.icon = chipIcon != null ? chipIcon : icons.appIcon(pkg);
         it.iconIsImage = chipIcon == null;
         it.appName = (String) Refl.get(info, "appName");
+        if (it.appName == null && pkg != null) {
+            it.appName = labelOf(pkg);
+        }
         it.title = it.appName;
         it.cardImage = icons.appIcon(pkg);
         it.cardImageIsImage = true;
@@ -113,6 +120,21 @@ final class CallCardBuilder {
         startClock(it, info);
         it.postTime = Long.MAX_VALUE;
         return it;
+    }
+
+    /** The package in a notification key ("user|package|id|tag|uid"), or null. */
+    static String packageOfKey(String key) {
+        String[] parts = key.split("\\|", 3);
+        return parts.length > 1 && !parts[1].isEmpty() ? parts[1] : null;
+    }
+
+    private String labelOf(String pkg) {
+        try {
+            PackageManager pm = ctx.getPackageManager();
+            return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
+        } catch (Throwable t) {
+            return pkg;
+        }
     }
 
     private static Drawable copyOfShownIcon(Object iconView) {
