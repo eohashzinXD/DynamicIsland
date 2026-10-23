@@ -28,6 +28,8 @@
     <string name="setting_hide_progress_desc">While a progress card is on the island, drop the same notification from the shade. Its buttons stay on the card.</string>
     <string name="setting_progress_desc">Show ongoing notifications with a progress bar (downloads, file copies, app updates) as cards.</string>
     <string name="setting_heads_up">Notifications in the island</string>
+    <string name="setting_all_notifications">All notifications in the island</string>
+    <string name="setting_all_notifications_desc">Every new notification gets an island card, also the quiet ones that would not pop up as a banner. Ongoing, call and alarm notifications and the app you are in are left out.</string>
     <string name="setting_heads_up_desc">Messages and other banner notifications appear as an island card instead of the heads-up banner. Calls and alarms keep the stock banner.</string>
     <string name="setting_otp">Verification codes</string>
     <string name="setting_otp_desc">A text with a verification code opens a card with the code and a Copy button.</string>

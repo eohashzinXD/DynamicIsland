@@ -206,6 +206,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         Runnable scan = () -> {
             try {
                 headsUp.scanForCodes(forCodes);
+                headsUp.scanAll(forCodes);
             } catch (Throwable t) {
                 XLog.once("IslandController.showNewCodes", t);
             }

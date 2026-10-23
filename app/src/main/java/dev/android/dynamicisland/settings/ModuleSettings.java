@@ -74,6 +74,7 @@ public final class ModuleSettings {
     public static final int PILL_Y_MIN_DP = -16;
     public static final int PILL_Y_MAX_DP = 64;
     public static final String KEY_HEADS_UP_ISLAND = "heads_up_island";
+    public static final String KEY_ALL_NOTIFICATIONS = "all_notifications_island";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
     /** Cards for staged processes (delivery, taxi, route, connection) found by the rules. */
@@ -114,6 +115,7 @@ public final class ModuleSettings {
     private static volatile boolean haptics = true;
     private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
+    private static volatile boolean allNotifications;
     private static volatile boolean progressNotifications = true;
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
@@ -386,6 +388,7 @@ public final class ModuleSettings {
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
+            allNotifications = source.getBoolean(KEY_ALL_NOTIFICATIONS, false);
             hideProgressOriginals = source.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
             smartRules = source.getBoolean(KEY_SMART_RULES, true);
             int sizeBefore = pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000;
@@ -447,7 +450,7 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + progressNotifications + hideProgressOriginals
+        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
@@ -573,6 +576,12 @@ public final class ModuleSettings {
     }
 
     /** Do Not Disturb / airplane / power saving / flashlight / hotspot / auto-rotate feedback. */
+    /** Every new notification, also the quiet ones that would not pop up as a banner, gets an island card. */
+    public static boolean allNotifications() {
+        ensureStarted();
+        return allNotifications;
+    }
+
     public static boolean eventToggles() {
         ensureStarted();
         return eventToggles;

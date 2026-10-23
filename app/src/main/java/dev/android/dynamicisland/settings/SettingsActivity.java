@@ -227,6 +227,7 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.group_banners));
         LinearLayout banners = ui.card(page);
         toggle(banners, R.string.setting_heads_up, R.string.setting_heads_up_desc, ModuleSettings.KEY_HEADS_UP_ISLAND, true);
+        toggle(banners, R.string.setting_all_notifications, R.string.setting_all_notifications_desc, ModuleSettings.KEY_ALL_NOTIFICATIONS, false);
         Switch progress = toggle(banners, R.string.setting_progress, R.string.setting_progress_desc, ModuleSettings.KEY_PROGRESS_NOTIFICATIONS, true);
         Switch hide = toggle(banners, R.string.setting_hide_progress, R.string.setting_hide_progress_desc, ModuleSettings.KEY_HIDE_PROGRESS_ORIGINALS, true);
         dependent(progress, OneUi.rowOf(hide));

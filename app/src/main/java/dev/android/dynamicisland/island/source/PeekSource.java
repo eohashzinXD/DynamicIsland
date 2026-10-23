@@ -120,7 +120,7 @@ public final class PeekSource {
         return true;
     }
 
-    IslandItem build(StatusBarNotification sbn) {
+    public IslandItem build(StatusBarNotification sbn) {
         IslandItem otp = buildOtp(sbn);
         return otp != null ? otp : buildMessage(sbn);
     }

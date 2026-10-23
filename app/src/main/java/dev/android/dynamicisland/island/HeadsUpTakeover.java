@@ -23,6 +23,8 @@ final class HeadsUpTakeover {
     private static final long DEFAULT_PEEK_MS = 5000;
     /** A verification code is "fresh" (worth a card) for this long after its notification was posted. */
     private static final long OTP_FRESH_MS = 20000;
+    /** A notification is "new" for the all-notifications pass for this long after it was posted. */
+    private static final long ALL_FRESH_MS = 8000;
     /** Notifications dated this far in the future are still accepted (clock differences between processes). */
     private static final long OTP_CLOCK_SKEW_MS = 5000;
     /** The same code arriving again within this time is ignored. */
@@ -41,6 +43,9 @@ final class HeadsUpTakeover {
     /** Notification key to post time of the posting that already got a card. */
     private final Map<String, Long> peeked = new HashMap<>();
     private final Set<String> otpChecked = new HashSet<>();
+    /** Postings the "all notifications" pass already looked at. */
+    private final Set<String> allChecked = new HashSet<>();
+    private int rejectLogs;
     private int otpLogs;
     private String lastOtpCode;
     private long lastOtpAt;
@@ -59,6 +64,7 @@ final class HeadsUpTakeover {
                 return false;
             }
             if (!ModuleSettings.appAllowed(sbn.getPackageName())) {
+                reject("banner of " + sbn.getPackageName() + ": the app is kept out of the island");
                 return false; // the user keeps this app out of the island: its banner stays stock
             }
             if (isOnIslandNow(sbn)) {
@@ -66,6 +72,7 @@ final class HeadsUpTakeover {
             }
             if (view.isSuppressedNow() || !PeekSource.eligible(sbn)
                     || sbn.getPackageName().equals(sources.foregroundPackage())) {
+                reject("banner of " + sbn.getPackageName() + ": " + (view.isSuppressedNow() ? "island hidden" : !PeekSource.eligible(sbn) ? "not an ordinary notification" : "its app is open"));
                 return false;
             }
             // a code card is shown whatever the "notifications in the island" setting and even over an open card
@@ -81,6 +88,7 @@ final class HeadsUpTakeover {
                 return shown;
             }
             if (!ModuleSettings.headsUpIsland() || view.isExpanded()) {
+                reject("banner of " + sbn.getPackageName() + ": " + (view.isExpanded() ? "a card is open" : "the setting is off"));
                 return false;
             }
             IslandItem message = sources.peeks.buildMessage(sbn);
@@ -88,6 +96,54 @@ final class HeadsUpTakeover {
         } catch (Throwable t) {
             XLog.once("IslandController.peekHeadsUp", t);
             return false;
+        }
+    }
+
+    /**
+     * The "all notifications" setting: a fresh notification that never became a banner (silent, or the system
+     * did not ask) still gets a card. Looks at each posting once and shows only the newest of a burst.
+     */
+    void scanAll(List<StatusBarNotification> snapshot) {
+        if (!ModuleSettings.allNotifications() || !placement.ready()) {
+            return;
+        }
+        if (allChecked.size() > MAX_OTP_CHECKED) {
+            allChecked.clear();
+        }
+        long now = System.currentTimeMillis();
+        StatusBarNotification newest = null;
+        for (StatusBarNotification sbn : snapshot) {
+            long age = now - sbn.getPostTime();
+            if (age > ALL_FRESH_MS || age < -OTP_CLOCK_SKEW_MS || !allChecked.add(sbn.getKey() + "@" + sbn.getPostTime())) {
+                continue;
+            }
+            if (alreadyHadCard(sbn) || !PeekSource.eligible(sbn) || !ModuleSettings.appAllowed(sbn.getPackageName())
+                    || sbn.getPackageName().equals(sources.foregroundPackage())) {
+                continue;
+            }
+            if (newest == null || sbn.getPostTime() >= newest.getPostTime()) {
+                newest = sbn;
+            }
+        }
+        if (newest == null) {
+            return;
+        }
+        IslandView view = placement.view();
+        if (view.isSuppressedNow() || view.isExpanded()) {
+            reject("all notifications: the island is hidden or open");
+            return;
+        }
+        IslandItem item = sources.peeks.build(newest);
+        if (item != null && !show(newest, item)) {
+            reject("all notifications: the island could not open");
+        }
+    }
+
+    /** Why a banner or a card was left to the stock UI; only the first few are logged. */
+    private void reject(String why) {
+        if (rejectLogs < MAX_OTP_LOGS) {
+            rejectLogs++;
+            XLog.event("notification card not shown: " + why);
         }
     }
 
