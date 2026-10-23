@@ -7,8 +7,11 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.Refl;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Screen recording, screen sharing and casting as island items, read from the chip model of System UI's
@@ -24,6 +27,10 @@ public final class CastSource {
     private Object bundle;
 
     /** {@code ctx} is accepted for symmetry with the other sources; the chip model needs no context. */
+    private volatile Set<String> recordingPackages = Collections.emptySet();
+    /** Told when the recorder whose notification is hidden starts or stops, so the shade list is built again. */
+    public volatile Runnable onRecordersChanged;
+
     public CastSource(Context ctx) {
     }
 
@@ -32,7 +39,32 @@ public final class CastSource {
         bundle = b;
     }
 
+    /** True when {@code notificationKey} is the notification of the screen recorder that has a card on the island. */
+    public boolean hidesOriginal(String notificationKey) {
+        Set<String> recorders = recordingPackages;
+        if (recorders.isEmpty() || notificationKey == null) {
+            return false;
+        }
+        String[] parts = notificationKey.split("\\|", 3); // user|package|id|tag|uid
+        return parts.length > 1 && recorders.contains(parts[1]);
+    }
+
     public void collect(List<IslandItem> out) {
+        Set<String> recorders = new HashSet<>();
+        try {
+            collectInto(out, recorders);
+        } finally {
+            Set<String> now = recorders.isEmpty() ? Collections.emptySet() : recorders;
+            boolean changed = !now.equals(recordingPackages);
+            recordingPackages = now;
+            Runnable listener = onRecordersChanged;
+            if (changed && listener != null) {
+                listener.run();
+            }
+        }
+    }
+
+    private void collectInto(List<IslandItem> out, Set<String> recorders) {
         if (bundle == null) {
             return;
         }
@@ -40,13 +72,21 @@ public final class CastSource {
         Object share = Refl.get(bundle, "shareToApp");
         Object cast = Refl.get(bundle, "castToOtherDevice");
         if (isActive(record)) {
-            out.add(item("cast:record", record, IslandItem.Kind.RECORDING, RED, tr("Screen recording", "Запись экрана")));
+            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, tr("Screen recording", "Запись экрана"));
+            out.add(card);
+            if (card.packageName != null) {
+                recorders.add(card.packageName);
+            }
         } else if (isActive(share)) {
             String manager = (String) Refl.get(share, "managingPackageName");
             // Samsung's own recorder reports itself as a share
             boolean ownRecorder = manager != null && manager.contains("com.samsung.android.app.smartcapture");
             String title = ownRecorder ? tr("Screen recording", "Запись экрана") : tr("Sharing screen", "Демонстрация экрана");
-            out.add(item("cast:share", share, IslandItem.Kind.RECORDING, RED, title));
+            IslandItem card = item("cast:share", share, IslandItem.Kind.RECORDING, RED, title);
+            out.add(card);
+            if (ownRecorder && card.packageName != null) {
+                recorders.add(card.packageName);
+            }
         }
         if (isActive(cast)) {
             out.add(item("cast:device", cast, IslandItem.Kind.LIVE, BLUE, tr("Casting screen", "Трансляция экрана")));

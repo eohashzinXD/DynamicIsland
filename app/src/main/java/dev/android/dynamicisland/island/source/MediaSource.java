@@ -292,7 +292,10 @@ public final class MediaSource {
                 case PlaybackState.STATE_BUFFERING:
                 case PlaybackState.STATE_FAST_FORWARDING:
                 case PlaybackState.STATE_REWINDING:
-                    return true;
+                case PlaybackState.STATE_SKIPPING_TO_NEXT:
+                case PlaybackState.STATE_SKIPPING_TO_PREVIOUS:
+                case PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM:
+                    return true; // changing track: the glow must not dim for the moment it takes
                 default:
                     return false;
             }

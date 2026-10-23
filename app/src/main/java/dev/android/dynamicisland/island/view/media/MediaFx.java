@@ -37,6 +37,8 @@ public final class MediaFx {
     private static final float GLOW_RANGE = 0.27999997f;
 
     private final IslandView owner;
+    /** How much faster than the cross-fade the new colours come in. */
+    private static final float NEW_TONES_LEAD = 1.6f;
     int accentFrom;
     long accentStart;
     int accentTo;
@@ -251,8 +253,10 @@ public final class MediaFx {
             if (setFrom.h != h || setFrom.accent != accentFrom) {
                 setFrom.build(accentFrom, h);
             }
-            drawLayer(c, setFrom, w, h, glowAlpha * (1.0f - (0.35f * fade)));
-            drawLayer(c, setTo, w, h, glowAlpha * fade);
+            // the old colours leave completely by the end and the new ones come in a little ahead of them, so the
+            // glow neither dims in the middle nor jumps when the cross-fade ends
+            drawLayer(c, setFrom, w, h, glowAlpha * (1.0f - fade));
+            drawLayer(c, setTo, w, h, glowAlpha * Math.min(1.0f, fade * NEW_TONES_LEAD));
         } else {
             drawLayer(c, setTo, w, h, glowAlpha);
         }

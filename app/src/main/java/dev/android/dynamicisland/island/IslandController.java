@@ -157,7 +157,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** True when the island shows a card for this notification and the setting asks to drop the shade row. */
     public boolean hidesOriginal(String notificationKey) {
         return (ModuleSettings.hideProgressOriginals() && sources.progress.isShownOnIsland(notificationKey))
-                || sources.rules.isShownOnIsland(notificationKey);
+                || sources.rules.isShownOnIsland(notificationKey)
+                || (ModuleSettings.hideProgressOriginals() && sources.cast.hidesOriginal(notificationKey));
     }
 
     /** Fed by the notification list hook: progress notifications become cards. */
