@@ -1,12 +1,16 @@
 package dev.android.dynamicisland.island.view;
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.RectF;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RemoteViews;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
+import dev.android.dynamicisland.xposed.hooks.DarkRemote;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,6 +31,7 @@ final class RemoteCards {
     private final Map<String, View> inflated = new HashMap<>();
     private final Map<String, RemoteViews> sources = new HashMap<>();
     private ViewGroup layer;
+    private Context dark;
 
     RemoteCards(IslandView view, Shapes shapes, Scene scene) {
         this.view = view;
@@ -51,7 +56,8 @@ final class RemoteCards {
         }
         if (existing != null && previous != null && previous.getLayoutId() == item.remoteView.getLayoutId()) {
             try {
-                item.remoteView.reapply(view.getContext(), existing);
+                item.remoteView.reapply(inflationContext(), existing);
+                DarkRemote.lighten(existing);
                 sources.put(item.key, item.remoteView);
                 return existing;
             } catch (Throwable ignored) {
@@ -61,12 +67,35 @@ final class RemoteCards {
         if (existing != null) {
             layer.removeView(existing);
         }
-        View fresh = item.remoteView.apply(view.getContext(), new FrameLayout(view.getContext()));
+        Context context = inflationContext();
+        View fresh = item.remoteView.apply(context, new FrameLayout(context));
+        // island cards are dark in every theme: an app's dark text (a light-theme layout) would vanish on them
+        DarkRemote.lighten(fresh);
         fresh.setVisibility(View.GONE);
         layer.addView(fresh, new FrameLayout.LayoutParams(1, 1));
         inflated.put(item.key, fresh);
         sources.put(item.key, item.remoteView);
         return fresh;
+    }
+
+    /**
+     * The context an app's layout is inflated with. The island window's own context has the plain default theme (a
+     * light one), so an app's "primary text" colour came out dark on the always-dark card, where System UI's shade
+     * (dark theme) gives it white. A dark theme and the night flag give the layout the same colours as there.
+     */
+    private Context inflationContext() {
+        if (dark == null) {
+            Context base = view.getContext();
+            try {
+                Configuration night = new Configuration(base.getResources().getConfiguration());
+                night.uiMode = (night.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | Configuration.UI_MODE_NIGHT_YES;
+                base = base.createConfigurationContext(night);
+            } catch (Throwable ignored) {
+                // keep the plain context: the dark theme alone is still better than none
+            }
+            dark = new ContextThemeWrapper(base, android.R.style.Theme_DeviceDefault);
+        }
+        return dark;
     }
 
     /** Moves the views of the open remote cards onto their cards and drops those whose item is gone. */

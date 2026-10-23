@@ -95,6 +95,7 @@ public final class SystemUiHooks {
         runGroup("shade performance", () -> ShadePerf.install(cl));
         runGroup("shade live cards", () -> ShadeLiveCards.install(cl));
         runGroup("duplicate originals", () -> HideDuplicated.install(cl));
+        runGroup("ungroup google sports", () -> UngroupGoogleSports.install(cl));
         // the blurred shade cards and the media player takeover are built on rows that One UI 8 introduced
         boolean blurRows = declares(cl, "com.android.systemui.statusbar.notification.row.ActivatableNotificationView", "isBlurBackground");
         Diagnostics.fact("shade rows", blurRows ? "blur cards (One UI 8+)" : "stock rows (One UI 7): card theme and media takeover off");
