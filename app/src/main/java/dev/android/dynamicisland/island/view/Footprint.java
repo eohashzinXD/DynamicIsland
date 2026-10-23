@@ -65,7 +65,8 @@ final class Footprint {
         if (scene.visibleAlpha() < TouchController.MIN_TOUCHABLE_ALPHA) {
             return;
         }
-        if (scene.mode == Mode.EXPANDED) {
+        if (scene.mode == Mode.EXPANDED && !scene.peekOpen) {
+            // an opened stack takes the touches of the whole screen: a touch beside it closes it
             out.set(0, 0, m.screenW, Math.max(view.getHeight(), m.screenW * 3));
             return;
         }

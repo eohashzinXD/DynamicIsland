@@ -215,7 +215,32 @@ public final class PeekSource {
                 it.actions.add(action);
             }
         }
+        addWearableReply(n, it);
         return it;
+    }
+
+    /**
+     * Some messaging apps (the Samsung messages app) offer their reply only as a wearable action, which carries the
+     * text field the same way: the card gets a reply button from it too.
+     */
+    private void addWearableReply(Notification n, IslandItem it) {
+        for (IslandItem.Action existing : it.actions) {
+            if (existing.remoteInputs != null) {
+                return;
+            }
+        }
+        try {
+            for (Notification.Action a : new Notification.WearableExtender(n).getActions()) {
+                if (a.getRemoteInputs() != null && a.getRemoteInputs().length > 0 && a.actionIntent != null) {
+                    IslandItem.Action reply = new IslandItem.Action(t("답장", "Reply"), null, a.actionIntent, null, false);
+                    reply.remoteInputs = a.getRemoteInputs();
+                    it.actions.add(0, reply);
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {
+            // no wearable extras
+        }
     }
 
     /** The text that decides whether this is a code: for a conversation only its newest message counts. */

@@ -22,6 +22,8 @@ import java.util.Set;
 final class HeadsUpTakeover {
     /** How long a heads-up card stays open unless the item asks for something else. */
     private static final long DEFAULT_PEEK_MS = 5000;
+    /** Wait before the stock heads-up entry of a notification the island took is removed (it is added right after the decision). */
+    private static final long STOCK_DISMISS_DELAY_MS = 120;
     /** A verification code is "fresh" (worth a card) for this long after its notification was posted. */
     private static final long OTP_FRESH_MS = 20000;
     /** A notification is "new" for the all-notifications pass for this long after it was posted. */
@@ -94,6 +96,11 @@ final class HeadsUpTakeover {
             }
             IslandItem message = sources.peeks.buildMessage(sbn);
             boolean taken = message != null && show(sbn, message);
+            if (taken) {
+                // the compact banner of Android 17 may come up through a path that is not asked: take its entry away
+                final String key = sbn.getKey();
+                view.postDelayed(() -> HeadsUpHooks.dismissStock(key), STOCK_DISMISS_DELAY_MS);
+            }
             note("banner of " + sbn.getPackageName() + (taken ? " taken by the island" : " left to the stock banner: no card could be built or opened"));
             return taken;
         } catch (Throwable t) {
