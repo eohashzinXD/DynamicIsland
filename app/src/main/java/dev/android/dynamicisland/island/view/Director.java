@@ -555,7 +555,8 @@ final class Director {
             boolean gone = c.leaving && c.launched && Math.abs(c.cy.value() - c.targetCy) < m.dp(4.0f)
                     && (legacy() ? c.h.value() < m.pillH * 0.95f
                     : Math.abs(c.h.value() - c.targetH) < m.dp(3.0f) && Math.abs(c.w.value() - c.targetW) < m.dp(6.0f)
-                    && (pillSettled() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS));
+                    && (pillSettled() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS)
+                    && (pillShown() || t - c.leaveAt > PILL_SETTLE_TIMEOUT_MS));
             if (gone) {
                 scene.cards.remove(i);
                 if (scene.blur != null) {
@@ -584,6 +585,14 @@ final class Director {
             }
         }
         return active;
+    }
+
+    /**
+     * True once the pill is drawn in full again. The card is only removed after that: a pill that is still fading in is
+     * see-through, and with the card already gone it showed the wallpaper through it as a pale grey pill in a black ring.
+     */
+    private boolean pillShown() {
+        return legacy() || scene.mode != Mode.COMPACT || sp.pillBlob.value() > 0.97f;
     }
 
     /** True once every card is gone or has folded to (nearly) the pill's shape, so the pill can take over from it. */

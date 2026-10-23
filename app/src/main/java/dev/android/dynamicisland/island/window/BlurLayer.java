@@ -30,6 +30,10 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     private static final float CORNER_EPSILON_DP = 8.0f;
     /** Slots narrower or shorter than this (px) are hidden instead of blurred. */
     private static final float MIN_SLOT_SIZE = 2.0f;
+    /** Frames a slot may go unplaced before it is hidden. */
+    private static final int MISSED_FRAMES_BEFORE_HIDE = 1;
+    /** How long a released slot keeps its blur after its view is gone, so the blur does not leave before the picture does. */
+    private static final long RELEASE_BLUR_LINGER_MS = 32;
 
     private final Map<Object, Slot> slots = new IdentityHashMap<>();
     private CardPainter painter;
@@ -80,7 +84,9 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     @Override
     public void endFrame() {
         for (Slot slot : slots.values()) {
-            if (slot.placedInFrame != frame) {
+            // one frame without a placement is tolerated: the blur drops out for a frame when its card is hidden and
+            // shown again, while the card's own last picture is still on screen
+            if (frame - slot.placedInFrame > MISSED_FRAMES_BEFORE_HIDE) {
                 slot.hide();
             }
         }
@@ -105,8 +111,11 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     public void release(Object owner) {
         Slot slot = slots.remove(owner);
         if (slot != null) {
-            slot.removeBlur();
-            removeView(slot);
+            // the card's last picture is still on screen for a frame: the blur goes after it, not before
+            postDelayed(() -> {
+                slot.removeBlur();
+                removeView(slot);
+            }, RELEASE_BLUR_LINGER_MS);
         }
     }
 
