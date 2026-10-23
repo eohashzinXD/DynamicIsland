@@ -34,6 +34,7 @@ public class SettingsRenderTest {
             show(activity, activity, page, prefix + page);
         }
         show(activity, field(activity, "animation"), "open", prefix + "animationPage");
+        show(activity, field(activity, "position"), "open", prefix + "positionPage");
         show(activity, rules, "listPage", prefix + "rulesList");
         show(activity, field(rules, "wizard"), "page", prefix + "ruleWizard");
         show(activity, rules, "testPage", prefix + "rulesTest");

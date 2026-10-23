@@ -25,6 +25,10 @@ public final class TorchSource {
     /** Beyond this many levels the slider is smooth instead of stepped. */
     private static final int MAX_STEPS = 10;
     private static volatile boolean handlesTorch;
+    /** The ongoing notification System UI posts for the flashlight (id 4660, tag "Flashlight"); the card replaces it. */
+    private static final String STOCK_NOTIFICATION = "|com.android.systemui|4660|Flashlight|";
+    /** Told when the card appears or goes, so the shade list is built again without the stock notification. */
+    public volatile Runnable onShownChanged;
 
     private final Context ctx;
     private final Handler main;
@@ -47,6 +51,16 @@ public final class TorchSource {
     /** True when this source shows the flashlight, so the plain popup of the event source stays away. */
     public static boolean handlesTorch() {
         return handlesTorch;
+    }
+
+    /** True for the notification key of System UI's own flashlight notification. */
+    public static boolean isStockNotification(String key) {
+        return key != null && key.contains(STOCK_NOTIFICATION);
+    }
+
+    /** True while the card is up, so the stock notification (and its Now Bar copy) must not be shown as well. */
+    public boolean replacesStockNotification() {
+        return handlesTorch && on && ModuleSettings.eventToggles();
     }
 
     public void setSamsungController(Object controller) {
@@ -110,6 +124,10 @@ public final class TorchSource {
             return;
         }
         on = enabled;
+        Runnable shown = onShownChanged;
+        if (shown != null) {
+            shown.run();
+        }
         if (enabled) {
             onSince = SystemClock.uptimeMillis();
             try {
@@ -154,7 +172,6 @@ public final class TorchSource {
         it.sliderValue = (level - 1) / (float) (maxLevel - 1);
         it.sliderSteps = maxLevel <= MAX_STEPS ? maxLevel : 0;
         it.sliderChange = this::setFraction;
-        it.expandOnShow = true;
         it.actions.add(new IslandItem.Action(t("끄기", "Turn off"), null, null, this::turnOff, false));
         it.postTime = onSince;
         return it;

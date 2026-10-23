@@ -104,6 +104,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** The slider card being dragged and the position the finger is at (0..1). */
     public SliderBody sliderBody;
     public float sliderFraction;
+    /** The slider that was just let go of glides from {@code sliderSettleFrom} to {@code sliderSettleTo} (a step). */
+    public String sliderSettleKey;
+    public float sliderSettleFrom;
+    public float sliderSettleTo;
+    public long sliderSettleStart;
     public float seekFraction;
 
     // layout values the content classes read; copies of the final ones in Metrics
@@ -114,6 +119,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     final float minPillW;
     final float padding;
     float holeD;
+    private float markerX = -1.0f;
+    private float markerY;
+    private float markerD;
+    private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     float maxPillW;
 
     private final IslandHost host;
@@ -268,6 +277,31 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         invalidate();
         notifyHost();
+    }
+
+    /** The ring that shows where the camera hole is set to while the settings page is open; {@code x < 0} = none. */
+    public void setHoleMarker(float x, float y, float diameter) {
+        if (markerX == x && markerY == y && markerD == diameter) {
+            return;
+        }
+        markerX = x;
+        markerY = y;
+        markerD = diameter;
+        invalidate();
+    }
+
+    private void drawHoleMarker(Canvas canvas) {
+        if (markerX < 0.0f) {
+            return;
+        }
+        markerPaint.setStyle(Paint.Style.STROKE);
+        markerPaint.setStrokeWidth(dp(2.0f));
+        markerPaint.setColor(0xFF3E91FF);
+        canvas.drawCircle(markerX, markerY, markerD / 2.0f, markerPaint);
+        markerPaint.setStrokeWidth(dp(1.0f));
+        float arm = (markerD / 2.0f) + dp(5.0f);
+        canvas.drawLine(markerX - arm, markerY, markerX + arm, markerY, markerPaint);
+        canvas.drawLine(markerX, markerY - arm, markerX, markerY + arm, markerPaint);
     }
 
     public void setItems(List<IslandItem> sorted) {
@@ -505,6 +539,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             IslandItem it = bubble.content.item;
             need |= it.pulsingDot || runningStopwatch(it) || (it.isMedia && mediaFx.animating(it));
         }
+        if (sliderSettleKey != null) {
+            need |= now() - sliderSettleStart < SliderBody.SETTLE_MS;
+        }
         for (Card c : scene.cards) {
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item)
                     || (scene.mode == Mode.EXPANDED && c.item.isMedia);
@@ -572,6 +609,14 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     private void paint(Canvas canvas) {
+        try {
+            paintIsland(canvas);
+        } finally {
+            drawHoleMarker(canvas);
+        }
+    }
+
+    private void paintIsland(Canvas canvas) {
         followFont();
         if (metrics.screenW == 0) {
             return;

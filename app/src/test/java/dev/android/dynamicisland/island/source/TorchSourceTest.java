@@ -46,9 +46,22 @@ public class TorchSourceTest {
         assertEquals(5, it.sliderSteps);
         assertEquals("60%", it.trailingText.toString());
         assertNotNull(it.sliderChange);
-        assertTrue(it.expandOnShow);
         assertEquals(1, it.actions.size());
         render("torch_card", it);
+    }
+
+    @Test
+    public void recognisesTheStockFlashlightNotification() {
+        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|4660|Flashlight|10161"));
+        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.android.systemui|1234|Other|10161"));
+        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.example|4660|Flashlight|10161"));
+        org.junit.Assert.assertFalse(TorchSource.isStockNotification(null));
+    }
+
+    @Test
+    public void cardReplacesTheStockNotificationOnlyWhileOn() {
+        assertTrue(source(5, 3, true).replacesStockNotification());
+        org.junit.Assert.assertFalse(source(5, 3, false).replacesStockNotification());
     }
 
     @Test

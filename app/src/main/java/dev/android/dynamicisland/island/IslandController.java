@@ -16,6 +16,7 @@ import android.view.View;
 import dev.android.dynamicisland.island.feedback.AudioLevels;
 import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.island.source.TorchSource;
 import dev.android.dynamicisland.island.view.IslandHost;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.window.IslandWindow;
@@ -102,6 +103,11 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     public void start() {
         sources.start(this::requestRefresh);
+        // the position settings take effect without a restart (and the sample item comes and goes with them)
+        ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
+            placement.updateGeometry();
+            requestRefresh();
+        }));
         try {
             ctx.registerReceiver(new BroadcastReceiver() {
                 @Override
@@ -111,6 +117,26 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             }, new IntentFilter("android.media.action.MICROPHONE_MUTE_CHANGED"), Context.RECEIVER_NOT_EXPORTED);
         } catch (Throwable t) {
             XLog.e("mute receiver failed", t);
+        }
+        try {
+            // the settings app moves the island on the real status bar while the position page is open
+            ctx.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (!ModuleSettings.PACKAGE.equals(getSentFromPackage())) {
+                        return; // only the module's own settings app may move the island
+                    }
+                    ModuleSettings.applyPlacementPreview(intent.getIntExtra(ModuleSettings.EXTRA_ANCHOR, 0),
+                            intent.getIntExtra(ModuleSettings.EXTRA_X_DP, 0), intent.getIntExtra(ModuleSettings.EXTRA_Y_DP, 0),
+                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_MODE, ModuleSettings.HOLE_AUTO),
+                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP),
+                            intent.getIntExtra(ModuleSettings.EXTRA_HOLE_X_DP, 0), intent.getIntExtra(ModuleSettings.EXTRA_HOLE_Y_DP, 0),
+                            intent.getBooleanExtra(ModuleSettings.EXTRA_ACTIVE, true));
+                    requestRefresh();
+                }
+            }, new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW), Context.RECEIVER_EXPORTED);
+        } catch (Throwable t) {
+            XLog.e("position preview receiver failed", t);
         }
         try {
             ctx.getSystemService(AudioManager.class)
@@ -158,6 +184,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public boolean hidesOriginal(String notificationKey) {
         return (ModuleSettings.hideProgressOriginals() && sources.progress.isShownOnIsland(notificationKey))
                 || sources.rules.isShownOnIsland(notificationKey)
+                || (sources.torch.replacesStockNotification() && TorchSource.isStockNotification(notificationKey))
                 || (ModuleSettings.hideProgressOriginals() && sources.cast.hidesOriginal(notificationKey));
     }
 

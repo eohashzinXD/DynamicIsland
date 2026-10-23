@@ -23,6 +23,12 @@ public final class SliderBody extends CardBody {
     private static final float ROW_SLIDE_DP = 8.0f;
     private static final int ICON_ON_FILL = 0xFF2C2C2E;
     private static final float HIT_EXTRA_DP = 14.0f;
+    private static final int STEP_DOTS_MAX = 10;
+    private static final float DOT_INSET_DP = 14.0f;
+    /** How long the bar takes to glide to its step, and the shape of that glide (a damped swing). */
+    public static final float SETTLE_MS = 380.0f;
+    private static final float SETTLE_DAMPING = 7.0f;
+    private static final float SETTLE_SWING = 10.0f;
 
     final float pad;
     final StaticLayout title;
@@ -56,10 +62,40 @@ public final class SliderBody extends CardBody {
                 && lx >= trackLeft - extra && lx <= trackRight + extra;
     }
 
-    /** Position on the slider (0..1) for a touch at {@code lx}, snapped to the steps when the item has some. */
-    public float fractionAt(float lx) {
-        float f = IslandView.clamp01((lx - trackLeft) / Math.max(1.0f, trackRight - trackLeft));
-        return snap(f, item.sliderSteps);
+    /**
+     * The value after the finger moved {@code dx} pixels since it touched down at {@code startValue}. The drag is
+     * relative, as in the iOS control centre: touching the bar does not make it jump, and the edge of the fill stays
+     * right under the finger (the fill has the track's height as its minimum width, which is left out of the range).
+     */
+    public float valueAfterDrag(float startValue, float dx) {
+        return IslandView.clamp01(startValue + (dx / Math.max(1.0f, trackRight - trackLeft - trackH)));
+    }
+
+    /** The value the bar shows right now: the dragged one while dragging, else where it rests or glides to. */
+    public float shownValue() {
+        return owner.sliderBody == this ? owner.sliderFraction : settledValue();
+    }
+
+    /** The step the finger position {@code fraction} stands for (the value itself when the slider has no steps). */
+    public float snapped(float fraction) {
+        return snap(fraction, item.sliderSteps);
+    }
+
+    /**
+     * Where the bar is drawn after the finger left it: it glides from where it was released to the nearest step and
+     * overshoots a hair on the way, so it feels pulled in by a magnet.
+     */
+    private float settledValue() {
+        float target = snap(IslandView.clamp01(item.sliderValue), item.sliderSteps);
+        if (!item.key.equals(owner.sliderSettleKey)) {
+            return target;
+        }
+        float t = (IslandView.now() - owner.sliderSettleStart) / SETTLE_MS;
+        if (t >= 1.0f) {
+            return target;
+        }
+        float e = 1.0f - (float) (Math.exp(-SETTLE_DAMPING * t) * Math.cos(SETTLE_SWING * t));
+        return IslandView.clamp01(owner.sliderSettleFrom + ((owner.sliderSettleTo - owner.sliderSettleFrom) * e));
     }
 
     static float snap(float fraction, int steps) {
@@ -110,9 +146,26 @@ public final class SliderBody extends CardBody {
         }
     }
 
+    /** Small dots where the steps are, so the levels can be seen on the bar. */
+    private void drawStepDots(Canvas c, float left, float right, float top, float height, float fillRight, float alpha) {
+        int steps = item.sliderSteps;
+        if (steps < 2 || steps > STEP_DOTS_MAX) {
+            return;
+        }
+        float radius = owner.dp(2.5f);
+        for (int i = 1; i < steps; i++) {
+            // a dot sits just inside the end of the fill the bar has at that step, so the fill's edge always rests at one
+            float edge = left + height + ((i / (float) (steps - 1)) * ((right - left) - height));
+            float x = edge - owner.dp(DOT_INSET_DP);
+            boolean covered = edge <= fillRight + 0.5f;
+            owner.fillPaint.setColor(Colors.withAlpha(covered ? ICON_ON_FILL : Colors.WHITE, (covered ? 0.28f : 0.45f) * alpha));
+            c.drawCircle(x, top + (height / 2.0f), radius, owner.fillPaint);
+        }
+    }
+
     private void drawSlider(Canvas c, float x, float y, float alpha) {
         boolean dragged = owner.sliderBody == this;
-        float value = dragged ? owner.sliderFraction : snap(IslandView.clamp01(item.sliderValue), item.sliderSteps);
+        float value = dragged ? owner.sliderFraction : settledValue();
         float left = x + trackLeft;
         float right = x + trackRight;
         float top = y + trackTop;
@@ -134,6 +187,7 @@ public final class SliderBody extends CardBody {
         float fillRight = left + height + (value * ((right - left) - height));
         owner.fillPaint.setColor(Colors.withAlpha(Colors.WHITE, 0.94f * alpha));
         c.drawRect(left, top, fillRight, top + height, owner.fillPaint);
+        drawStepDots(c, left, right, top, height, fillRight, alpha);
         c.restore();
         if (item.icon != null) {
             float size = owner.dp(ICON_DP);

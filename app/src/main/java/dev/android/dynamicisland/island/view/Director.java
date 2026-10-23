@@ -64,10 +64,7 @@ final class Director {
     private final Runnable autoCollapse = this::collapseIfExpanded;
     private final Runnable fadePillBlob = this::fadePillBlobNow;
     private final Runnable regrowPill = this::regrowPillNow;
-    private final Runnable autoExpand = this::autoExpandNow;
-    private static final long AUTO_EXPAND_DELAY_MS = 450;
-    /** Key of the item that already opened by itself, so closing it does not open it again. */
-    private String autoExpandedKey;
+
     private final Runnable startSplit = this::startSplitNow;
     /** When the pill last appeared from nothing, for the timing of the first bubble. */
     private long appearedAt;
@@ -122,13 +119,6 @@ final class Director {
         scene.primary = list.isEmpty() ? null : list.get(0);
         scene.secondary = list.size() > 1 ? list.get(1) : null;
         IslandItem primary = scene.primary;
-        if (primary == null || !primary.expandOnShow) {
-            autoExpandedKey = null;
-        } else if (!primary.key.equals(autoExpandedKey) && scene.mode != Mode.EXPANDED) {
-            autoExpandedKey = primary.key; // a card made to be adjusted opens by itself, once per appearance
-            view.removeCallbacks(autoExpand);
-            view.postDelayed(autoExpand, AUTO_EXPAND_DELAY_MS);
-        }
         if (primary == null) {
             if (scene.mode == Mode.EXPANDED) {
                 collapseCards(false);
@@ -351,13 +341,6 @@ final class Director {
         } else {
             layoutCards(show);
             host.onWindowHeightNeeded(expandedWindowHeight());
-        }
-    }
-
-    private void autoExpandNow() {
-        if (scene.mode == Mode.COMPACT && scene.primary != null && scene.primary.expandOnShow
-                && scene.primary.key.equals(autoExpandedKey)) {
-            expandFromPill();
         }
     }
 

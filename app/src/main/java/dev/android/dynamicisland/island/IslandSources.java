@@ -2,6 +2,8 @@ package dev.android.dynamicisland.island;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.SystemClock;
+import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.source.CallSource;
 import dev.android.dynamicisland.island.source.CastSource;
@@ -13,6 +15,7 @@ import dev.android.dynamicisland.island.source.PrivacySource;
 import dev.android.dynamicisland.island.source.ProgressSource;
 import dev.android.dynamicisland.island.source.RuleSource;
 import dev.android.dynamicisland.island.source.TorchSource;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
 import java.util.ArrayList;
@@ -35,6 +38,10 @@ final class IslandSources {
         final Set<String> packages = new LinkedHashSet<>();
     }
 
+    private static final long PREVIEW_RECHECK_MS = 2500;
+    private final Context ctx;
+    private final Handler main;
+    private final Runnable onChange;
     final OaSource oa;
     final MediaSource media;
     final CastSource cast;
@@ -47,6 +54,9 @@ final class IslandSources {
     final PeekSource peeks;
 
     IslandSources(Context ctx, ClassLoader classLoader, Handler main, Runnable onChange) {
+        this.ctx = ctx;
+        this.main = main;
+        this.onChange = onChange;
         oa = new OaSource(ctx, classLoader);
         media = new MediaSource(ctx, main, onChange);
         cast = new CastSource(ctx);
@@ -58,6 +68,7 @@ final class IslandSources {
         progress.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         cast.onRecordersChanged = () -> main.post(HideDuplicated::rebuild);
+        torch.onShownChanged = () -> main.post(HideDuplicated::rebuild);
         calls = new CallSource(ctx, main, onChange);
         peeks = new PeekSource(ctx, main, onChange);
     }
@@ -95,13 +106,38 @@ final class IslandSources {
         guarded("cast", () -> cast.collect(items));
         guarded("events", () -> events.collect(items));
         guarded("torch", () -> torch.collect(items));
+        if (ModuleSettings.placementPreviewActive()) {
+            items.add(placementSample());
+            main.removeCallbacks(onChange);
+            main.postDelayed(onChange, PREVIEW_RECHECK_MS); // so the sample goes away when the page stops asking for it
+        }
         guarded("privacy", () -> privacy.collect(items, foreground));
         guarded("progress", () -> progress.collect(items, foreground));
         guarded("rules", () -> rules.collect(items, foreground));
         guarded("calls", () -> calls.collect(items, foreground));
         guarded("peeks", () -> peeks.collect(items));
+        if (torch.replacesStockNotification()) {
+            // System UI's own "flashlight in use" notification would show next to the brightness card
+            items.removeIf(it -> TorchSource.isStockNotification(it.key) || TorchSource.isStockNotification(it.sourceKey));
+        }
         ItemDedupe.apply(items, HideDuplicated::copyKeysOf);
         return out;
+    }
+
+    /** What the island shows while the position page of the settings app is open, so there is something to move. */
+    private IslandItem placementSample() {
+        boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
+        IslandItem it = new IslandItem("preview:position");
+        it.kind = IslandItem.Kind.EVENT;
+        it.iconIsImage = false;
+        it.title = ko ? "아일랜드 위치" : "Island position";
+        it.subtitle = ko ? "슬라이더로 옮겨 보세요" : "Move it with the sliders";
+        it.icon = GlyphIcon.of(GlyphIcon.Kind.HOTSPOT);
+        it.accent = 0xFF3E91FF;
+        it.trailing = IslandItem.Trailing.TEXT;
+        it.trailingText = ko ? "미리보기" : "Preview";
+        it.postTime = SystemClock.uptimeMillis();
+        return it;
     }
 
     private static void guarded(String source, Runnable collect) {

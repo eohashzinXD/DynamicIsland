@@ -5,7 +5,7 @@ Build, test and compatibility details for contributors. The user-facing overview
 ## Target
 
 - App package: `dev.android.dynamicisland`; scope: `com.android.systemui`.
-- Samsung One UI 8 / 9 (Android 16 / 17); minSdk 35, compileSdk / targetSdk 36. Xposed API 93 (legacy API, `XSharedPreferences` for settings).
+- Samsung One UI 7 / 8 / 9 (Android 15 / 16 / 17); minSdk 35, compileSdk / targetSdk 36. Xposed API 93 (legacy API, `XSharedPreferences` for settings).
 - Everything hooks private System UI classes by name (see `xposed/hooks/SystemUiHooks`). When a System UI update renames something, the log line `SystemUI hooks installed ... N hook(s) did not attach: [...]` and the in-app diagnostics list exactly which hooks to update.
 
 ## Source layout

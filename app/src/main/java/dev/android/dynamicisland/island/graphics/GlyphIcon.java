@@ -343,23 +343,29 @@ public final class GlyphIcon extends Drawable {
         c.drawPath(path, paint);
     }
 
+    /** A flashlight pointing up with three rays of light, like the iOS symbol: flared head, neck, body with a switch. */
     private void drawTorch(Canvas c, float cx, float cy, float s) {
+        float stroke = Math.max(1.4f, s * 0.075f);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(stroke);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        c.drawLine(cx, cy - (s * 0.46f), cx, cy - (s * 0.36f), paint);
+        c.drawLine(cx - (s * 0.27f), cy - (s * 0.39f), cx - (s * 0.21f), cy - (s * 0.30f), paint);
+        c.drawLine(cx + (s * 0.27f), cy - (s * 0.39f), cx + (s * 0.21f), cy - (s * 0.30f), paint);
         int layer = c.saveLayer(cx - s, cy - s, cx + s, cy + s, null);
         paint.setStyle(Paint.Style.FILL);
         path.reset();
-        path.moveTo(cx - (s * 0.2f), cy - (s * 0.4f));
-        path.lineTo(cx + (s * 0.2f), cy - (s * 0.4f));
-        path.lineTo(cx + (s * 0.2f), cy - (s * 0.22f));
-        path.lineTo(cx + (s * 0.1f), cy - (s * 0.08f));
-        path.lineTo(cx + (s * 0.1f), cy + (s * 0.4f));
-        path.lineTo(cx - (s * 0.1f), cy + (s * 0.4f));
-        path.lineTo(cx - (s * 0.1f), cy - (s * 0.08f));
-        path.lineTo(cx - (s * 0.2f), cy - (s * 0.22f));
+        path.moveTo(cx - (s * 0.2f), cy - (s * 0.24f));
+        path.lineTo(cx + (s * 0.2f), cy - (s * 0.24f));
+        path.lineTo(cx + (s * 0.115f), cy - (s * 0.02f));
+        path.lineTo(cx - (s * 0.115f), cy - (s * 0.02f));
         path.close();
         c.drawPath(path, paint);
+        rect.set(cx - (s * 0.115f), cy + (s * 0.02f), cx + (s * 0.115f), cy + (s * 0.42f));
+        c.drawRoundRect(rect, s * 0.07f, s * 0.07f, paint);
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        rect.set(cx - (s * 0.035f), cy - (s * 0.02f), cx + (s * 0.035f), cy + (s * 0.14f));
-        c.drawRoundRect(rect, s * 0.035f, s * 0.035f, paint);
+        rect.set(cx - (s * 0.032f), cy + (s * 0.1f), cx + (s * 0.032f), cy + (s * 0.22f));
+        c.drawRoundRect(rect, s * 0.032f, s * 0.032f, paint);
         paint.setXfermode(null);
         c.restoreToCount(layer);
     }

@@ -45,6 +45,7 @@ public final class SettingsActivity extends Activity {
     private OneUi ui;
     private RulesScreen rules;
     private AnimationScreen animation;
+    private PositionScreen position;
     private LinearLayout page;
     private ScrollView scroll;
     /** Builders of the open pages, the visible one on top. */
@@ -58,6 +59,7 @@ public final class SettingsActivity extends Activity {
         ui = new OneUi(this);
         rules = new RulesScreen(this, ui, prefs);
         animation = new AnimationScreen(this, ui, prefs);
+        position = new PositionScreen(this, ui, prefs);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -75,6 +77,12 @@ public final class SettingsActivity extends Activity {
         setContentView(scroll);
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         open(this::hub);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        position.stop();
     }
 
     @Override
@@ -104,6 +112,7 @@ public final class SettingsActivity extends Activity {
     }
 
     void render() {
+        position.stop(); // a page that moves the real island lets go of it when another page is built
         page.removeAllViews();
         stack.peek().run();
     }
@@ -156,6 +165,7 @@ public final class SettingsActivity extends Activity {
         LinearLayout main = ui.card(page);
         ui.linkRow(main, getString(R.string.hub_display), getString(R.string.hub_display_sum), () -> open(this::displayPage));
         ui.linkRow(main, getString(R.string.anim_title), getString(R.string.anim_sum), () -> open(animation::open));
+        ui.linkRow(main, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
         ui.linkRow(main, getString(R.string.hub_notifications), getString(R.string.hub_notifications_sum), () -> open(this::notificationsPage));
         ui.linkRow(main, getString(R.string.hub_events), getString(R.string.hub_events_sum), () -> open(this::eventsPage));
         ui.linkRow(main, getString(R.string.apps_title), appsSummary(), () -> open(this::appsPage));

@@ -111,8 +111,6 @@ public final class IslandItem {
     public float sliderValue = -1.0f;
     public int sliderSteps;
     public java.util.function.Consumer<Float> sliderChange;
-    /** The card opens by itself when it first appears: it exists to be adjusted (the flashlight). */
-    public boolean expandOnShow;
 
     /** What the compact pill shows at its trailing edge. */
     public Trailing trailing = Trailing.NONE;

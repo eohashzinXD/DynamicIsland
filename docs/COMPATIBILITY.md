@@ -8,7 +8,7 @@ The module hooks Samsung's System UI by name, so each One UI version has to be c
 |---|---|---|
 | 9 | 17 (SDK 37) | the code has branches for it; not confirmed on a device |
 | 8 | 16 (SDK 36) | the module was written against it; tested on one device only |
-| 7 | 15 (SDK 35) | added in 0.1.6-dev3 from a System UI build (Android 15, version code 35): the hook targets were checked against it by name and attach; not tested on a device. The blurred shade cards and the shade media player takeover are off here (those rows do not exist in One UI 7), and the screen-recording / screen-sharing card is not available |
+| 7 | 15 (SDK 35) | added in 0.1.7 from a System UI build (Android 15, version code 35): the hook targets were checked against it by name and attach; not tested on a device. The blurred shade cards and the shade media player takeover are off here (those rows do not exist in One UI 7), and the screen-recording / screen-sharing card is not available |
 
 "Tested" means used on a real phone. Nothing here is tested on more than the author's own device.
 

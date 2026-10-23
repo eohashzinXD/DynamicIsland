@@ -129,7 +129,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 - **Charging** (fast or wireless, with the live percentage), **low battery**, **sound mode** (silent, vibrate, ring), **Bluetooth audio** connecting (with its battery level).
 - **Camera, microphone and location in use:** which app uses which sensor; a tap opens that app's permission page. (Location is off by default because navigation and weather apps use it all day.)
 - **Quick-setting feedback:** Do Not Disturb, airplane mode, power saving, hotspot and auto-rotate being switched on or off.
-- **Flashlight brightness:** While the torch is on, a card opens with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the plain "flashlight on" popup is shown instead.
+- **Flashlight brightness:** While the torch is on, tapping the island opens a card with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the plain "flashlight on" popup is shown instead.
 - Every group can be switched off separately.
 
 ### Settings app
@@ -147,7 +147,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ## Requirements
 
-- A Samsung device on One UI 8 / 9 (Android 16 / 17) with the stock System UI.
+- A Samsung device on One UI 7 / 8 / 9 (Android 15 / 16 / 17) with the stock System UI. One UI 7 support is new and checked against one System UI build only (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 - LSPosed (module minimum SDK 35).
 - Root is only needed for the optional **Restart System UI** button.
 

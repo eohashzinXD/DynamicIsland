@@ -49,7 +49,9 @@ final class TouchController {
     /** Touch started on the empty hole while an item is minimized there. */
     private boolean downOnHole;
     private Card downCard;
-    /** Last slider position passed on during the current drag, -1 before the first. */
+    /** Value of the dragged slider when the finger touched down. */
+    private float sliderStart;
+    /** Last slider position passed on during the current drag. */
     private float lastSliderFraction = -1.0f;
     /** The gesture already did its job (e.g. collapsed the stack): swallow the rest of it. */
     private boolean ignoreGesture;
@@ -179,11 +181,12 @@ final class TouchController {
         if (downCard.body instanceof SliderBody) {
             SliderBody slider = (SliderBody) downCard.body;
             if (slider.onSlider(downX - left, downY - slot.top)) {
+                // relative drag: the bar stays where it is and moves with the finger, it does not jump to the touch
+                sliderStart = slider.shownValue();
                 view.sliderBody = slider;
-                view.sliderFraction = slider.fractionAt(downX - left);
-                lastSliderFraction = -1.0f;
+                view.sliderFraction = sliderStart;
+                lastSliderFraction = slider.snapped(sliderStart);
                 view.getParent().requestDisallowInterceptTouchEvent(true);
-                tellSlider(slider);
                 view.invalidate();
             }
         }
@@ -221,7 +224,7 @@ final class TouchController {
             return;
         }
         if (view.sliderBody != null && downCard != null) {
-            view.sliderFraction = view.sliderBody.fractionAt(x(e) - shapes.contentLeft(downCard));
+            view.sliderFraction = view.sliderBody.valueAfterDrag(sliderStart, x(e) - downX);
             tellSlider(view.sliderBody);
             view.scheduleFrame();
             view.invalidate();
@@ -325,24 +328,32 @@ final class TouchController {
 
     /** Passes the dragged slider position on whenever it lands on another step (the flashlight changes at once). */
     private void tellSlider(SliderBody body) {
-        float value = view.sliderFraction;
+        float value = body.snapped(view.sliderFraction); // the bar follows the finger smoothly, the brightness goes by steps
         if (value == lastSliderFraction) {
             return;
         }
-        boolean first = lastSliderFraction < 0.0f;
         lastSliderFraction = value;
         body.item.sliderValue = value;
         if (body.item.sliderChange != null) {
             body.item.sliderChange.accept(value);
         }
-        if (!first) {
-            Haptics.perform(view, HAPTIC_SEEK_DONE);
-        }
+        Haptics.perform(view, HAPTIC_SEEK_DONE);
     }
 
     private void finishSlider() {
+        SliderBody body = view.sliderBody;
         view.sliderBody = null;
         lastSliderFraction = -1.0f;
+        if (body != null) {
+            // let go: the bar glides to the nearest step
+            float target = body.snapped(view.sliderFraction);
+            body.item.sliderValue = target;
+            view.sliderSettleKey = body.item.key;
+            view.sliderSettleFrom = view.sliderFraction;
+            view.sliderSettleTo = target;
+            view.sliderSettleStart = IslandView.now();
+            view.scheduleFrame();
+        }
         director.postAutoCollapse();
         view.invalidate();
     }

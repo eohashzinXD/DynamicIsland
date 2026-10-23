@@ -12,6 +12,7 @@ import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.window.ExitAnimationBridge;
 import dev.android.dynamicisland.island.window.IslandWindow;
 import dev.android.dynamicisland.island.window.StatusBarIconFader;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.LinkedHashSet;
@@ -38,6 +39,8 @@ final class IslandPlacement {
     /** The visible part of the camera hole as a fraction of its bounding box. */
     private static final float CUTOUT_VISIBLE_RATIO = 0.78f;
     /** Screens at least this wide (dp, short side) are treated as tablets. */
+    /** How far in from the edge the island sits for the left and right positions, as a fraction of the screen width. */
+    private static final float PILL_SIDE_FRACTION = 0.25f;
     private static final float TABLET_MIN_WIDTH_DP = 600.0f;
     /** Phones in landscape (wider than this aspect ratio) hide the island. */
     private static final float LANDSCAPE_ASPECT = 1.2f;
@@ -249,8 +252,17 @@ final class IslandPlacement {
         if (width <= 0 || height <= 0) {
             return;
         }
-        float centerX = width / 2.0f;
-        float centerY = statusBarCenterY();
+        float centerX = pillCenterX(width);
+        float centerY = pillCenterY();
+        // where the camera hole is: found from the cutout, or set by hand (then the island grows from that spot)
+        boolean onHole = ModuleSettings.pillAnchor() == ModuleSettings.ANCHOR_AUTO && ModuleSettings.pillXDp() == 0 && ModuleSettings.pillYDp() == 0;
+        boolean manualHole = ModuleSettings.holeMode() == ModuleSettings.HOLE_MANUAL;
+        float holeCenterX = (width / 2.0f) + (manualHole ? ModuleSettings.holeXDp() * density : 0.0f);
+        float holeCenterY = statusBarCenterY() + (manualHole ? ModuleSettings.holeYDp() * density : 0.0f);
+        if (onHole && manualHole) {
+            centerX = holeCenterX;
+            centerY = holeCenterY;
+        }
         boolean landscape = width > height;
         if (landscape) {
             centerYLandscape = centerY;
@@ -259,10 +271,49 @@ final class IslandPlacement {
         }
         boolean tablet = Math.min(width, height) / density >= TABLET_MIN_WIDTH_DP;
         landscapeSuppressed = !tablet && width > height * LANDSCAPE_ASPECT;
-        view.setGeometry(width, centerX, centerY, cameraHoleDiameter(centerX), tablet);
+        // the island hugs the camera hole only where it sits on it; moved anywhere else it is a plain pill
+        float holeD = 0.0f;
+        if (onHole) {
+            switch (ModuleSettings.holeMode()) {
+                case ModuleSettings.HOLE_MANUAL:
+                    holeD = ModuleSettings.holeDiameterDp() * density;
+                    break;
+                case ModuleSettings.HOLE_NONE:
+                    break;
+                default:
+                    holeD = cameraHoleDiameter(centerX);
+                    break;
+            }
+        }
+        view.setGeometry(width, centerX, centerY, holeD, tablet);
+        // while the settings page is open the hole set by hand is drawn as a ring, to line it up with the real camera
+        boolean marker = manualHole && ModuleSettings.placementPreviewActive();
+        view.setHoleMarker(marker ? holeCenterX : -1.0f, holeCenterY, ModuleSettings.holeDiameterDp() * density);
         applyWindowHeight();
         updateSuppression();
         pushExitTargets(false);
+    }
+
+    /** Where the island's centre is horizontally: the middle, a quarter in from either side, plus the user's shift. */
+    private float pillCenterX(int width) {
+        float base;
+        switch (ModuleSettings.pillAnchor()) {
+            case ModuleSettings.ANCHOR_LEFT:
+                base = width * PILL_SIDE_FRACTION;
+                break;
+            case ModuleSettings.ANCHOR_RIGHT:
+                base = width * (1.0f - PILL_SIDE_FRACTION);
+                break;
+            default:
+                base = width / 2.0f;
+                break;
+        }
+        return base + (ModuleSettings.pillXDp() * density);
+    }
+
+    /** The status bar's centre line plus the user's vertical shift. */
+    private float pillCenterY() {
+        return statusBarCenterY() + (ModuleSettings.pillYDp() * density);
     }
 
     /** Diameter of the visible camera hole when it sits at the screen centre, else 0. */
@@ -300,7 +351,7 @@ final class IslandPlacement {
         if (window == null) {
             return;
         }
-        int height = Math.max(neededHeight, Math.round(statusBarCenterY() + density * WINDOW_EXTRA_HEIGHT_DP));
+        int height = Math.max(neededHeight, Math.round(pillCenterY() + density * WINDOW_EXTRA_HEIGHT_DP));
         if (view != null && view.isExpanded()) {
             height = Math.max(height, window.windowBounds().height());
         }
