@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.window;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.view.View;
 
@@ -29,8 +31,18 @@ final class IconAlphaFade {
         if (from == newTarget) {
             return;
         }
-        running = FadeTiming.animator(from, newTarget, a -> view.setTransitionAlpha((Float) a.getAnimatedValue()));
-        running.start();
+        ValueAnimator animator = FadeTiming.animator(from, newTarget, a -> view.setTransitionAlpha((Float) a.getAnimatedValue()));
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator finished) {
+                // a finished fade is idle again, so that an alpha changed behind our back is noticed (see animateTo)
+                if (running == finished) {
+                    running = null;
+                }
+            }
+        });
+        running = animator;
+        animator.start();
     }
 
     void cancel() {
