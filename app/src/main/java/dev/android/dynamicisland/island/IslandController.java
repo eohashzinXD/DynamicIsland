@@ -21,6 +21,7 @@ import dev.android.dynamicisland.island.view.IslandHost;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.window.IslandWindow;
 import dev.android.dynamicisland.settings.ModuleSettings;
+import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.ArrayList;
@@ -104,6 +105,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void start() {
         sources.start(this::requestRefresh);
         // the position settings take effect without a restart (and the sample item comes and goes with them)
+        ModuleSettings.setOnSwitchesChanged(() -> main.post(() -> {
+            requestRefresh();
+            HideDuplicated.rebuild();
+        }));
         ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
             placement.updateGeometry();
             requestRefresh();

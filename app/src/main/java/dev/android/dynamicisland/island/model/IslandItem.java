@@ -37,6 +37,8 @@ public final class IslandItem {
     public Drawable profileBadge;
     /** Key of the notification this item was made from, when it is made from one; else null. */
     public String sourceKey;
+    /** A progress-category notification (download, copy, update): the "Downloads & transfers" switch covers it. */
+    public boolean transfer;
     /** Stage reached in a staged process (delivery, ride, route...), see the rule source; -1 = none. */
     public int stage = -1;
     /** When the underlying notification / session was posted (ms, wall clock). */

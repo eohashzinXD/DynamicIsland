@@ -105,6 +105,9 @@ final class IslandSources {
         } catch (Throwable t) {
             XLog.once("collect live notifications", t);
         }
+        if (!ModuleSettings.progressNotifications()) {
+            items.removeIf(item -> item.transfer);
+        }
         final String foreground = fg;
         guarded("media", () -> media.collect(items, foreground, out.hiddenByForeground, out.packages));
         guarded("cast", () -> cast.collect(items));

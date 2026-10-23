@@ -134,6 +134,8 @@ public final class ModuleSettings {
     private static volatile RuleConfig rulesConfig = RuleConfig.DEFAULT;
     /** Told (on the reload thread) when the user's rules changed, so cards already showing can follow. */
     private static volatile Runnable onRulesChanged;
+    /** Told (on the reload thread) when any switch changed, so what is on the island follows without waiting for the next event. */
+    private static volatile Runnable onSwitchesChanged;
     private static volatile boolean eventToggles = true;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
@@ -256,6 +258,10 @@ public final class ModuleSettings {
         return pillYDp;
     }
 
+    public static void setOnSwitchesChanged(Runnable listener) {
+        onSwitchesChanged = listener;
+    }
+
     public static void setOnRulesChanged(Runnable listener) {
         onRulesChanged = listener;
     }
@@ -350,11 +356,26 @@ public final class ModuleSettings {
             Set<String> listed = prefs.getStringSet(KEY_APPS_LISTED, null);
             appFilter = new AppFilter(prefs.getBoolean(KEY_APPS_ONLY_LISTED, false),
                     listed == null ? null : new java.util.HashSet<>(listed));
+            String switches = switchSignature();
+            boolean switchesChanged = lastSwitches != null && !switches.equals(lastSwitches);
+            lastSwitches = switches;
             logChanges();
+            Runnable switchListener = onSwitchesChanged;
+            if (switchesChanged && switchListener != null) {
+                switchListener.run();
+            }
         } catch (Throwable t) {
             // unreadable preferences: keep the last known / default values
             XLog.once("ModuleSettings.refresh", t);
         }
+    }
+
+    private static String lastSwitches;
+
+    private static String switchSignature() {
+        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + progressNotifications + hideProgressOriginals
+                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + cardHeader
+                + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
