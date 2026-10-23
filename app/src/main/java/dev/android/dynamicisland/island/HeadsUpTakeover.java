@@ -93,7 +93,9 @@ final class HeadsUpTakeover {
                 return false;
             }
             IslandItem message = sources.peeks.buildMessage(sbn);
-            return message != null && show(sbn, message);
+            boolean taken = message != null && show(sbn, message);
+            note("banner of " + sbn.getPackageName() + (taken ? " taken by the island" : " left to the stock banner: no card could be built or opened"));
+            return taken;
         } catch (Throwable t) {
             XLog.once("IslandController.peekHeadsUp", t);
             return false;
@@ -137,10 +139,18 @@ final class HeadsUpTakeover {
         IslandItem item = sources.peeks.build(newest);
         if (item != null) {
             if (show(newest, item)) {
-                HeadsUpHooks.dismissStock(newest.getKey()); // the system's banner may have come up first
+                note("card for " + newest.getPackageName() + " from the notification list (stock banner asked to leave: "
+                        + HeadsUpHooks.dismissStock(newest.getKey()) + ")"); // the system's banner may have come up first
             } else {
                 reject("all notifications: the island could not open");
             }
+        }
+    }
+
+    private void note(String what) {
+        if (rejectLogs < MAX_OTP_LOGS) {
+            rejectLogs++;
+            XLog.event("notification card: " + what);
         }
     }
 

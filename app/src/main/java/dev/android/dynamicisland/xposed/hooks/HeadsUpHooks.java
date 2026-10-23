@@ -19,6 +19,8 @@ public final class HeadsUpHooks {
 
     /** The heads-up manager, kept so that a banner that already came up can be taken away again. */
     private static volatile Object manager;
+    private static final int MAX_ASKED_LOGS = 10;
+    private static int askedLogs;
 
     private HeadsUpHooks() {
     }
@@ -28,24 +30,34 @@ public final class HeadsUpHooks {
     }
 
     /** Removes the stock banner of {@code key} when it is up: the island shows the notification now. */
-    public static void dismissStock(String key) {
+    public static String dismissStock(String key) {
         Object heads = manager;
         if (heads == null || key == null) {
-            return;
+            return "no heads-up manager seen yet";
         }
         try {
             if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
                 Refl.call(heads, "removeNotification", key, Boolean.TRUE);
+                return "removeNotification/2 called";
             } else if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
                 Refl.call(heads, "removeNotification", key, Boolean.TRUE, "dynamic island");
+                return "removeNotification/3 called";
             }
+            return "no removeNotification with 2 or 3 parameters";
         } catch (Throwable t) {
             XLog.once("HeadsUpHooks.dismissStock", t);
+            return "failed: " + t.getClass().getSimpleName();
         }
     }
 
     private static void afterPinDecision(XC_MethodHook.MethodHookParam p) {
         manager = p.thisObject;
+        if (askedLogs < MAX_ASKED_LOGS) {
+            askedLogs++;
+            Object entry = p.args.length > 0 ? p.args[0] : null;
+            Object sbnForLog = entry == null ? null : Refl.get(entry, "mSbn");
+            XLog.event("heads-up pin decision asked: " + (sbnForLog instanceof StatusBarNotification ? ((StatusBarNotification) sbnForLog).getPackageName() : "?") + " -> " + p.getResult());
+        }
         if (p.hasThrowable() || !Boolean.TRUE.equals(p.getResult()) || p.args.length < 1 || p.args[0] == null) {
             return;
         }
