@@ -14,6 +14,7 @@ import dev.android.dynamicisland.island.source.PeekSource;
 import dev.android.dynamicisland.island.source.PrivacySource;
 import dev.android.dynamicisland.island.source.PromotedSource;
 import dev.android.dynamicisland.island.source.ProgressSource;
+import dev.android.dynamicisland.island.source.RecorderNotificationSource;
 import dev.android.dynamicisland.island.source.RuleSource;
 import dev.android.dynamicisland.island.source.TorchSource;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -51,6 +52,7 @@ final class IslandSources {
     final PrivacySource privacy;
     final ProgressSource progress;
     final PromotedSource promoted;
+    final RecorderNotificationSource recorder;
     final RuleSource rules;
     final CallSource calls;
     final PeekSource peeks;
@@ -67,6 +69,8 @@ final class IslandSources {
         privacy = new PrivacySource(ctx, main, onChange);
         progress = new ProgressSource(ctx, main, onChange);
         promoted = new PromotedSource(ctx, main, onChange);
+        recorder = new RecorderNotificationSource(ctx, onChange);
+        recorder.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         promoted.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules = new RuleSource(ctx, main, onChange);
         progress.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
@@ -111,6 +115,7 @@ final class IslandSources {
         final String foreground = fg;
         guarded("media", () -> media.collect(items, foreground, out.hiddenByForeground, out.packages));
         guarded("cast", () -> cast.collect(items));
+        guarded("recorder notification", () -> recorder.collect(items));
         guarded("events", () -> events.collect(items));
         guarded("torch", () -> torch.collect(items));
         if (ModuleSettings.placementPreviewActive()) {

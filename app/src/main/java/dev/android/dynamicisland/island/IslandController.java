@@ -184,6 +184,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public boolean hidesOriginal(String notificationKey) {
         return (ModuleSettings.hideProgressOriginals() && sources.progress.isShownOnIsland(notificationKey))
                 || (ModuleSettings.hideProgressOriginals() && sources.promoted.isShownOnIsland(notificationKey))
+                || (ModuleSettings.hideProgressOriginals() && sources.recorder.isShownOnIsland(notificationKey))
                 || sources.rules.isShownOnIsland(notificationKey)
                 || (sources.torch.replacesStockNotification() && TorchSource.isStockNotification(notificationKey))
                 || (ModuleSettings.hideProgressOriginals() && sources.cast.hidesOriginal(notificationKey));
@@ -197,6 +198,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                 allowed.add(sbn);
             }
         }
+        sources.recorder.update(allowed);
         sources.promoted.update(allowed);
         sources.progress.update(allowed);
         sources.rules.update(allowed);
