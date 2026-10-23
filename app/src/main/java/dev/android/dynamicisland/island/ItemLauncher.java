@@ -56,6 +56,24 @@ final class ItemLauncher {
         }
     }
 
+    /** Sends {@code text} through the reply action of a notification. */
+    boolean sendReply(IslandItem.Action action, CharSequence text) {
+        try {
+            Intent fill = new Intent();
+            Bundle results = new Bundle();
+            for (android.app.RemoteInput input : action.remoteInputs) {
+                results.putCharSequence(input.getResultKey(), text);
+            }
+            android.app.RemoteInput.addResultsToIntent(action.remoteInputs, fill, results);
+            action.intent.send(ctx, 0, fill, null, null, null, backgroundStartOptions().toBundle());
+            haptics.click();
+            return true;
+        } catch (Throwable t) {
+            XLog.e("reply failed", t);
+            return false;
+        }
+    }
+
     /** Grows from the island when its bounds are known. */
     private Bundle launchOptions(RectF from) {
         View view = anchor.get();

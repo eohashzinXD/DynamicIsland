@@ -235,6 +235,8 @@ public final class IslandItem {
         public final PendingIntent intent;
         public final Runnable runnable;
         public final CharSequence title;
+        /** The text fields of a reply action: the button asks for a text and sends it through {@link #intent}. */
+        public android.app.RemoteInput[] remoteInputs;
 
         public Action(CharSequence title, Drawable icon, PendingIntent intent, Runnable runnable, boolean destructive) {
             this.title = title;

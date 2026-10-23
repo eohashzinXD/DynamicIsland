@@ -88,7 +88,7 @@ final class HeadsUpTakeover {
                 log(shown ? "shown with its heads-up" : "not shown: the island could not open");
                 return shown;
             }
-            if (!(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications()) || view.isExpanded()) {
+            if (!(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications()) || view.isExpanded() && !view.isPeekOpen()) {
                 reject("banner of " + sbn.getPackageName() + ": " + (view.isExpanded() ? "a card is open" : "the notification settings are off"));
                 return false;
             }
@@ -132,7 +132,7 @@ final class HeadsUpTakeover {
             return;
         }
         IslandView view = placement.view();
-        if (view.isSuppressedNow() || view.isExpanded()) {
+        if (view.isSuppressedNow() || (view.isExpanded() && !view.isPeekOpen())) {
             reject("all notifications: the island is hidden or open");
             return;
         }

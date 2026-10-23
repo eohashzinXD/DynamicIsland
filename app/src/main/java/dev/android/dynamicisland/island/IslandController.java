@@ -289,7 +289,42 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     @Override
     public void onItemAction(IslandItem item, IslandItem.Action action) {
+        if (action.remoteInputs != null && action.intent != null && startReply(item, action)) {
+            return;
+        }
+        if (action.remoteInputs != null && item.contentIntent != null) {
+            launcher.open(item, null); // the reply field could not be shown: open the conversation instead
+            return;
+        }
         launcher.runAction(action);
+    }
+
+    /** Opens the text field for answering the message of {@code item}; false when it cannot be shown. */
+    private boolean startReply(IslandItem item, IslandItem.Action action) {
+        IslandWindow window = placement.window();
+        if (window == null) {
+            return false;
+        }
+        boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
+        CharSequence name = item.title == null ? "" : item.title;
+        boolean shown = window.showReply(ko ? name + "에게 답장" : "Reply to " + name, ko ? "전송" : "Send", new IslandWindow.ReplyListener() {
+            @Override
+            public void onSend(CharSequence text) {
+                launcher.sendReply(action, text);
+                window.hideReply();
+                placement.view().collapse();
+            }
+
+            @Override
+            public void onDismiss() {
+                window.hideReply();
+                placement.view().collapse();
+            }
+        });
+        if (shown) {
+            placement.view().holdOpen();
+        }
+        return shown;
     }
 
     @Override
@@ -297,7 +332,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         haptics.tick();
         IslandWindow window = placement.window();
         if (window != null) {
-            window.setWatchOutsideTouch(expanded);
+            window.setWatchOutsideTouch(expanded && !placement.view().isPeekOpen());
         }
         placement.pushExitTargets(false);
     }

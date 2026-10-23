@@ -332,6 +332,7 @@ final class Director {
     }
 
     void peek(IslandItem item, long ms) {
+        scene.peekOpen = true;
         expand(Collections.singletonList(item), ms);
     }
 
@@ -348,6 +349,7 @@ final class Director {
 
     /** Opens the stack from the current item lists (a tap on the pill). */
     void expandFromPill() {
+        scene.peekOpen = false;
         expand(scene.stackItems(MAX_CARDS), ModuleSettings.autoCollapseMs());
     }
 
@@ -355,6 +357,7 @@ final class Director {
         if (scene.mode != Mode.EXPANDED) {
             return;
         }
+        scene.peekOpen = false;
         cancelAutoCollapse();
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);

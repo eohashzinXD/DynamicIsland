@@ -36,12 +36,14 @@ public final class HeadsUpHooks {
             return "no heads-up manager seen yet";
         }
         try {
+            // One UI 9 / Android 17: removeNotification(String key, String reason, boolean releaseImmediately)
+            if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
+                Refl.call(heads, "removeNotification", key, "dynamic island", Boolean.TRUE);
+                return "removeNotification(key, reason, immediately) called";
+            }
             if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
                 Refl.call(heads, "removeNotification", key, Boolean.TRUE);
-                return "removeNotification/2 called";
-            } else if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
-                Refl.call(heads, "removeNotification", key, Boolean.TRUE, "dynamic island");
-                return "removeNotification/3 called";
+                return "removeNotification(key, immediately) called";
             }
             return "no removeNotification with 2 or 3 parameters";
         } catch (Throwable t) {

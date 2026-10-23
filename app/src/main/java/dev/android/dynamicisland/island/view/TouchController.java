@@ -112,7 +112,7 @@ final class TouchController {
                 cancel(e);
                 break;
             case MotionEvent.ACTION_OUTSIDE:
-                if (scene.mode == Mode.EXPANDED) {
+                if (scene.mode == Mode.EXPANDED && !scene.peekOpen) {
                     director.collapse();
                 }
                 break;
@@ -161,8 +161,10 @@ final class TouchController {
             }
         }
         if (downCard == null) {
-            // touch outside every card closes the stack
-            director.collapse();
+            // touch outside every card closes the stack (a notification popup just goes away on its own)
+            if (!scene.peekOpen) {
+                director.collapse();
+            }
             ignoreGesture = true;
             return;
         }

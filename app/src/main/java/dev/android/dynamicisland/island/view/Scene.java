@@ -26,6 +26,8 @@ final class Scene {
     BlurSink blur;
 
     boolean suppressed;
+    /** The open card is a notification popup that goes away by itself; touches elsewhere (typing) do not close it. */
+    boolean peekOpen;
     /** How far the notification shade is pulled down, 0..1. */
     float shade;
     /** The host fades the whole window surface itself for the pulled shade. */

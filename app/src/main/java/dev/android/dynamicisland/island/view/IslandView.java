@@ -417,6 +417,16 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         return scene.mode == Mode.EXPANDED;
     }
 
+    /** True while the open card is a notification popup (it closes by itself and ignores touches elsewhere). */
+    public boolean isPeekOpen() {
+        return scene.mode == Mode.EXPANDED && scene.peekOpen;
+    }
+
+    /** Keeps the open card from closing by itself (while the user types a reply). */
+    public void holdOpen() {
+        director.cancelAutoCollapse();
+    }
+
     public void collapse() {
         director.collapse();
     }

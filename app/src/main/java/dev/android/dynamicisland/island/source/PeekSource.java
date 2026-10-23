@@ -206,9 +206,13 @@ public final class PeekSource {
                     continue;
                 }
                 boolean reply = a.getRemoteInputs() != null && a.getRemoteInputs().length > 0;
-                // typing a reply needs the app's own UI: that button just opens the conversation
-                it.actions.add(new IslandItem.Action(reply ? t("답장", "Reply") : a.title, null,
-                        reply && n.contentIntent != null ? n.contentIntent : a.actionIntent, null, !reply && OaSource.isDestructive(a.title)));
+                // a reply button asks for the text on the island and sends it with the app's own reply intent
+                IslandItem.Action action = new IslandItem.Action(reply ? t("답장", "Reply") : a.title, null,
+                        a.actionIntent, null, !reply && OaSource.isDestructive(a.title));
+                if (reply) {
+                    action.remoteInputs = a.getRemoteInputs();
+                }
+                it.actions.add(action);
             }
         }
         return it;

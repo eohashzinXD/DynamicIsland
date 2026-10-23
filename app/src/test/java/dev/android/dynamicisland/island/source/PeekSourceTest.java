@@ -92,7 +92,12 @@ public class PeekSourceTest {
         assertEquals("I booked the table, bring the tickets!", it.subtitle.toString());
         assertTrue(it.cardImageRound);
         assertEquals(2, it.actions.size());
-        assertEquals("Reply", it.actions.get(0).title.toString());   // opens the conversation
+        assertEquals("Reply", it.actions.get(0).title.toString());
+        // the reply button asks for a text on the island and sends it through the app's reply intent
+        assertNotNull(it.actions.get(0).remoteInputs);
+        assertEquals("text", it.actions.get(0).remoteInputs[0].getResultKey());
+        assertNotNull(it.actions.get(0).intent);
+        assertEquals(null, it.actions.get(1).remoteInputs);
         render("peek_message", it);
 
         IslandItem groupItem = s.build(sbn("com.kakao.talk", 2, message(true)));

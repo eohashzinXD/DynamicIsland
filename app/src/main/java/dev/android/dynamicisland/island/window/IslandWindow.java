@@ -201,6 +201,61 @@ public final class IslandWindow {
         }
     }
 
+    // ---- reply bar -----------------------------------------------------------------------------
+
+    private ReplyBar replyBar;
+
+    /** What the reply bar reports; see {@link ReplyBar}. */
+    public interface ReplyListener extends ReplyBar.Listener {
+    }
+
+    /** Shows the text field for answering below the island's cards; false when the window cannot be added. */
+    public boolean showReply(CharSequence hint, CharSequence sendLabel, ReplyListener listener) {
+        hideReply();
+        try {
+            ReplyBar bar = new ReplyBar(context, hint, sendLabel, listener);
+            float density = context.getResources().getDisplayMetrics().density;
+            int margin = Math.round(density * 12.0f);
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    windowBounds().width() - (2 * margin), ViewGroup.LayoutParams.WRAP_CONTENT, TYPE_STATUS_BAR_ADDITIONAL,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                            | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    PixelFormat.TRANSLUCENT);
+            lp.gravity = Gravity.TOP | Gravity.LEFT;
+            lp.x = margin;
+            lp.y = requestedHeight + Math.round(density * 6.0f);
+            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+            lp.windowAnimations = 0;
+            lp.setTitle("DynamicIslandReply");
+            Field privateFlags = WindowManager.LayoutParams.class.getField("privateFlags");
+            privateFlags.setInt(lp, privateFlags.getInt(lp) | PRIVATE_FLAGS);
+            windowManager.addView(bar, lp);
+            replyBar = bar;
+            bar.post(bar::focusField);
+            return true;
+        } catch (Throwable t) {
+            XLog.e("reply bar not shown", t);
+            replyBar = null;
+            return false;
+        }
+    }
+
+    public void hideReply() {
+        ReplyBar bar = replyBar;
+        replyBar = null;
+        if (bar != null) {
+            try {
+                windowManager.removeViewImmediate(bar);
+            } catch (Throwable t) {
+                XLog.e("reply bar not removed", t);
+            }
+        }
+    }
+
+    public boolean isReplying() {
+        return replyBar != null;
+    }
+
     // ---- surface fade --------------------------------------------------------------------------
 
     /**
