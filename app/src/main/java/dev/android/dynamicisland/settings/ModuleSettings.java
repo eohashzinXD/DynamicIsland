@@ -3,10 +3,12 @@ package dev.android.dynamicisland.settings;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
+import android.content.SharedPreferences;
 import de.robv.android.xposed.XSharedPreferences;
 import dev.android.dynamicisland.island.rules.RuleConfig;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -146,6 +148,10 @@ public final class ModuleSettings {
 
     private static boolean started;
     private static XSharedPreferences prefs;
+    private static boolean loaded;
+    /** True while the values come from {@link SettingsProvider} because the preference file was empty or unreadable. */
+    private static boolean viaProvider;
+    private static Map<String, Object> lastRemote;
     private static String lastLogged;
 
     private ModuleSettings() {
@@ -289,50 +295,118 @@ public final class ModuleSettings {
         }
     }
 
-    /** Re-reads the preferences file when it changed; runs on the reload thread only. */
+    /**
+     * The preferences to read now, or null when nothing changed since the last call. The shared file is tried first;
+     * when it holds nothing (the framework did not let System UI read it) the module app's provider is asked instead.
+     */
+    private static SharedPreferences readSource() {
+        boolean first = prefs == null;
+        if (first) {
+            prefs = new XSharedPreferences(PACKAGE, FILE);
+            prefs.makeWorldReadable();
+            XLog.event("settings file " + prefs.getFile() + " readable=" + prefs.getFile().canRead());
+        }
+        boolean fileChanged = !first && prefs.hasFileChanged();
+        if (fileChanged) {
+            prefs.reload();
+        }
+        if (!prefs.getAll().isEmpty()) {
+            boolean switched = viaProvider;
+            viaProvider = false;
+            lastRemote = null;
+            boolean fresh = first || fileChanged || switched || !loaded;
+            loaded = true;
+            return fresh ? prefs : null;
+        }
+        Map<String, Object> remote = readProvider();
+        if (remote == null || remote.isEmpty()) {
+            boolean fresh = !loaded;
+            loaded = true;
+            viaProvider = false;
+            return fresh ? prefs : null;
+        }
+        if (loaded && viaProvider && remote.equals(lastRemote)) {
+            return null;
+        }
+        loaded = true;
+        viaProvider = true;
+        lastRemote = remote;
+        return new MapPrefs(remote);
+    }
+
+    /** Every setting as the module app's provider reports it; null when the app cannot be reached. */
+    private static Map<String, Object> readProvider() {
+        try {
+            Object app = Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null);
+            if (!(app instanceof android.content.Context)) {
+                return null;
+            }
+            android.os.Bundle all = ((android.content.Context) app).getContentResolver().call(
+                    android.net.Uri.parse("content://" + SettingsProvider.AUTHORITY), SettingsProvider.METHOD_ALL, null, null);
+            if (all == null) {
+                return null;
+            }
+            Map<String, Object> out = new java.util.HashMap<>();
+            for (String key : all.keySet()) {
+                Object value = all.get(key);
+                out.put(key, value instanceof java.util.ArrayList ? new java.util.HashSet<Object>((java.util.ArrayList<?>) value) : value);
+            }
+            return out;
+        } catch (Throwable t) {
+            XLog.once("ModuleSettings.provider", t);
+            return null;
+        }
+    }
+
+    /** The preference store the settings app writes and the provider reads: world-readable on LSPosed, private otherwise. */
+    @SuppressWarnings({"deprecation", "WorldReadableFiles"})
+    public static SharedPreferences openStore(android.content.Context ctx) {
+        try {
+            return ctx.getSharedPreferences(FILE, android.content.Context.MODE_WORLD_READABLE);
+        } catch (SecurityException e) {
+            return ctx.getSharedPreferences(FILE, android.content.Context.MODE_PRIVATE);
+        }
+    }
+
+    /** Re-reads the preferences when they changed; runs on the reload thread only. */
     private static void refresh() {
         try {
-            if (prefs == null) {
-                prefs = new XSharedPreferences(PACKAGE, FILE);
-                prefs.makeWorldReadable();
-                XLog.event("settings file " + prefs.getFile() + " readable=" + prefs.getFile().canRead());
-            } else if (prefs.hasFileChanged()) {
-                prefs.reload();
-            } else {
+            SharedPreferences source = readSource();
+            if (source == null) {
                 return;
             }
-            pausedTimeoutS = prefs.getInt(KEY_PAUSED_TIMEOUT_S, DEF_PAUSED_TIMEOUT_S);
-            autoCollapseS = prefs.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
-            cardHeader = prefs.getBoolean(KEY_CARD_HEADER, true);
-            visualizer = prefs.getBoolean(KEY_VISUALIZER, true);
-            eventCharging = prefs.getBoolean(KEY_EVENT_CHARGING, true);
-            eventRinger = prefs.getBoolean(KEY_EVENT_RINGER, true);
-            eventBluetooth = prefs.getBoolean(KEY_EVENT_BLUETOOTH, true);
-            haptics = prefs.getBoolean(KEY_HAPTICS, true);
-            legacyAnimation = prefs.getBoolean(KEY_LEGACY_ANIMATION, false);
-            headsUpIsland = prefs.getBoolean(KEY_HEADS_UP_ISLAND, true);
-            progressNotifications = prefs.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
-            hideProgressOriginals = prefs.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
-            smartRules = prefs.getBoolean(KEY_SMART_RULES, true);
+            pausedTimeoutS = source.getInt(KEY_PAUSED_TIMEOUT_S, DEF_PAUSED_TIMEOUT_S);
+            autoCollapseS = source.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
+            cardHeader = source.getBoolean(KEY_CARD_HEADER, true);
+            visualizer = source.getBoolean(KEY_VISUALIZER, true);
+            eventCharging = source.getBoolean(KEY_EVENT_CHARGING, true);
+            eventRinger = source.getBoolean(KEY_EVENT_RINGER, true);
+            eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
+            haptics = source.getBoolean(KEY_HAPTICS, true);
+            legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
+            headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
+            progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
+            hideProgressOriginals = source.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
+            smartRules = source.getBoolean(KEY_SMART_RULES, true);
             int sizeBefore = pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000;
             int holeBefore = holeMode * 1_000_000 + holeDDp * 10_000 + holeXDp * 100 + holeYDp;
             int anchorBefore = pillAnchor;
             int xBefore = pillXDp;
             int yBefore = pillYDp;
             boolean previewBefore = placementPreviewActive();
-            previewWallUntil = prefs.getLong(KEY_PILL_PREVIEW_UNTIL, 0L);
+            previewWallUntil = source.getLong(KEY_PILL_PREVIEW_UNTIL, 0L);
             if (!placementPreviewActive()) {
-                pillAnchor = Math.max(ANCHOR_AUTO, Math.min(ANCHOR_RIGHT, prefs.getInt(KEY_PILL_ANCHOR, ANCHOR_AUTO)));
-                pillXDp = Math.max(-PILL_X_MAX_DP, Math.min(PILL_X_MAX_DP, prefs.getInt(KEY_PILL_X_DP, 0)));
-                pillYDp = Math.max(PILL_Y_MIN_DP, Math.min(PILL_Y_MAX_DP, prefs.getInt(KEY_PILL_Y_DP, 0)));
-                pillHPct = Math.max(PILL_H_MIN_PCT, Math.min(PILL_H_MAX_PCT, prefs.getInt(KEY_PILL_H_PCT, 0)));
-                pillMinWDp = Math.max(0, Math.min(PILL_MIN_W_MAX_DP, prefs.getInt(KEY_PILL_MIN_W_DP, 0)));
-                pillMaxWDp = clampMaxWidth(prefs.getInt(KEY_PILL_MAX_W_DP, 0));
-                keepPillWidth = prefs.getBoolean(KEY_PILL_KEEP_WIDTH, false);
-                holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, prefs.getInt(KEY_HOLE_MODE, HOLE_AUTO)));
-                holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, prefs.getInt(KEY_HOLE_D_DP, HOLE_D_DEFAULT_DP)));
-                holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, prefs.getInt(KEY_HOLE_X_DP, 0)));
-                holeYDp = Math.max(HOLE_Y_MIN_DP, Math.min(HOLE_Y_MAX_DP, prefs.getInt(KEY_HOLE_Y_DP, 0)));
+                pillAnchor = Math.max(ANCHOR_AUTO, Math.min(ANCHOR_RIGHT, source.getInt(KEY_PILL_ANCHOR, ANCHOR_AUTO)));
+                pillXDp = Math.max(-PILL_X_MAX_DP, Math.min(PILL_X_MAX_DP, source.getInt(KEY_PILL_X_DP, 0)));
+                pillYDp = Math.max(PILL_Y_MIN_DP, Math.min(PILL_Y_MAX_DP, source.getInt(KEY_PILL_Y_DP, 0)));
+                pillHPct = Math.max(PILL_H_MIN_PCT, Math.min(PILL_H_MAX_PCT, source.getInt(KEY_PILL_H_PCT, 0)));
+                pillMinWDp = Math.max(0, Math.min(PILL_MIN_W_MAX_DP, source.getInt(KEY_PILL_MIN_W_DP, 0)));
+                pillMaxWDp = clampMaxWidth(source.getInt(KEY_PILL_MAX_W_DP, 0));
+                keepPillWidth = source.getBoolean(KEY_PILL_KEEP_WIDTH, false);
+                holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, source.getInt(KEY_HOLE_MODE, HOLE_AUTO)));
+                holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, source.getInt(KEY_HOLE_D_DP, HOLE_D_DEFAULT_DP)));
+                holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, source.getInt(KEY_HOLE_X_DP, 0)));
+                holeYDp = Math.max(HOLE_Y_MIN_DP, Math.min(HOLE_Y_MAX_DP, source.getInt(KEY_HOLE_Y_DP, 0)));
             }
             Runnable placementListener = onPlacementChanged;
             if (placementListener != null && (anchorBefore != pillAnchor || xBefore != pillXDp || yBefore != pillYDp
@@ -342,24 +416,24 @@ public final class ModuleSettings {
                 placementListener.run();
             }
             RuleConfig before = rulesConfig;
-            rulesConfig = readRulesConfig(prefs);
+            rulesConfig = readRulesConfig(source);
             Runnable listener = onRulesChanged;
             if (listener != null && rulesConfig.revision != before.revision) {
                 listener.run();
             }
-            eventToggles = prefs.getBoolean(KEY_EVENT_TOGGLES, true);
-            privacyIndicator = prefs.getBoolean(KEY_PRIVACY, true);
-            privacyLocation = prefs.getBoolean(KEY_PRIVACY_LOCATION, false);
-            otpCard = prefs.getBoolean(KEY_OTP_CARD, true);
-            otpAutoCopy = prefs.getBoolean(KEY_OTP_AUTO_COPY, false);
-            thirdPartyCalls = prefs.getBoolean(KEY_THIRD_PARTY_CALLS, true);
-            Set<String> listed = prefs.getStringSet(KEY_APPS_LISTED, null);
-            appFilter = new AppFilter(prefs.getBoolean(KEY_APPS_ONLY_LISTED, false),
+            eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
+            privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
+            privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
+            otpCard = source.getBoolean(KEY_OTP_CARD, true);
+            otpAutoCopy = source.getBoolean(KEY_OTP_AUTO_COPY, false);
+            thirdPartyCalls = source.getBoolean(KEY_THIRD_PARTY_CALLS, true);
+            Set<String> listed = source.getStringSet(KEY_APPS_LISTED, null);
+            appFilter = new AppFilter(source.getBoolean(KEY_APPS_ONLY_LISTED, false),
                     listed == null ? null : new java.util.HashSet<>(listed));
             String switches = switchSignature();
             boolean switchesChanged = lastSwitches != null && !switches.equals(lastSwitches);
             lastSwitches = switches;
-            logChanges();
+            logChanges(source);
             Runnable switchListener = onSwitchesChanged;
             if (switchesChanged && switchListener != null) {
                 switchListener.run();
@@ -379,7 +453,7 @@ public final class ModuleSettings {
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
-    private static void logChanges() {
+    private static void logChanges(SharedPreferences source) {
         String now = "haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
                 + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
@@ -387,13 +461,14 @@ public final class ModuleSettings {
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
                 + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
+        Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
         if (!now.equals(lastLogged)) {
             lastLogged = now;
             XLog.event("settings: " + now);
         }
     }
 
-    private static RuleConfig readRulesConfig(XSharedPreferences source) {
+    private static RuleConfig readRulesConfig(SharedPreferences source) {
         String custom = source.getString(KEY_RULES_CUSTOM, null);
         Set<String> off = source.getStringSet(KEY_RULES_DISABLED, null);
         RuleConfig next = new RuleConfig(custom == null || custom.isEmpty() ? null : custom,

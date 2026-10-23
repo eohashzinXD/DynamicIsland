@@ -415,10 +415,6 @@ public final class SettingsActivity extends Activity {
     /** World-readable on LSPosed (which lifts the N+ restriction for active modules), private otherwise. */
     @SuppressWarnings({"deprecation", "WorldReadableFiles"})
     private SharedPreferences openPrefs() {
-        try {
-            return getSharedPreferences(ModuleSettings.FILE, Context.MODE_WORLD_READABLE);
-        } catch (SecurityException e) {
-            return getSharedPreferences(ModuleSettings.FILE, Context.MODE_PRIVATE);
-        }
+        return ModuleSettings.openStore(this);
     }
 }

@@ -42,6 +42,10 @@ Android 16 System UI without any Samsung class (checked against a Nothing OS bui
 - **Blur** is not touched: it is used wherever `SemBlurInfo` exists and only switched off when Samsung's own feature flag says so.
 - **Everything else Samsung-specific** (capsule, flashlight level, ongoing-activity reader) is skipped by the same feature checks as on One UI 7.
 
+## How the settings reach System UI
+
+`ModuleSettings` reads the shared preference file through `XSharedPreferences`. When that file is empty or unreadable from System UI (the framework did not apply module scope or file mode), it asks the module app's read-only `SettingsProvider` (`content://dev.android.dynamicisland.settings`, call `all`) instead, every 4 seconds like the file. The diagnostics line `settings source` says which one is in use and how many keys arrived; a switch that has no effect while it says `0 keys` or is missing means neither route works.
+
 ## Name alternatives
 
 Any class, method or field name in a `Refl` call may be written `"new|old"`: the first that exists on the running build is used, and a name that was found only under an older alternative appears in the report as `older names used`. Put the newest System UI's name first.

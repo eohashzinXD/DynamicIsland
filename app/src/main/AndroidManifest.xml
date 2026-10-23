@@ -28,6 +28,11 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name=".settings.SettingsProvider"
+            android:authorities="dev.android.dynamicisland.settings"
+            android:exported="true" />
+
         <meta-data
             android:name="xposedmodule"
             android:value="true" />

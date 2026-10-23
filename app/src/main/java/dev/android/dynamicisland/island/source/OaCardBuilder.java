@@ -88,7 +88,8 @@ final class OaCardBuilder {
         it.userId = Refl.getInt(data, "mUserId", 0);
         it.progressStyle = OaActivity.isProgressStyle(n);
         it.kind = kindOf(n, pkg);
-        it.transfer = n != null && Notification.CATEGORY_PROGRESS.equals(n.category);
+        it.transfer = n != null && (Notification.CATEGORY_PROGRESS.equals(n.category)
+                || (it.kind == IslandItem.Kind.LIVE && !it.progressStyle && extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0) > 0));
         bindPillIcon(it, data, n, pkg);
         it.leftImage = icons.load((Icon) Refl.get(data, "mFirstIcon"), pkg);
         it.rightImage = icons.load((Icon) Refl.get(data, "mSecondIcon"), pkg);
