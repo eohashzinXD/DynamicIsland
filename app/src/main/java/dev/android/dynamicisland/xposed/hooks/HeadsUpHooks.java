@@ -5,6 +5,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.SafeHook;
+import dev.android.dynamicisland.xposed.XLog;
 
 /**
  * Takes over the stock heads-up banner. {@code HeadsUpManagerImpl.shouldHeadsUpBecomePinned} is the
@@ -16,6 +17,9 @@ import dev.android.dynamicisland.xposed.SafeHook;
 public final class HeadsUpHooks {
     private static final String MANAGER = "com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl|com.android.systemui.statusbar.phone.HeadsUpManagerPhone";
 
+    /** The heads-up manager, kept so that a banner that already came up can be taken away again. */
+    private static volatile Object manager;
+
     private HeadsUpHooks() {
     }
 
@@ -23,7 +27,25 @@ public final class HeadsUpHooks {
         Refl.hookAll(cl, MANAGER, "shouldHeadsUpBecomePinned", SafeHook.after("heads-up to island", HeadsUpHooks::afterPinDecision));
     }
 
+    /** Removes the stock banner of {@code key} when it is up: the island shows the notification now. */
+    public static void dismissStock(String key) {
+        Object heads = manager;
+        if (heads == null || key == null) {
+            return;
+        }
+        try {
+            if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
+                Refl.call(heads, "removeNotification", key, Boolean.TRUE);
+            } else if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
+                Refl.call(heads, "removeNotification", key, Boolean.TRUE, "dynamic island");
+            }
+        } catch (Throwable t) {
+            XLog.once("HeadsUpHooks.dismissStock", t);
+        }
+    }
+
     private static void afterPinDecision(XC_MethodHook.MethodHookParam p) {
+        manager = p.thisObject;
         if (p.hasThrowable() || !Boolean.TRUE.equals(p.getResult()) || p.args.length < 1 || p.args[0] == null) {
             return;
         }

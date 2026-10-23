@@ -8,6 +8,7 @@ import dev.android.dynamicisland.island.source.PeekSource;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.xposed.hooks.HeadsUpHooks;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,8 +88,8 @@ final class HeadsUpTakeover {
                 log(shown ? "shown with its heads-up" : "not shown: the island could not open");
                 return shown;
             }
-            if (!ModuleSettings.headsUpIsland() || view.isExpanded()) {
-                reject("banner of " + sbn.getPackageName() + ": " + (view.isExpanded() ? "a card is open" : "the setting is off"));
+            if (!(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications()) || view.isExpanded()) {
+                reject("banner of " + sbn.getPackageName() + ": " + (view.isExpanded() ? "a card is open" : "the notification settings are off"));
                 return false;
             }
             IslandItem message = sources.peeks.buildMessage(sbn);
@@ -134,8 +135,12 @@ final class HeadsUpTakeover {
             return;
         }
         IslandItem item = sources.peeks.build(newest);
-        if (item != null && !show(newest, item)) {
-            reject("all notifications: the island could not open");
+        if (item != null) {
+            if (show(newest, item)) {
+                HeadsUpHooks.dismissStock(newest.getKey()); // the system's banner may have come up first
+            } else {
+                reject("all notifications: the island could not open");
+            }
         }
     }
 
