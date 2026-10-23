@@ -103,15 +103,39 @@ final class StackPainter {
         return clamp01((waist - m.dp(NECK_FADE_FROM_DP)) / m.dp(NECK_FADE_RANGE_DP));
     }
 
+    /**
+     * How much of the card's glass look is kept while it folds back into the pill (0..1): it turns from the grey glass
+     * into the pill's black gradually along the fold. Taken in one go (as soon as the card's height was nearly the
+     * pill's) it showed as a flash of flat grey just before the black.
+     */
+    float blurFraction(Card c, float opening) {
+        if (ModuleSettings.legacyAnimation()) {
+            return 1.0f;
+        }
+        if (c.leaving) {
+            return 1.0f - Easing.easeInOut(clamp01(foldProgress(c)));
+        }
+        return 1.0f;
+    }
+
+    /** The "opening" a card is drawn with: a leaving card goes back to the pill's black along its fold, not along its height. */
+    float visualOpening(Card c, float opening) {
+        if (c.leaving && !ModuleSettings.legacyAnimation()) {
+            return Math.min(opening, 1.0f - Easing.easeInOut(foldProgress(c)));
+        }
+        return opening;
+    }
+
     /** The card's fill: the pill's black while it pours out, turning into the card colour (and glass) as it opens. */
-    int fillColor(float opening) {
+    int fillColor(float opening, float blurFraction) {
         boolean glass = scene.blur != null && scene.blur.available();
         float material = Easing.easeInOut(clamp01((opening - CARD_MATERIAL_FROM) / (1.0f - CARD_MATERIAL_FROM)));
         int fill = Colors.blend(Colors.BLACK, glass ? Colors.CARD_GLASS : Colors.CARD_SOLID, material);
         // the see-through glass comes in over the whole opening: squeezing it into the last stretch made the black
         // turn transparent in one jump
         float glassIn = Easing.easeInOut(clamp01((opening - GLASS_FROM) / (1.0f - GLASS_FROM)));
-        return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn));
+        // the see-through part only counts as far as the real blur is there behind it
+        return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn * (glass ? blurFraction : 1.0f)));
     }
 
     /** Blur callback: paints a card into its blur slot, whose canvas origin is the slot, not the view. */
@@ -192,7 +216,8 @@ final class StackPainter {
         // while it pours out of (or back into) the pill the card is the pill's black, but it wears a clearly
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
-        paints.card.setColor(fillColor(opening));
+        opening = visualOpening(c, opening);
+        paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
         canvas.drawRoundRect(r, corner, corner, paints.card);
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
                 ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE) // before 0.1.4: no outline until the card has nearly opened
