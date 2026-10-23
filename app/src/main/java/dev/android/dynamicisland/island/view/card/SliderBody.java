@@ -46,7 +46,7 @@ public final class SliderBody extends CardBody {
         super(owner, item, w);
         pad = owner.dp(18.0f);
         float headerH = owner.dp(HEADER_BUTTON_DP);
-        label = item.title == null ? null : TextUtils.ellipsize(item.title, owner.smallPaint, w - (pad * 2.0f) - headerH - owner.dp(12.0f), TextUtils.TruncateAt.END).toString();
+        label = item.title == null ? null : TextUtils.ellipsize(item.title, owner.mediaTitlePaint(), w - (pad * 2.0f) - headerH - owner.dp(12.0f), TextUtils.TruncateAt.END).toString();
         if (!item.actions.isEmpty()) {
             Btn off = new Btn();
             off.r.set(w - pad - headerH, pad, w - pad, pad + headerH);
@@ -156,9 +156,9 @@ public final class SliderBody extends CardBody {
         if (label == null) {
             return;
         }
-        owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, alpha));
-        Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
-        c.drawText(label, x + pad, y + pad + (owner.dp(HEADER_BUTTON_DP) / 2.0f) - ((fm.ascent + fm.descent) / 2.0f), owner.smallPaint);
+        owner.mediaTitlePaint().setColor(Colors.withAlpha(Colors.WHITE, alpha));
+        Paint.FontMetrics fm = owner.mediaTitlePaint().getFontMetrics();
+        c.drawText(label, x + pad, y + pad + (owner.dp(HEADER_BUTTON_DP) / 2.0f) - ((fm.ascent + fm.descent) / 2.0f), owner.mediaTitlePaint());
     }
 
     private String valueText(float step) {
