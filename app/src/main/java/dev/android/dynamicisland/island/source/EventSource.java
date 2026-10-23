@@ -197,7 +197,9 @@ public final class EventSource {
         for (Boolean on : torchState.values()) {
             any |= on;
         }
-        onToggle("torch", any);
+        if (!TorchSource.handlesTorch()) {
+            onToggle("torch", any); // with a brightness card the flashlight needs no extra popup
+        }
     }
 
     /** Shows "<setting> on/off" for a quick-setting style switch, only when its state really changed. */

@@ -6,6 +6,7 @@ import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.graphics.Motion;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.MediaBody;
+import dev.android.dynamicisland.island.view.card.SliderBody;
 import dev.android.dynamicisland.island.view.card.CardBody;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
@@ -63,6 +64,10 @@ final class Director {
     private final Runnable autoCollapse = this::collapseIfExpanded;
     private final Runnable fadePillBlob = this::fadePillBlobNow;
     private final Runnable regrowPill = this::regrowPillNow;
+    private final Runnable autoExpand = this::autoExpandNow;
+    private static final long AUTO_EXPAND_DELAY_MS = 450;
+    /** Key of the item that already opened by itself, so closing it does not open it again. */
+    private String autoExpandedKey;
     private final Runnable startSplit = this::startSplitNow;
     /** When the pill last appeared from nothing, for the timing of the first bubble. */
     private long appearedAt;
@@ -117,6 +122,13 @@ final class Director {
         scene.primary = list.isEmpty() ? null : list.get(0);
         scene.secondary = list.size() > 1 ? list.get(1) : null;
         IslandItem primary = scene.primary;
+        if (primary == null || !primary.expandOnShow) {
+            autoExpandedKey = null;
+        } else if (!primary.key.equals(autoExpandedKey) && scene.mode != Mode.EXPANDED) {
+            autoExpandedKey = primary.key; // a card made to be adjusted opens by itself, once per appearance
+            view.removeCallbacks(autoExpand);
+            view.postDelayed(autoExpand, AUTO_EXPAND_DELAY_MS);
+        }
         if (primary == null) {
             if (scene.mode == Mode.EXPANDED) {
                 collapseCards(false);
@@ -342,6 +354,13 @@ final class Director {
         }
     }
 
+    private void autoExpandNow() {
+        if (scene.mode == Mode.COMPACT && scene.primary != null && scene.primary.expandOnShow
+                && scene.primary.key.equals(autoExpandedKey)) {
+            expandFromPill();
+        }
+    }
+
     /** Opens the stack from the current item lists (a tap on the pill). */
     void expandFromPill() {
         expand(scene.stackItems(MAX_CARDS), ModuleSettings.autoCollapseMs());
@@ -422,6 +441,9 @@ final class Director {
                 c.item = it;
                 if (view.seekBody != null && view.seekBody == c.body && body instanceof MediaBody) {
                     view.seekBody = (MediaBody) body; // the dragged seek bar follows the rebuilt body
+                }
+                if (view.sliderBody != null && view.sliderBody == c.body && body instanceof SliderBody) {
+                    view.sliderBody = (SliderBody) body; // and so does a dragged slider
                 }
                 c.body = body;
             }

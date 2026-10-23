@@ -49,6 +49,7 @@ public final class SystemUiHooks {
     private static volatile Object callController;
     private static volatile Object castBundle;
     private static volatile Object castController;
+    private static volatile Object flashlightController;
 
     /** Resource ids of the stock chip views, resolved once the System UI resources are available. */
     private static int idCapsule;
@@ -77,6 +78,7 @@ public final class SystemUiHooks {
         runGroup("data changes", () -> hookDataChanges(cl));
         runGroup("calls", () -> hookCalls(cl));
         runGroup("cast", () -> hookCast(cl));
+        runGroup("flashlight", () -> hookFlashlight(cl));
         runGroup("signals", () -> hookSignals(cl));
         // Android 16 only: newer System UI builds (One UI 9 / SDK 37) ship the AOSP chip classes too,
         // but hooking them there is exactly what the original module avoided.
@@ -176,6 +178,9 @@ public final class SystemUiHooks {
         }
         if (castBundle != null) {
             island.setCastBundle(castBundle);
+        }
+        if (flashlightController != null) {
+            island.setFlashlightController(flashlightController);
         }
         island.setBarState(barState);
         island.setDozing(dozing);
@@ -365,6 +370,21 @@ public final class SystemUiHooks {
         }));
         refreshAfter(cl, OA_CONTROLLER, "OA change", OA_CONTROLLER_CHANGES);
         refreshAfter(cl, OA_DATA_HELPER, "OA change", OA_DATA_HELPER_CHANGES);
+    }
+
+    /** Captures Samsung's flashlight controller: it sets the torch level and remembers it for the quick settings tile. */
+    private static void hookFlashlight(ClassLoader cl) {
+        String controller = SUI + ".statusbar.policy.SecFlashlightControllerImpl";
+        if (!Refl.hasClass(controller, cl)) {
+            return; // the island then sets the level through the camera service itself
+        }
+        Refl.hookConstructors(cl, controller, SafeHook.after("flashlight ctor", param -> {
+            flashlightController = param.thisObject;
+            IslandController island = IslandController.get();
+            if (island != null) {
+                island.setFlashlightController(param.thisObject);
+            }
+        }));
     }
 
     /** Captures Samsung's call controller and follows its call chip. */

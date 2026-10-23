@@ -11,6 +11,7 @@ import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.graphics.Motion;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
+import dev.android.dynamicisland.island.view.card.SliderBody;
 
 /**
  * Turns touches on the island into actions: pressing and tapping the pill, swiping it away or back, handing a
@@ -48,6 +49,8 @@ final class TouchController {
     /** Touch started on the empty hole while an item is minimized there. */
     private boolean downOnHole;
     private Card downCard;
+    /** Last slider position passed on during the current drag, -1 before the first. */
+    private float lastSliderFraction = -1.0f;
     /** The gesture already did its job (e.g. collapsed the stack): swallow the rest of it. */
     private boolean ignoreGesture;
     private int pointerId;
@@ -173,7 +176,18 @@ final class TouchController {
                 view.invalidate();
             }
         }
-        if (view.seekBody == null) {
+        if (downCard.body instanceof SliderBody) {
+            SliderBody slider = (SliderBody) downCard.body;
+            if (slider.onSlider(downX - left, downY - slot.top)) {
+                view.sliderBody = slider;
+                view.sliderFraction = slider.fractionAt(downX - left);
+                lastSliderFraction = -1.0f;
+                view.getParent().requestDisallowInterceptTouchEvent(true);
+                tellSlider(slider);
+                view.invalidate();
+            }
+        }
+        if (view.seekBody == null && view.sliderBody == null) {
             Btn pressed = downCard.body.hit(downX - left, downY - slot.top);
             if (pressed != null) {
                 buttons.press(pressed, downCard.item);
@@ -204,6 +218,13 @@ final class TouchController {
     private void move(MotionEvent e) {
         if (forwardingShade) {
             host.onShadeDragEvent(e);
+            return;
+        }
+        if (view.sliderBody != null && downCard != null) {
+            view.sliderFraction = view.sliderBody.fractionAt(x(e) - shapes.contentLeft(downCard));
+            tellSlider(view.sliderBody);
+            view.scheduleFrame();
+            view.invalidate();
             return;
         }
         if (view.seekBody != null && downCard != null) {
@@ -274,6 +295,10 @@ final class TouchController {
             host.onShadeDragEvent(e);
             return;
         }
+        if (view.sliderBody != null) {
+            finishSlider();
+            return;
+        }
         if (view.seekBody != null) {
             commitSeek();
             return;
@@ -296,6 +321,30 @@ final class TouchController {
         } else {
             tap(x(e), y(e));
         }
+    }
+
+    /** Passes the dragged slider position on whenever it lands on another step (the flashlight changes at once). */
+    private void tellSlider(SliderBody body) {
+        float value = view.sliderFraction;
+        if (value == lastSliderFraction) {
+            return;
+        }
+        boolean first = lastSliderFraction < 0.0f;
+        lastSliderFraction = value;
+        body.item.sliderValue = value;
+        if (body.item.sliderChange != null) {
+            body.item.sliderChange.accept(value);
+        }
+        if (!first) {
+            Haptics.perform(view, HAPTIC_SEEK_DONE);
+        }
+    }
+
+    private void finishSlider() {
+        view.sliderBody = null;
+        lastSliderFraction = -1.0f;
+        director.postAutoCollapse();
+        view.invalidate();
     }
 
     /** Commits the media seek that was dragged on a card's progress bar. */
@@ -339,6 +388,7 @@ final class TouchController {
             host.onShadeDragEvent(e);
         }
         view.seekBody = null;
+        view.sliderBody = null;
         releaseStack();
         buttons.release();
         sp.press.animateTo(1.0f, Motion.PRESS_UP);

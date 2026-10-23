@@ -22,6 +22,7 @@ import dev.android.dynamicisland.island.graphics.Easing;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
+import dev.android.dynamicisland.island.view.card.SliderBody;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
 import dev.android.dynamicisland.island.view.media.MediaFx;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -100,6 +101,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public final Matrix flipMatrix = new Matrix();
     /** Seek bar being dragged (in the island or in the shade) and the fraction it points at. */
     public MediaBody seekBody;
+    /** The slider card being dragged and the position the finger is at (0..1). */
+    public SliderBody sliderBody;
+    public float sliderFraction;
     public float seekFraction;
 
     // layout values the content classes read; copies of the final ones in Metrics

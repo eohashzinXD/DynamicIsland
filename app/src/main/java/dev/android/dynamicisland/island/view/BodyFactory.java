@@ -6,6 +6,7 @@ import dev.android.dynamicisland.island.view.card.LiveBody;
 import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.ProgressBody;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
+import dev.android.dynamicisland.island.view.card.SliderBody;
 import dev.android.dynamicisland.island.view.card.TimerBody;
 import dev.android.dynamicisland.xposed.XLog;
 
@@ -25,6 +26,9 @@ final class BodyFactory {
     CardBody create(IslandItem it, float width, boolean inShade) {
         if (it.isMedia) {
             return new MediaBody(view, it, width);
+        }
+        if (it.sliderChange != null) {
+            return new SliderBody(view, it, width);
         }
         if (it.bigNumber) {
             return new TimerBody(view, it, width);

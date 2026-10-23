@@ -12,6 +12,7 @@ import dev.android.dynamicisland.island.source.PeekSource;
 import dev.android.dynamicisland.island.source.PrivacySource;
 import dev.android.dynamicisland.island.source.ProgressSource;
 import dev.android.dynamicisland.island.source.RuleSource;
+import dev.android.dynamicisland.island.source.TorchSource;
 import dev.android.dynamicisland.xposed.XLog;
 import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ final class IslandSources {
     final MediaSource media;
     final CastSource cast;
     final EventSource events;
+    final TorchSource torch;
     final PrivacySource privacy;
     final ProgressSource progress;
     final RuleSource rules;
@@ -49,6 +51,7 @@ final class IslandSources {
         media = new MediaSource(ctx, main, onChange);
         cast = new CastSource(ctx);
         events = new EventSource(ctx, main, onChange);
+        torch = new TorchSource(ctx, main, onChange);
         privacy = new PrivacySource(ctx, main, onChange);
         progress = new ProgressSource(ctx, main, onChange);
         rules = new RuleSource(ctx, main, onChange);
@@ -64,6 +67,7 @@ final class IslandSources {
         media.start();
         try {
             events.start();
+            torch.start();
             privacy.start();
         } catch (Throwable t) {
             XLog.e("event islands failed to start", t);
@@ -90,6 +94,7 @@ final class IslandSources {
         guarded("media", () -> media.collect(items, foreground, out.hiddenByForeground, out.packages));
         guarded("cast", () -> cast.collect(items));
         guarded("events", () -> events.collect(items));
+        guarded("torch", () -> torch.collect(items));
         guarded("privacy", () -> privacy.collect(items, foreground));
         guarded("progress", () -> progress.collect(items, foreground));
         guarded("rules", () -> rules.collect(items, foreground));

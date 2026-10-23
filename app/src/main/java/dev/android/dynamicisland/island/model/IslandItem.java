@@ -104,6 +104,16 @@ public final class IslandItem {
 
     // ---- trailing indicator --------------------------------------------------------------------
 
+    /**
+     * A card with a slider (the flashlight's brightness): its position 0..1 ({@code -1} = none), the number of steps
+     * (0 = smooth) and what to tell when the user moves it (the new position, 0..1).
+     */
+    public float sliderValue = -1.0f;
+    public int sliderSteps;
+    public java.util.function.Consumer<Float> sliderChange;
+    /** The card opens by itself when it first appears: it exists to be adjusted (the flashlight). */
+    public boolean expandOnShow;
+
     /** What the compact pill shows at its trailing edge. */
     public Trailing trailing = Trailing.NONE;
     /** Progress 0..1 for {@link Trailing#PROGRESS_RING} and progress bars; -1 = none. */

@@ -202,6 +202,11 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         requestRefresh();
     }
 
+    /** Samsung's flashlight controller, which sets and remembers the torch brightness level. */
+    public void setFlashlightController(Object controller) {
+        sources.torch.setSamsungController(controller);
+    }
+
     public void setCastController(Object controller) {
         sources.cast.castController = controller;
     }

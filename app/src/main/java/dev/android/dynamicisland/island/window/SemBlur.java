@@ -1,6 +1,7 @@
 package dev.android.dynamicisland.island.window;
 
 import android.view.View;
+import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -41,13 +42,56 @@ final class SemBlur {
         if (!probed) {
             probed = true;
             try {
-                api = new Api();
+                Api candidate = new Api();
+                String why = unusableReason();
+                if (why == null) {
+                    api = candidate;
+                    Diagnostics.fact("blur", "real-time (SemBlurInfo)");
+                } else {
+                    api = null;
+                    Diagnostics.fact("blur", "off: " + why);
+                    XLog.i("blur off: " + why);
+                }
             } catch (Throwable t) {
                 XLog.e("SemBlurInfo unavailable", t);
                 api = null;
             }
         }
         return api != null;
+    }
+
+    /** Samsung's feature switch for real-time (live) blur; phones without it only support the captured kind. */
+    private static final String FEATURE_REAL_TIME_BLUR = "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_3D_SURFACE_TRANSITION_FLAG";
+    private static final String SETTING_REDUCE_TRANSPARENCY = "accessibility_reduce_transparency";
+
+    /**
+     * Why the real-time blur would show nothing on this phone, or null when it should work. The API calls succeed
+     * either way, so without this the cards would be see-through and unblurred (and hard to read) on such phones.
+     */
+    private static String unusableReason() {
+        try {
+            Object features = Class.forName("com.samsung.android.feature.SemFloatingFeature").getMethod("getInstance").invoke(null);
+            Object supported = features.getClass().getMethod("getBoolean", String.class).invoke(features, FEATURE_REAL_TIME_BLUR);
+            if (Boolean.FALSE.equals(supported)) {
+                return "this phone has no real-time blur (" + FEATURE_REAL_TIME_BLUR + "=false)";
+            }
+        } catch (ClassNotFoundException notSamsung) {
+            return null;
+        } catch (Throwable t) {
+            XLog.e("blur feature check failed", t);
+        }
+        try {
+            Object app = Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null);
+            if (app instanceof android.content.Context) {
+                android.content.ContentResolver resolver = ((android.content.Context) app).getContentResolver();
+                if (android.provider.Settings.System.getInt(resolver, SETTING_REDUCE_TRANSPARENCY, 0) != 0) {
+                    return "\"reduce transparency\" is on in the accessibility settings";
+                }
+            }
+        } catch (Throwable ignored) {
+            // the setting is only a hint
+        }
+        return null;
     }
 
     /** Gives {@code target} a background blur of the given radius, corner radius and tint colour. */
