@@ -63,7 +63,7 @@ final class Director {
 
     private final Runnable autoCollapse = this::collapseIfExpanded;
     private final Runnable fadePillBlob = this::fadePillBlobNow;
-    private final Runnable regrowPill = this::regrowPillNow;
+    private final Runnable regrowPill = () -> regrowPill(false);
 
     private final Runnable startSplit = this::startSplitNow;
     /** When the pill last appeared from nothing, for the timing of the first bubble. */
@@ -390,12 +390,22 @@ final class Director {
     }
 
     void regrowPillNow() {
+        regrowPill(true);
+    }
+
+    /**
+     * The pill grows back to its size; the bubble splits out of it only once the cards are gone ({@code withBubble}),
+     * so it comes out of the pill in view instead of appearing from behind the folding card.
+     */
+    private void regrowPill(boolean withBubble) {
         if (scene.mode != Mode.COMPACT || scene.mainIn == null) {
             return;
         }
         sp.width.animateTo(scene.pillWidthFor(scene.mainIn.content), Motion.PILL_REGROW);
         sp.height.animateTo(m.pillH, Motion.PILL_REGROW);
-        sp.split.animateTo(scene.secondary != null ? 1.0f : 0.0f, Motion.BUBBLE_SPLIT);
+        if (withBubble || legacy() || scene.cards.isEmpty()) {
+            sp.split.animateTo(scene.secondary != null ? 1.0f : 0.0f, Motion.BUBBLE_SPLIT);
+        }
         view.scheduleFrame();
     }
 
