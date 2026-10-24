@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
 </p>
 
 ### Everything the capsule shows, as cards
@@ -130,7 +130,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 - **Charging** (fast or wireless, with the live percentage), **low battery**, **sound mode** (silent, vibrate, ring), **Bluetooth audio** connecting (with its battery level).
 - **Camera, microphone and location in use:** which app uses which sensor; a tap opens that app's permission page. (Location is off by default because navigation and weather apps use it all day.)
 - **Quick-setting feedback:** Do Not Disturb, airplane mode, power saving, hotspot and auto-rotate being switched on or off.
-- **Flashlight brightness:** While the torch is on, tapping the island opens a card with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the plain "flashlight on" popup is shown instead.
+- **Flashlight brightness:** While the torch is on, tapping the island opens a card with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the card has no slider, only the state and the turn-off button (the *Flashlight card* switch can be turned off to get the plain "flashlight on" popup instead).
 - Every group can be switched off separately.
 
 ### Settings app
