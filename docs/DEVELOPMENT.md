@@ -82,10 +82,32 @@ To release: raise `versionCode` / `versionName` in `app/build.gradle` and `Crash
 
 The unit tests include headless Robolectric renders of cards and settings pages, written as PNGs to `app/build/render/`. With network access the Robolectric jar is downloaded; offline, pass the folder that holds `android-all-instrumented-15-robolectric-13954326-i7.jar` with `-ProbolectricDir=<folder>`.
 
+## Testing status
+
+- Automated: `./gradlew testReleaseUnitTest` (unit tests and headless renders; no real System UI and no blur). It runs on every push (`ci.yml`) and before every release.
+- On phones: One UI 8 and 9 have been used on real phones; One UI 7 and Nothing OS have not (details and what the words mean in [COMPATIBILITY.md](COMPATIBILITY.md)).
+
+## Release process
+
+1. Work in small steps; every change gets its own commit and the version in `app/build.gradle` / `CrashGuard.BUILD` goes up with a test build.
+2. A test build is published as a GitHub **pre-release** (`v<version>-devN` or `-dev`), with notes in `docs/release-notes/` in English and Korean. Testers install it, and what they report is fixed in the next test build.
+3. When the test builds have been tried on real phones, the stable release (`v<version>`) collects the working changes into one set of notes. What was not confirmed on a phone is left out of the notes.
+4. Releases come fast while the project is young, so a stable release is only cut after the test builds before it have been used for a while; regressions are checked on a phone before it, not after.
+
+## Maintenance
+
+The module hooks private System UI classes by name, so each One UI update can break a hook. The way to keep up is in [COMPATIBILITY.md](COMPATIBILITY.md): run `scripts/check_systemui.py` on the new System UI, read the diagnostics report of a tester on that version (`hooks not attached`, `older names used`), and add the new name next to the old one (`"new|old"`). A missing target skips its hook group, it does not stop the module.
+
 ## Known limitations
 
+Open bugs are tracked as issues; the ones that are planned carry the `planned` label.
+
+- The voice recorder's media session can show up as a music card next to the recorder card (issue #1).
+- The favorite (star) button of the shade music player looks bigger than the stock one (issue #2).
+- The island's open / close motion feels stiffer than the system's unlock animation (issue #3).
+- The status bar icons can come back a moment late after the shade is closed again; the cause is not known and has not been confirmed to be this module.
 - Tapping a shade card does not remove the notification.
 - After dragging the stack sideways, the tap position of `IslandView.onTap` can be off by the drag.
 - The call card green differs slightly between sources (0xFF30D158 / 0xFF34C759).
 - A verification code made only of lowercase letters and digits is not detected.
-- Nothing has been verified on a real device, only in the headless test and render environment.
+- One UI 7 and Nothing OS are not confirmed on a real device (see [COMPATIBILITY.md](COMPATIBILITY.md)).

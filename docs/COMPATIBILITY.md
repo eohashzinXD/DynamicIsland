@@ -6,11 +6,16 @@ The module hooks Samsung's System UI by name, so each One UI version has to be c
 
 | One UI | Android | Status |
 |---|---|---|
-| 9 | 17 (SDK 37) | the code has branches for it; not confirmed on a device |
-| 8 | 16 (SDK 36) | the module was written against it; tested on one device only |
-| 7 | 15 (SDK 35) | added in 0.1.7 from a System UI build (Android 15, version code 35): the hook targets were checked against it by name and attach; not tested on a device. The blurred shade cards and the shade media player takeover are off here (those rows do not exist in One UI 7), and the screen-recording / screen-sharing card is not available |
+| 9 | 17 (SDK 37) | **used on real phones** (a Galaxy S916U on One UI 9.0 sent a Diagnostics report: every hook group attached; the one target the build lacks, `SecQSPanelResourcePicker#getMediaPlayerExpandHeight`, is skipped on purpose) |
+| 8 | 16 (SDK 36) | **used on real phones** by the author and by testers, the version the module was first written against |
+| 7 | 15 (SDK 35) | added in 0.1.7 from a System UI build (Android 15, version code 35): the hook targets were checked against it by name and attach; **not tested on a device**. The blurred shade cards and the shade media player takeover are off here (those rows do not exist in One UI 7), and the screen-recording / screen-sharing card is not available |
+| Nothing OS (Android 16, AOSP-style) | 16 | first, lowest-priority support, checked against a Nothing OS build by name; **not confirmed on a device** (see below) |
 
-"Tested" means used on a real phone. Nothing here is tested on more than the author's own device.
+## What "tested" means here
+
+- **Tested** means used on a real phone. Every release is tried that way first: changes go out as test builds (GitHub pre-releases), the author and testers use them on their phones, and a stable release only contains what was reported to work. The notes of a test build say when something was only checked in the test and render environment.
+- **Not tested** means only the automated tests (unit tests and headless Robolectric renders of cards and settings pages, no real System UI, no blur) and the name check below. The same words are used in the README and in `DEVELOPMENT.md`.
+- There is no per-feature matrix: "used on real phones" says the version runs and the features that were tried worked, not that every card was tried on every phone. A bug found on a phone becomes an issue on GitHub and, if it is fixed, a line in the notes of the next release.
 
 ## How a build is checked
 

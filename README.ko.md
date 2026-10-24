@@ -147,7 +147,7 @@
 
 ## 요구 사항
 
-- One UI 7 / 8 / 9(Android 15 / 16 / 17)을 쓰는 삼성 기기와 기본 시스템 UI. One UI 7 지원은 새로 추가됐고 시스템 UI 빌드 하나만 대조했습니다([docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 참고).
+- One UI 7 / 8 / 9(Android 15 / 16 / 17)을 쓰는 삼성 기기와 기본 시스템 UI. One UI 8과 9는 실제 폰에서 사용해 봤고, One UI 7 지원은 새로 추가됐으며 시스템 UI 빌드 하나만 대조했고 실제 기기에서는 확인하지 못했습니다([docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 참고).
 - LSPosed(모듈 최소 SDK 35).
 - 루트는 선택 기능인 **시스템 UI 재시작** 버튼에만 필요합니다.
 
@@ -195,7 +195,7 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # 빌드, 정렬, 서명 -> release/Dyna
 
 ## 면책
 
-Dynamic Island는 삼성과 무관한 독립 비공식 프로젝트입니다. 시스템 UI의 비공개 클래스에 후크를 걸기 때문에 시스템 업데이트로 언제든 동작이 바뀔 수 있습니다. 실제 기기가 아닌, 기기 없이 PC에서 돌리는 테스트·렌더 환경에서만 검증했으며, 사용에 따른 책임은 사용자에게 있습니다.
+Dynamic Island는 삼성과 무관한 독립 비공식 프로젝트입니다. 시스템 UI의 비공개 클래스에 후크를 걸기 때문에 시스템 업데이트로 언제든 동작이 바뀔 수 있습니다. One UI 8과 9를 쓰는 실제 폰에서 사용해 봤고, One UI 7과 Nothing OS는 실제 기기에서 확인하지 못했습니다([docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) 참고). 사용에 따른 책임은 사용자에게 있습니다.
 
 ## 크레딧
 

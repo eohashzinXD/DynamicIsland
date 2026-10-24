@@ -149,7 +149,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ## Requirements
 
-- A Samsung device on One UI 7 / 8 / 9 (Android 15 / 16 / 17) with the stock System UI. One UI 7 support is new and checked against one System UI build only (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
+- A Samsung device on One UI 7 / 8 / 9 (Android 15 / 16 / 17) with the stock System UI. One UI 8 and 9 are used on real phones; One UI 7 support is new and checked against one System UI build only, not on a device (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 - LSPosed (module minimum SDK 35).
 - Root is only needed for the optional **Restart System UI** button.
 
@@ -198,7 +198,7 @@ The module runs inside System UI and reads the notifications System UI already h
 
 ## Disclaimer
 
-Dynamic Island is an independent, unofficial project and is not affiliated with or endorsed by Samsung. It hooks private System UI classes that may change with any update, and it has been verified only in a headless test and render environment, not on a device. Use it at your own risk.
+Dynamic Island is an independent, unofficial project and is not affiliated with or endorsed by Samsung. It hooks private System UI classes that may change with any update, and it has been used on real phones running One UI 8 and 9, while One UI 7 and Nothing OS are not confirmed on a device (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). Use it at your own risk.
 
 ## Credits
 
