@@ -163,7 +163,7 @@ public final class ProgressSource {
         if (!ongoing || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
             return null;
         }
-        if (isSpecial(n, extras)) {
+        if (isSpecial(sbn, n, extras)) {
             return null;
         }
         int max = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0);
@@ -226,11 +226,18 @@ public final class ProgressSource {
         return it;
     }
 
-    /** Media, calls, conversations and system notifications that merely carry a progress bar. */
-    private static boolean isSpecial(Notification n, Bundle extras) {
+    /**
+     * Media, calls, conversations and system notifications that merely carry a progress bar. An Android 16
+     * ProgressStyle notification is a progress notification and stays here, unless another source already makes a card
+     * of it: One UI's own live ones (the ongoing-activity extras below) and the promoted ones of the live source.
+     */
+    private static boolean isSpecial(StatusBarNotification sbn, Notification n, Bundle extras) {
         String template = extras.getString(Notification.EXTRA_TEMPLATE);
         if (template != null && (template.endsWith("$MediaStyle") || template.endsWith("$DecoratedMediaCustomViewStyle")
-                || template.endsWith("$CallStyle") || template.endsWith("$ProgressStyle"))) {
+                || template.endsWith("$CallStyle"))) {
+            return true;
+        }
+        if (template != null && template.endsWith("$ProgressStyle") && PromotedSource.enabled() && PromotedSource.isPromoted(sbn)) {
             return true;
         }
         if (extras.containsKey(Notification.EXTRA_MEDIA_SESSION) || Notification.CATEGORY_CALL.equals(n.category)

@@ -56,6 +56,35 @@ public class ProgressSourceTest {
         return b;
     }
 
+    /** An app's Android 16 ProgressStyle notification, as an installer posts it. */
+    private Notification.Builder progressStyle(String title, int progress, int max) {
+        Notification.Builder b = download(title, progress, max);
+        b.addExtras(androidx_style());
+        return b;
+    }
+
+    private android.os.Bundle androidx_style() {
+        android.os.Bundle extras = new android.os.Bundle();
+        extras.putString(Notification.EXTRA_TEMPLATE, "android.app.Notification$ProgressStyle");
+        return extras;
+    }
+
+    @Test
+    public void aProgressStyleNotificationBecomesAProgressCard() throws Exception {
+        IslandItem it = source().build(sbn("com.example.installer", 9, progressStyle("Installing app", 40, 100)));
+        assertNotNull(it);
+        assertEquals(0.4f, it.progress, 0.001f);
+    }
+
+    @Test
+    public void aProgressStyleNotificationOneUiPromotesIsLeftToTheLiveSource() throws Exception {
+        Notification.Builder b = progressStyle("Installing app", 40, 100);
+        android.os.Bundle live = new android.os.Bundle();
+        live.putInt("android.ongoingActivityNoti.style", 1);
+        b.addExtras(live);
+        org.junit.Assert.assertNull(source().build(sbn("com.example.installer", 9, b)));
+    }
+
     private ProgressSource source() {
         return new ProgressSource(app, new Handler(Looper.getMainLooper()), () -> { });
     }
