@@ -10,8 +10,12 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.XLog;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The flashlight as a card with a brightness slider, while the torch is on. The brightness steps come from the
@@ -34,8 +38,13 @@ public final class TorchSource {
     private final Handler main;
     private final Runnable onChange;
     private CameraManager cameras;
+    /** The camera whose torch the card shows and controls: the one that was switched on last. */
     private String cameraId;
     private int maxLevel = 1;
+    /** Brightness levels of every camera whose torch has more than one, by camera id. */
+    private final Map<String, Integer> controllable = new HashMap<>();
+    /** The cameras whose torch is on right now (the flashlight is on while any of them is). */
+    private final Set<String> enabled = new LinkedHashSet<>();
     private boolean on;
     private int level = 1;
     /** Samsung's {@code SecFlashlightControllerImpl}, or null. */
@@ -53,9 +62,31 @@ public final class TorchSource {
         return handlesTorch;
     }
 
-    /** True for the notification key of System UI's own flashlight notification. */
+    /**
+     * True for the notification key of System UI's own flashlight notification: Samsung's (id 4660, tag "Flashlight"),
+     * or, on other builds of System UI, one of System UI's whose tag or id names the flashlight.
+     */
     public static boolean isStockNotification(String key) {
-        return key != null && key.contains(STOCK_NOTIFICATION);
+        if (key == null) {
+            return false;
+        }
+        if (key.contains(STOCK_NOTIFICATION)) {
+            return true;
+        }
+        String lower = key.toLowerCase(Locale.ROOT);
+        return lower.contains("|com.android.systemui|") && (lower.contains("flashlight") || lower.contains("torch"));
+    }
+
+    /** True for a card made from System UI's own flashlight notification (found by what it says, not by its key). */
+    public static boolean isStockItem(IslandItem it) {
+        if (isStockNotification(it.key) || isStockNotification(it.sourceKey)) {
+            return true;
+        }
+        if (!"com.android.systemui".equals(it.packageName) || it.title == null) {
+            return false;
+        }
+        String title = it.title.toString().toLowerCase(Locale.ROOT);
+        return title.contains("flashlight") || title.contains("torch") || title.contains("손전등");
     }
 
     /** True while the card is up, so the stock notification (and its Now Bar copy) must not be shown as well. */
@@ -70,23 +101,21 @@ public final class TorchSource {
     public void start() {
         cameras = ctx.getSystemService(CameraManager.class);
         try {
-            findTorchCamera();
+            findTorchCameras();
         } catch (Throwable t) {
             XLog.e("flashlight camera not found", t);
             return;
         }
-        if (cameraId == null || maxLevel < 2) {
-            XLog.i("flashlight brightness: not controllable (camera=" + cameraId + " levels=" + maxLevel + ")");
+        if (controllable.isEmpty()) {
+            XLog.i("flashlight brightness: not controllable (no camera with several levels)");
             return;
         }
         handlesTorch = true;
-        XLog.i("flashlight brightness: camera " + cameraId + " levels " + maxLevel);
+        XLog.i("flashlight brightness: cameras " + controllable);
         cameras.registerTorchCallback(ctx.getMainExecutor(), new CameraManager.TorchCallback() {
             @Override
-            public void onTorchModeChanged(String id, boolean enabled) {
-                if (id.equals(cameraId)) {
-                    onMode(enabled);
-                }
+            public void onTorchModeChanged(String id, boolean on) {
+                onCamera(id, on);
             }
 
             @Override
@@ -98,25 +127,53 @@ public final class TorchSource {
         });
     }
 
-    private void findTorchCamera() throws Exception {
+    /** Every camera with a flash and several brightness levels; one that cannot be read is skipped, not fatal. */
+    private void findTorchCameras() throws Exception {
         String best = null;
-        int bestLevels = 1;
         boolean bestBack = false;
         for (String id : cameras.getCameraIdList()) {
-            CameraCharacteristics c = cameras.getCameraCharacteristics(id);
-            if (!Boolean.TRUE.equals(c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE))) {
-                continue;
-            }
-            Integer levels = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL);
-            boolean back = Integer.valueOf(CameraCharacteristics.LENS_FACING_BACK).equals(c.get(CameraCharacteristics.LENS_FACING));
-            if (best == null || (back && !bestBack)) {
-                best = id;
-                bestLevels = levels == null ? 1 : levels;
-                bestBack = back;
+            try {
+                CameraCharacteristics c = cameras.getCameraCharacteristics(id);
+                if (!Boolean.TRUE.equals(c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE))) {
+                    continue;
+                }
+                Integer levels = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL);
+                if (levels == null || levels < 2) {
+                    continue;
+                }
+                controllable.put(id, levels);
+                boolean back = Integer.valueOf(CameraCharacteristics.LENS_FACING_BACK).equals(c.get(CameraCharacteristics.LENS_FACING));
+                if (best == null || (back && !bestBack)) {
+                    best = id;
+                    bestBack = back;
+                }
+            } catch (Throwable t) {
+                XLog.i("flashlight: camera " + id + " skipped: " + t);
             }
         }
         cameraId = best;
-        maxLevel = bestLevels;
+        Integer levels = best == null ? null : controllable.get(best);
+        maxLevel = levels == null ? 1 : levels;
+    }
+
+    /** A torch of one camera switched on or off; the card follows whichever camera was switched on last. */
+    private void onCamera(String id, boolean isOn) {
+        Integer levels = controllable.get(id);
+        if (levels == null) {
+            return;
+        }
+        if (isOn) {
+            enabled.add(id);
+            cameraId = id;
+            maxLevel = levels;
+        } else {
+            enabled.remove(id);
+            if (id.equals(cameraId) && !enabled.isEmpty()) {
+                cameraId = enabled.iterator().next();
+                maxLevel = controllable.get(cameraId);
+            }
+        }
+        onMode(!enabled.isEmpty());
     }
 
     private void onMode(boolean enabled) {
@@ -184,6 +241,10 @@ public final class TorchSource {
         level = current;
         on = torchOn;
         handlesTorch = true;
+        controllable.put(id, levels);
+        if (torchOn) {
+            enabled.add(id);
+        }
     }
 
     private int levelFor(float fraction) {

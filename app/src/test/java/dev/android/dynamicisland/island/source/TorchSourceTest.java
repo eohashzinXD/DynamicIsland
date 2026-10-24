@@ -51,6 +51,22 @@ public class TorchSourceTest {
     }
 
     @Test
+    public void recognisesOtherBuildsOfTheStockFlashlightNotification() {
+        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|77|flashlight_notification|10161"));
+        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|5|TorchService|10161"));
+        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.example|5|Torch|10161"));
+        IslandItem card = new IslandItem("n:1");
+        card.packageName = "com.android.systemui";
+        card.title = "Flashlight is on";
+        assertTrue(TorchSource.isStockItem(card));
+        card.title = "Battery low";
+        org.junit.Assert.assertFalse(TorchSource.isStockItem(card));
+        card.packageName = "com.example";
+        card.title = "Flashlight";
+        org.junit.Assert.assertFalse(TorchSource.isStockItem(card));
+    }
+
+    @Test
     public void recognisesTheStockFlashlightNotification() {
         assertTrue(TorchSource.isStockNotification("0|com.android.systemui|4660|Flashlight|10161"));
         org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.android.systemui|1234|Other|10161"));
