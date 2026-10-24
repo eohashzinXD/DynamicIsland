@@ -25,6 +25,8 @@
     <string name="setting_privacy_location_desc">Also announce location use. Off by default: navigation and weather apps use it constantly.</string>
     <string name="setting_event_toggles">Setting changes</string>
     <string name="setting_event_toggles_desc">Confirm Do Not Disturb, airplane mode, power saving, flashlight, hotspot and auto-rotate being switched.</string>
+    <string name="setting_torch_pill">Flashlight card</string>
+    <string name="setting_torch_pill_desc">While the flashlight is on, show it on the island with a button to turn it off. Works on phones whose flashlight has a single brightness level too.</string>
     <string name="setting_progress">Downloads &amp; transfers</string>
     <string name="setting_hide_progress">Hide original progress notifications</string>
     <string name="setting_hide_progress_desc">While a progress card is on the island, drop the same notification from the shade. Its buttons stay on the card.</string>

@@ -85,6 +85,8 @@ public final class ModuleSettings {
     /** Ids of the smart rules switched off. */
     public static final String KEY_RULES_DISABLED = "rules_disabled";
     public static final String KEY_EVENT_TOGGLES = "event_toggles";
+    /** The flashlight card shown on the island while the torch is on. */
+    public static final String KEY_TORCH_PILL = "torch_pill";
     public static final String KEY_PRIVACY = "privacy_indicator";
     public static final String KEY_PRIVACY_LOCATION = "privacy_location";
     public static final String KEY_OTP_CARD = "otp_card";
@@ -143,6 +145,7 @@ public final class ModuleSettings {
     /** Told (on the reload thread) when any switch changed, so what is on the island follows without waiting for the next event. */
     private static volatile Runnable onSwitchesChanged;
     private static volatile boolean eventToggles = true;
+    private static volatile boolean torchPill = true;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
     private static volatile boolean otpCard = true;
@@ -428,6 +431,7 @@ public final class ModuleSettings {
                 listener.run();
             }
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
+            torchPill = source.getBoolean(KEY_TORCH_PILL, true);
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
@@ -453,7 +457,7 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
@@ -594,6 +598,12 @@ public final class ModuleSettings {
     public static boolean eventToggles() {
         ensureStarted();
         return eventToggles;
+    }
+
+    /** The flashlight card while the torch is on (see {@link #KEY_TORCH_PILL}). */
+    public static boolean torchPill() {
+        ensureStarted();
+        return torchPill;
     }
 
     /** Camera / microphone in use island. */

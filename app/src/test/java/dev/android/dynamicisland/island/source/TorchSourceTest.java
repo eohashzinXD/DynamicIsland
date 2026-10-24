@@ -99,6 +99,20 @@ public class TorchSourceTest {
         render("torch_card_full", out.get(1));
     }
 
+    @Test
+    public void singleLevelTorchGetsACardWithoutSlider() throws Exception {
+        TorchSource s = source(1, 1, true);
+        List<IslandItem> out = new ArrayList<>();
+        s.collect(out);
+        assertEquals(1, out.size());
+        IslandItem it = out.get(0);
+        org.junit.Assert.assertNull(it.sliderChange);
+        assertEquals("On", it.trailingText.toString());
+        assertEquals(1, it.actions.size());
+        assertTrue(s.replacesStockNotification());
+        render("torch_card_single_level", it);
+    }
+
     private void render(String name, IslandItem item) throws Exception {
         IslandView view = new IslandView(app, null);
         float w = 360f * app.getResources().getDisplayMetrics().density;
