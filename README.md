@@ -17,7 +17,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/Download-APK-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="Download the APK"></a>
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/Download-APK-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="Download the APK" height="36" align="middle"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/sampple-korea/dynamicisland"><img src="docs/badge_obtainium.png" alt="Get it on Obtainium" height="36" align="middle"></a>
 </p>
 
 <p align="center">

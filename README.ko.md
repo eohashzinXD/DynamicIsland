@@ -17,7 +17,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/APK-%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="APK 다운로드"></a>
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/APK-%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="APK 다운로드" height="36" align="middle"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/sampple-korea/dynamicisland"><img src="docs/badge_obtainium.png" alt="Obtainium으로 받기" height="36" align="middle"></a>
 </p>
 
 <p align="center">
