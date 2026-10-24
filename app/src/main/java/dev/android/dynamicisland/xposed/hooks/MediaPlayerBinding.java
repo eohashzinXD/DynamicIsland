@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityManager;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.XLog;
 import java.lang.ref.WeakReference;
@@ -62,9 +63,12 @@ final class MediaPlayerBinding {
 
     /**
      * The island item to draw for this player, or null when the stock player must show (touch exploration on,
-     * options open, no session known to the island). The lock screen shows the same themed player as the shade.
+     * options open, no session known to the island, or the user turned the island's player off). The lock screen shows the same themed player as the shade.
      */
     IslandItem item(View player) {
+        if (!ModuleSettings.shadeMediaPlayer()) {
+            return null; // the user keeps the stock music player in the shade
+        }
         Context ctx = player.getContext();
         AccessibilityManager accessibility = ctx.getSystemService(AccessibilityManager.class);
         if (accessibility != null && accessibility.isTouchExplorationEnabled()) {

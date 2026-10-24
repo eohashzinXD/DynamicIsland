@@ -6,6 +6,8 @@
     <string name="setting_card_header">Card header</string>
     <string name="setting_card_header_desc">Show the app name and time above live notification cards.</string>
     <string name="setting_color_icons">Coloured icons in the small island</string>
+    <string name="setting_shade_media">Music player in the shade</string>
+    <string name="setting_shade_media_desc">Show the island\'s music card (artwork glow, waveform) in the notification shade. Off leaves the stock music player there; only the music player is affected.</string>
     <string name="setting_color_icons_desc">Keep the real colours of an app icon or a team logo when the island is small. Off shows them in grey.</string>
     <string name="setting_visualizer">Audio waveform</string>
     <string name="setting_visualizer_desc">Drive the music waveform from the real audio output. Off uses a gentle animation instead.</string>

@@ -25,6 +25,8 @@ public final class ModuleSettings {
     public static final String KEY_CARD_HEADER = "card_header";
     public static final String KEY_VISUALIZER = "visualizer";
     public static final String KEY_COLOR_ICONS = "compact_color_icons";
+    /** The island's music card in place of the stock music player of the notification shade. */
+    public static final String KEY_SHADE_MEDIA = "shade_media_player";
     public static final String KEY_EVENT_CHARGING = "event_charging";
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
@@ -113,6 +115,7 @@ public final class ModuleSettings {
     private static volatile boolean cardHeader = true;
     private static volatile boolean visualizer = true;
     private static volatile boolean colorIcons;
+    private static volatile boolean shadeMedia = true;
     private static volatile boolean eventCharging = true;
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
@@ -387,6 +390,7 @@ public final class ModuleSettings {
             cardHeader = source.getBoolean(KEY_CARD_HEADER, true);
             visualizer = source.getBoolean(KEY_VISUALIZER, true);
             colorIcons = source.getBoolean(KEY_COLOR_ICONS, false);
+            shadeMedia = source.getBoolean(KEY_SHADE_MEDIA, true);
             eventCharging = source.getBoolean(KEY_EVENT_CHARGING, true);
             eventRinger = source.getBoolean(KEY_EVENT_RINGER, true);
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
@@ -458,7 +462,7 @@ public final class ModuleSettings {
 
     private static String switchSignature() {
         return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
-                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + cardHeader
+                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
 
@@ -514,6 +518,12 @@ public final class ModuleSettings {
     public static boolean cardHeader() {
         ensureStarted();
         return cardHeader;
+    }
+
+    /** The island's music card in the notification shade; off leaves the stock music player there (see {@link #KEY_SHADE_MEDIA}). */
+    public static boolean shadeMediaPlayer() {
+        ensureStarted();
+        return shadeMedia;
     }
 
     /** Keep the real colours of an app's icon or a team's logo in the small pill, instead of a grey version of it. */

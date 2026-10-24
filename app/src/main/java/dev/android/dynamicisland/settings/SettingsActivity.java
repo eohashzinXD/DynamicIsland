@@ -212,6 +212,7 @@ public final class SettingsActivity extends Activity {
         toggle(look, R.string.setting_card_header, R.string.setting_card_header_desc, ModuleSettings.KEY_CARD_HEADER, true);
         toggle(look, R.string.setting_visualizer, R.string.setting_visualizer_desc, ModuleSettings.KEY_VISUALIZER, true);
         toggle(look, R.string.setting_color_icons, R.string.setting_color_icons_desc, ModuleSettings.KEY_COLOR_ICONS, false);
+        toggle(look, R.string.setting_shade_media, R.string.setting_shade_media_desc, ModuleSettings.KEY_SHADE_MEDIA, true);
 
         ui.category(page, getString(R.string.group_feedback));
         LinearLayout feedback = ui.card(page);
