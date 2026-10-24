@@ -23,6 +23,12 @@ final class PillPainter {
     /** The bubble's content only shows once the bubble has split off this far, fully at +0.4. */
     private static final float BUBBLE_CONTENT_FROM = 0.55f;
     private static final float BUBBLE_CONTENT_RANGE = 0.4f;
+    /** Diameter of the dot the island shrinks into when the shade comes down, as a fraction of the pill's height. */
+    private static final float SHADE_DOT = 0.65f;
+    /** The shade gate (1 = there, 0 = gone): the bubble has merged into the pill by here, the content is gone before this. */
+    private static final float SHADE_MERGED_BY = 0.55f;
+    private static final float SHADE_CONTENT_GONE_BY = 0.45f;
+    private static final float SHADE_CONTENT_RANGE = 0.4f;
 
     private final Metrics m;
     private final Paints paints;
@@ -35,6 +41,7 @@ final class PillPainter {
     private final Path neck = new Path();
     private final RectF bubble = new RectF();
     private final RectF outlineRect = new RectF();
+    private final RectF shrunk = new RectF();
 
     PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge) {
         this.m = m;
@@ -51,9 +58,25 @@ final class PillPainter {
     }
 
     /** Draws pill and bubble; {@code pill} is the pill's rectangle for this frame. */
-    void draw(Canvas canvas, RectF pill, long t) {
-        float r = pill.height() / 2.0f;
+    void draw(Canvas canvas, RectF full, long t) {
+        // while the shade comes down the bubble merges into the pill, then the body shrinks into a dot with its content
+        // growing smaller and fading; the other way round when the shade has gone
+        float gate = IslandView.clamp01(sp.shadeGate.value());
+        RectF pill = full;
+        float contentScale = 1.0f;
+        float contentAlpha = 1.0f;
         float split = sp.split.value();
+        if (gate < 0.999f) {
+            float dot = full.height() * SHADE_DOT;
+            float w = dot + ((full.width() - dot) * gate);
+            float h = dot + ((full.height() - dot) * gate);
+            shrunk.set(full.centerX() - (w / 2.0f), full.centerY() - (h / 2.0f), full.centerX() + (w / 2.0f), full.centerY() + (h / 2.0f));
+            pill = shrunk;
+            contentScale = w / Math.max(1.0f, full.width());
+            contentAlpha = clamp01((gate - SHADE_CONTENT_GONE_BY) / SHADE_CONTENT_RANGE);
+            split *= clamp01((gate - SHADE_MERGED_BY) / (1.0f - SHADE_MERGED_BY));
+        }
+        float r = pill.height() / 2.0f;
         // the bubble also stays while a stack opens: it merges back into the pill instead of vanishing in one frame
         boolean hasBubble = split > 0.003f && (scene.mode != Mode.EXPANDED || !legacyMerge());
         boolean hasNeck = false;
@@ -62,7 +85,7 @@ final class PillPainter {
         float bubbleY = 0.0f;
         float bubbleRadius = 0.0f;
         if (hasBubble) {
-            shapes.bubble(pill, bubble);
+            shapes.bubble(pill, split, bubble);
             bubbleRadius = bubble.width() / 2.0f;
             bubbleX = bubble.centerX();
             bubbleY = bubble.centerY();
@@ -107,11 +130,17 @@ final class PillPainter {
             paints.shape.setColor(Colors.BLACK);
         }
 
-        if (pillVisible) {
-            drawPillContent(canvas, pill, r, t);
+        if (pillVisible && contentAlpha > IslandView.MIN_VISIBLE_ALPHA) {
+            int contentSave = canvas.save();
+            if (contentScale < 0.999f) {
+                canvas.scale(contentScale, contentScale, full.centerX(), full.centerY());
+            }
+            // the content keeps its full-size layout and is clipped to the (still shrinking) body
+            drawPillContent(canvas, full, full.height() / 2.0f, t, contentAlpha);
+            canvas.restoreToCount(contentSave);
         }
         if (hasBubble && split > BUBBLE_CONTENT_FROM) {
-            float extra = clamp01((split - BUBBLE_CONTENT_FROM) / BUBBLE_CONTENT_RANGE);
+            float extra = clamp01((split - BUBBLE_CONTENT_FROM) / BUBBLE_CONTENT_RANGE) * contentAlpha;
             drawBubbleLayer(canvas, scene.bubbleOut, t, extra);
             drawBubbleLayer(canvas, scene.bubbleIn, t, extra);
         }
@@ -143,16 +172,16 @@ final class PillPainter {
         }
     }
 
-    private void drawPillContent(Canvas canvas, RectF pill, float r, long t) {
+    private void drawPillContent(Canvas canvas, RectF pill, float r, long t, float extraAlpha) {
         int save = canvas.save();
         clip.reset();
         clip.addRoundRect(pill, r, r, Path.Direction.CW);
         canvas.clipPath(clip);
         if (scene.mainOut != null) {
-            drawLayer(canvas, scene.mainOut, pill, t);
+            drawLayer(canvas, scene.mainOut, pill, t, extraAlpha);
         }
         if (scene.mainIn != null && scene.mode != Mode.EXPANDED) {
-            drawLayer(canvas, scene.mainIn, pill, t);
+            drawLayer(canvas, scene.mainIn, pill, t, extraAlpha);
         }
         canvas.restoreToCount(save);
     }
@@ -166,9 +195,9 @@ final class PillPainter {
         return (!it.hasTeams() || it.pillColor == 0) ? Colors.BLACK : it.pillColor;
     }
 
-    private void drawLayer(Canvas canvas, Layer layer, RectF shape, long t) {
+    private void drawLayer(Canvas canvas, Layer layer, RectF shape, long t, float extraAlpha) {
         // the content goes with the pill's body: a pill that is out of sight (the cards are folding back into it) shows nothing
-        float alpha = layer.alpha(t) * clamp01(sp.pillBlob.value());
+        float alpha = layer.alpha(t) * clamp01(sp.pillBlob.value()) * extraAlpha;
         if (alpha <= IslandView.MIN_VISIBLE_ALPHA) {
             return;
         }

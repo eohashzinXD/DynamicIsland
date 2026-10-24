@@ -31,15 +31,45 @@ public class SceneMetricsTest {
     }
 
     @Test
-    public void shadeFadesOutSmoothlyAndIsGoneWhenPulledFar() {
+    public void shadeGateFadesTheIslandOutAndBackIn() {
         Scene scene = scene();
         assertEquals(1.0f, scene.shadeAlpha(), 1e-6f);
-        scene.shade = 0.2f;
+        scene.springs.shadeGate.snapTo(0.05f);
         float mid = scene.shadeAlpha();
         assertTrue(mid > 0.0f && mid < 1.0f);
-        scene.shade = 0.4f;
+        scene.springs.shadeGate.snapTo(0.0f);
         assertEquals(0.0f, scene.shadeAlpha(), 1e-6f);
+        scene.shade = 0.3f;
         assertTrue(scene.shadePulled());
+    }
+
+    /** The island's shrink into the dot and its return follow time, and neither jumps nor overshoots far. */
+    @Test
+    public void shadeGateMovesSmoothlyBothWays() {
+        Scene scene = scene();
+        dev.android.dynamicisland.island.graphics.Spring gate = scene.springs.shadeGate;
+        gate.animateTo(0.0f, IslandView.SHADE_GO_RESPONSE, IslandView.SHADE_GO_DAMPING);
+        float previous = gate.value();
+        float t = 0.0f;
+        while (t < 0.6f && !gate.isAtRest()) {
+            gate.step(1.0f / 60.0f);
+            t += 1.0f / 60.0f;
+            assertTrue("shrinking never turns back up", gate.value() <= previous + 1e-4f);
+            assertTrue("and does not undershoot", gate.value() >= -0.02f);
+            previous = gate.value();
+        }
+        assertTrue("shrunk and gone within half a second", gate.isAtRest() && gate.value() < 0.01f);
+
+        gate.animateTo(1.0f, IslandView.SHADE_BACK_RESPONSE, IslandView.SHADE_BACK_DAMPING);
+        float peak = 0.0f;
+        t = 0.0f;
+        while (t < 1.0f && !gate.isAtRest()) {
+            gate.step(1.0f / 60.0f);
+            t += 1.0f / 60.0f;
+            peak = Math.max(peak, gate.value());
+        }
+        assertTrue("grown back within a second", gate.isAtRest() && gate.value() > 0.99f);
+        assertTrue("with at most a small bounce", peak < 1.12f);
     }
 
     @Test

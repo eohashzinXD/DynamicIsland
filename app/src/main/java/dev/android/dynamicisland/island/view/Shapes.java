@@ -49,8 +49,12 @@ final class Shapes {
 
     /** The bubble: a circle that grows out of the pill's right end as the split progresses. */
     void bubble(RectF main, RectF out) {
+        bubble(main, sp.split.value(), out);
+    }
+
+    /** The bubble for an explicit split (the shade gate merges it back into the pill before the pill shrinks). */
+    void bubble(RectF main, float s, RectF out) {
         float pillRadius = main.height() / 2.0f;
-        float s = sp.split.value();
         float radius = lerp(IslandView.PAUSED_GLOW * pillRadius, m.bubbleR, IslandView.clamp01(s));
         float restDistance = m.bubbleGap + pillRadius + m.bubbleR;
         float centerX = (restDistance * s) + (main.right - pillRadius);

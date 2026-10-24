@@ -22,8 +22,14 @@ final class Springs {
     final Spring outlineFade = new Spring(1.0f, 0.3f, 1.0f).setValueThreshold(0.002f);
     final Spring stackDx = new Spring(0.0f, 0.45f, 0.55f).setValueThreshold(0.3f);
     final Spring stackDy = new Spring(0.0f, 0.45f, 0.55f).setValueThreshold(0.3f);
+    /**
+     * 1 = the island is there, 0 = the notification shade is down and the island has shrunk into a dot and gone. It
+     * follows the shade by time, not by how far the shade is pulled, so it shrinks and grows smoothly however fast
+     * the shade moves.
+     */
+    final Spring shadeGate = new Spring(1.0f, 0.3f, 0.9f).setValueThreshold(0.002f);
 
-    private final Spring[] all = {width, height, visibility, suppress, press, pulse, offsetX, split, pillBlob, stackDx, stackDy, outlineFade};
+    private final Spring[] all = {width, height, visibility, suppress, press, pulse, offsetX, split, pillBlob, stackDx, stackDy, outlineFade, shadeGate};
 
     /** Advances every spring by {@code dt}; true while any of them still moves. */
     boolean step(float dt) {

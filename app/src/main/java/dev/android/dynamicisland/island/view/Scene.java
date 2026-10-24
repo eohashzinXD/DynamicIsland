@@ -41,10 +41,13 @@ final class Scene {
         this.springs = springs;
     }
 
-    /** Smoothstep fade-out of the island while the notification shade is pulled down. */
+    /** The shade is down far enough that the island has been sent away (it comes back only when the shade is nearly shut). */
+    boolean shadeGone;
+
+    /** Opacity of the island for the notification shade: it stays solid while it shrinks into a dot and fades only once it is the dot. */
     float shadeAlpha() {
-        float x = IslandView.clamp01((shade - 0.05f) / 0.3f);
-        return 1.0f - ((x * x) * (3.0f - (2.0f * x)));
+        float x = IslandView.clamp01(springs.shadeGate.value() * 10.0f);
+        return x * x * (3.0f - (2.0f * x));
     }
 
     float visibleAlpha() {
@@ -57,7 +60,8 @@ final class Scene {
 
     /** While the host fades the whole surface for the pulled shade there is nothing to animate. */
     boolean frozenByShade() {
-        return surfaceFade && shadePulled() && springs.suppress.isAtRest() && springs.visibility.isAtRest();
+        return surfaceFade && shadePulled() && springs.suppress.isAtRest() && springs.visibility.isAtRest()
+                && springs.shadeGate.isAtRest();
     }
 
     Card findCard(String key) {

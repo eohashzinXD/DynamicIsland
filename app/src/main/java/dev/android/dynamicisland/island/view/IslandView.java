@@ -80,8 +80,15 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     static final float MIN_VISIBLE_SIZE = 0.5f;
 
     private static final float SHADE_COLLAPSE_AT = 0.04f;
-    /** The island shrinks by this fraction while the shade is fully pulled. */
-    private static final float SHADE_SHRINK = 0.25f;
+    /** The shade is down this far (0..1) and the island is sent away: it shrinks into a dot and fades. */
+    private static final float SHADE_GONE_AT = 0.02f;
+    /** The island comes back when the shade has closed down to this (a little lower, so it does not flicker). */
+    private static final float SHADE_BACK_AT = 0.01f;
+    /** Shrinking into the dot is quick and does not overshoot; growing back is slower, with a small bounce. */
+    static final float SHADE_GO_RESPONSE = 0.24f;
+    static final float SHADE_GO_DAMPING = 1.0f;
+    static final float SHADE_BACK_RESPONSE = 0.34f;
+    static final float SHADE_BACK_DAMPING = 0.72f;
     private static final float DEFAULT_FRAME_DT = 0.008333334f;
 
     /** Choreographer#getFrameTimeNanos: hidden API, open to System UI (a platform app). */
@@ -127,6 +134,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     private final IslandHost host;
     private final Choreographer choreographer = Choreographer.getInstance();
+    /** The shade gate value last handed to the host, so an unchanged one is not sent again. */
+    private float appliedGate = 1.0f;
     private final Metrics metrics;
     private final Springs springs = new Springs();
     private final Scene scene = new Scene(springs);
@@ -368,22 +377,44 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         scheduleFrame();
     }
 
-    /** How far the notification shade is pulled down (0..1); the island fades and shrinks with it. */
+    /**
+     * How far the notification shade is pulled down (0..1). The first bit of the pull sends the island away and the
+     * shade being nearly shut brings it back; it shrinks into a dot (and grows out of it) by time, not by distance.
+     */
     public void setShadeFraction(float fraction) {
         float clamped = clamp01(fraction);
         if (Math.abs(clamped - scene.shade) < Scene.SHADE_PULLED_EPS) {
             return;
         }
-        boolean wasPulled = scene.shadePulled();
         scene.shade = clamped;
         if (clamped > SHADE_COLLAPSE_AT && scene.mode == Mode.EXPANDED) {
             collapse();
         }
-        scene.surfaceFade = host.onShadeFade(scene.shadeAlpha(), 1.0f - (clamped * SHADE_SHRINK), metrics.cx, metrics.cy);
-        if (!scene.surfaceFade || (wasPulled && !scene.shadePulled())) {
-            scheduleFrame();
+        boolean gone = scene.shadeGone ? clamped > SHADE_BACK_AT : clamped > SHADE_GONE_AT;
+        if (gone != scene.shadeGone) {
+            scene.shadeGone = gone;
+            if (gone) {
+                springs.shadeGate.animateTo(0.0f, SHADE_GO_RESPONSE, SHADE_GO_DAMPING);
+            } else {
+                springs.shadeGate.animateTo(1.0f, SHADE_BACK_RESPONSE, SHADE_BACK_DAMPING);
+            }
         }
+        applyShadeFade();
+        scheduleFrame();
         notifyHost();
+    }
+
+    /**
+     * Hands the host the island's opacity for the shade gate: the whole window surface is faded. The island's shape
+     * shrinking into the dot is drawn by the pill painter.
+     */
+    private void applyShadeFade() {
+        float g = springs.shadeGate.value();
+        if (g == appliedGate && g >= 0.999f) {
+            return;
+        }
+        appliedGate = g;
+        scene.surfaceFade = host.onShadeFade(scene.shadeAlpha(), 1.0f, metrics.cx, metrics.cy);
     }
 
     public boolean shadePulled() {
@@ -510,6 +541,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         lastFrameNanos = frameTimeNanos;
         long t = now();
         boolean active = springs.step(dt) | buttons.animating();
+        applyShadeFade();
         if (scene.mode == Mode.HIDDEN && metrics.holeD > 0.0f && springs.visibility.target() > 0.0f
                 && springs.width.value() <= metrics.restWidth() + metrics.dp(5.0f)) {
             springs.visibility.animateTo(0.0f, 0.12f, 1.0f);
@@ -656,8 +688,6 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         shapes.main(pillRect);
         int save = canvas.save();
-        float shadeScale = scene.surfaceFade ? 1.0f : 1.0f - (scene.shade * SHADE_SHRINK);
-        canvas.scale(shadeScale, shadeScale, metrics.cx, metrics.cy);
         if (alpha < 0.995f) {
             canvas.saveLayerAlpha(0.0f, 0.0f, metrics.screenW, getHeight(), Math.round(255.0f * alpha));
         }
