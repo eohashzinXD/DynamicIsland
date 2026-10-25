@@ -63,7 +63,7 @@ body:
     attributes:
       label: Module version / 모듈 버전
       description: Shown on the first line of the Diagnostics report. / 진단 리포트의 첫 줄에 있습니다.
-      placeholder: "0.1.11"
+      placeholder: "0.1.12"
     validations:
       required: true
   - type: textarea
