@@ -66,6 +66,21 @@ public class UserRulesTest {
     }
 
     @Test
+    public void customStageNamesOverrideTurkishAndUndoCleanly() {
+        UserRules rules = UserRules.parse(null);
+        rules.setLabel("food", 3, "Kapınızda");
+        RuleDictionary merged = RuleStore.build(new RuleConfig(rules.toJson()));
+        assertEquals("Kapınızda", merged.statusText("food", 3, Locale.forLanguageTag("tr-TR")));
+        assertEquals("Kapınızda", merged.statusText("food", 3, Locale.ENGLISH));
+        assertEquals("Kapınızda", merged.statusText("food", 3, Locale.KOREAN));
+        UserRules again = UserRules.parse(rules.toJson());
+        again.setLabel("food", 3, "");
+        assertNull(again.toJson());
+        assertEquals("Varış yaklaşıyor", RuleStore.build(new RuleConfig(again.toJson()))
+                .statusText("food", 3, Locale.forLanguageTag("tr")));
+    }
+
+    @Test
     public void aNewRuleWorksAndASwitchedOffRuleIsGone() {
         UserRules rules = UserRules.parse(null);
         rules.create("gym");

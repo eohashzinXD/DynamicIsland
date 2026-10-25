@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.Collections;
@@ -109,7 +110,8 @@ public final class RecorderNotificationSource {
         it.pulsingDot = true;
         it.packageName = pkg;
         CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
-        it.title = title != null ? title : "Screen recording";
+        it.title = title != null ? title : IslandText.select(Locale.getDefault(),
+                "Screen recording", "Screen recording", "Ekran kaydı");
         it.appName = it.title;
         it.subtitle = extras.getCharSequence(Notification.EXTRA_TEXT);
         it.contentIntent = n.contentIntent;
@@ -131,9 +133,9 @@ public final class RecorderNotificationSource {
         }
         if (it.actions.isEmpty() && n.contentIntent != null) {
             // the recorder stops when its notification is tapped ("tap to stop"): the card gets that as a stop button
-            boolean ko = "ko".equals(Locale.getDefault().getLanguage());
-            it.actions.add(new IslandItem.Action(ko ? "중지" : "Stop", null, n.contentIntent, null, true));
-            it.subtitle = ko ? "녹화 중" : "Recording"; // the notification's own text says "tap to stop", which the button does now
+            it.actions.add(new IslandItem.Action(IslandText.select(Locale.getDefault(), "중지", "Stop", "Durdur"),
+                    null, n.contentIntent, null, true));
+            it.subtitle = IslandText.select(Locale.getDefault(), "녹화 중", "Recording", "Kaydediliyor"); // the notification's own text says "tap to stop", which the button does now
             it.contentIntent = null; // tapping the card must not stop the recording
         }
         return it;

@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.widget.RemoteViews;
+import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -169,6 +170,8 @@ public final class IslandItem {
     public boolean playing;
     /** Album art. */
     public Bitmap art;
+    /** Immutable artwork gradient; null means renderers should fall back to {@link #accent}. */
+    public ArtworkPalette mediaPalette;
     /** Launcher icon of the playing app. */
     public Drawable appIcon;
     /** Monochrome version of {@link #appIcon} for the compact pill, may be null. */

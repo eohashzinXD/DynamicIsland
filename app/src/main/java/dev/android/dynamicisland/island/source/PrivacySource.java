@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -20,7 +21,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -231,13 +231,13 @@ public final class PrivacySource {
         it.iconIsImage = false;
         it.packageName = null;
         if (cam && mic) {
-            it.title = t("카메라·마이크 사용 중", "Camera & microphone in use");
+            it.title = t("카메라·마이크 사용 중", "Camera & microphone in use", "Kamera ve mikrofon kullanımda");
         } else if (cam) {
-            it.title = t("카메라 사용 중", "Camera in use");
+            it.title = t("카메라 사용 중", "Camera in use", "Kamera kullanımda");
         } else if (mic) {
-            it.title = t("마이크 사용 중", "Microphone in use");
+            it.title = t("마이크 사용 중", "Microphone in use", "Mikrofon kullanımda");
         } else {
-            it.title = t("위치 사용 중", "Location in use");
+            it.title = t("위치 사용 중", "Location in use", "Konum kullanımda");
         }
         it.icon = GlyphIcon.of(cam ? GlyphIcon.Kind.CAMERA : mic ? GlyphIcon.Kind.MIC : GlyphIcon.Kind.LOCATION);
         it.accent = cam ? GREEN : mic ? ORANGE : BLUE;
@@ -250,7 +250,7 @@ public final class PrivacySource {
             who.append(label(packages.get(i)));
         }
         if (packages.size() > 2) {
-            who.append(t(" 외 " + (packages.size() - 2) + "개", " +" + (packages.size() - 2)));
+            who.append(t(" 외 " + (packages.size() - 2) + "개", " +" + (packages.size() - 2), " ve " + (packages.size() - 2) + " uygulama daha"));
         }
         it.subtitle = who.toString();
         it.trailing = IslandItem.Trailing.TEXT;
@@ -288,8 +288,7 @@ public final class PrivacySource {
     }
 
     /** The module has no string resources inside System UI, so pick the language here. */
-    private String t(String ko, String en) {
-        Locale locale = ctx.getResources().getConfiguration().getLocales().get(0);
-        return "ko".equals(locale.getLanguage()) ? ko : en;
+    private String t(String ko, String en, String tr) {
+        return IslandText.select(ctx, ko, en, tr);
     }
 }

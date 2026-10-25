@@ -12,6 +12,7 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.SystemClock;
+import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -204,7 +205,7 @@ public final class MediaSource {
             }
             if (art != cover.art) {
                 cover.art = art;
-                cover.accent = CoverAccent.of(art);
+                cover.palette = CoverAccent.palette(art);
             }
             cover.track = track;
             cover.pendingTrack = null;
@@ -263,7 +264,7 @@ public final class MediaSource {
     /** The last cover of one player and the track it belonged to. */
     private static final class Cover {
         Bitmap art;
-        int accent = -1;
+        ArtworkPalette palette;
         String track;
         /** Track that arrived without art, and since when we have been waiting for it. */
         String pendingTrack;
@@ -283,8 +284,8 @@ public final class MediaSource {
         long lastActive;
         /** The card for the current state; null when it must be rebuilt. */
         IslandItem card;
-        private Bitmap accentArt;
-        private int accent = -1;
+        private Bitmap paletteArt;
+        private ArtworkPalette palette;
 
         Session(MediaController controller) {
             this.controller = controller;
@@ -461,10 +462,11 @@ public final class MediaSource {
                 }
             }
             Bitmap art = resolveArt(pkg, fromMeta, track);
-            if (art != accentArt) {
-                accentArt = art;
+            if (art != paletteArt) {
+                paletteArt = art;
                 Cover cover = covers.get(pkg);
-                accent = art == null ? -1 : (cover == null || cover.art != art) ? CoverAccent.of(art) : cover.accent;
+                palette = art == null ? null : (cover == null || cover.art != art)
+                        ? CoverAccent.palette(art) : cover.palette;
             }
             Drawable appIcon = assets.icon(pkg);
             it.art = art;
@@ -477,7 +479,8 @@ public final class MediaSource {
             }
             it.iconIsImage = true;
             it.cardImageIsImage = true;
-            it.accent = accent;
+            it.mediaPalette = palette;
+            it.accent = palette == null ? -1 : palette.primary;
             it.appIcon = appIcon;
             if (appIcon instanceof AdaptiveIconDrawable) {
                 Drawable monochrome = ((AdaptiveIconDrawable) appIcon).getMonochrome();

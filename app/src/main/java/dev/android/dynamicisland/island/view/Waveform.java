@@ -9,6 +9,7 @@ import dev.android.dynamicisland.island.feedback.AudioLevels;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Spring;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.island.view.media.MediaFx;
 import java.util.Random;
 
 /**
@@ -28,6 +29,8 @@ final class Waveform {
     private final Spring[] bars = new Spring[BARS];
     private final float[] level = new float[BARS];
     private final Random random = new Random();
+    /** Flat non-media waveforms must not inherit a media shader or mutate the shared fill paint. */
+    private final Paint flatPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     Waveform(Metrics m) {
         this.m = m;
@@ -80,10 +83,18 @@ final class Waveform {
         }
     }
 
-    void draw(Canvas c, Paint paint, RectF scratch, float left, float midY, int color, float alpha) {
+    void draw(Canvas c, RectF scratch, float left, float midY, int color, float alpha) {
+        flatPaint.setColor(Colors.withAlpha(color, alpha));
+        drawBars(c, flatPaint, scratch, left, midY);
+    }
+
+    void draw(Canvas c, RectF scratch, float left, float midY, MediaFx fx, float alpha, long now) {
+        drawBars(c, fx.waveformPaint(left, width(), alpha, now), scratch, left, midY);
+    }
+
+    private void drawBars(Canvas c, Paint paint, RectF scratch, float left, float midY) {
         float maxH = m.dp(MAX_HEIGHT_DP);
         float minH = m.dp(MIN_HEIGHT_DP);
-        paint.setColor(Colors.withAlpha(color, alpha));
         float x = left;
         for (Spring bar : bars) {
             float h = ((maxH - minH) * clamp01(bar.value())) + minH;

@@ -50,6 +50,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 ## Features
 
 - **Live notifications as cards:** Every System UI ongoing activity gets a compact pill and an expanded card: header, chronometer, description, plain / segmented / indeterminate progress, icon or text buttons, custom chip views, work profile badge. Calls, cast, screen recording, timers and a music player (seek bar, art-tinted glow, waveform, output route) are included.
+- **Artwork-coloured waveform:** The compact music waveform blends a harmonious three-stop palette derived from the album art, with visible tonal variation and smooth colour changes between covers. Grayscale artwork keeps a neutral gradient.
 - **Ordinary notifications as cards:**
   - Messages and banners open as an island card instead of the stock heads-up banner (calls and alarms keep the stock banner).
   - Verification codes get a card with a Copy button (optional auto-copy, marked sensitive).
@@ -59,7 +60,8 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 - **System events:** Charging, low battery, sound mode, Bluetooth audio with battery, camera / microphone / location in use, and quick-setting feedback (Do Not Disturb, airplane, power saving, torch, hotspot, auto-rotate).
 - **App control:** A blacklist or whitelist of apps for the ordinary-notification features. Live notifications, media, calls and system events are never filtered.
 - **Motion:** Spring-based animations with squash and stretch, a liquid bridge between pill and card, and cards that grow out of the pill.
-- **One UI settings app:** A hub of grouped cards with sub pages, in Korean and English.
+- **One UI settings app:** A hub of grouped cards with sub pages, in Korean, English and Turkish.
+- **Turkish localization:** Settings, module-generated island text and built-in stage labels follow the phone's Turkish locale. Notification text supplied by other apps is unchanged; built-in notification detection remains Korean and English.
 - **Safety:** A crash guard switches the module off after repeated System UI crashes, hook groups are isolated, and a diagnostics page shows what the module did inside System UI.
 
 ## Features in detail
@@ -135,7 +137,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ### Settings app
 
-- A One UI style hub with grouped cards and sub pages: **Display and motion**, **Notification cards**, **System events**, **App control**, **Rules** and **Tools** (restart System UI with root, diagnostics), in Korean and English, light and dark. Changes apply within a few seconds without a reboot.
+- A One UI style hub with grouped cards and sub pages: **Display and motion**, **Notification cards**, **System events**, **App control**, **Rules** and **Tools** (restart System UI with root, diagnostics), in Korean, English and Turkish, light and dark. Changes apply within a few seconds without a reboot.
 - **Island position and size:** put the island on the camera hole (default), in the middle, or on the left or right of the status bar, and shift it sideways or up and down. The island on the real status bar moves while you drag the sliders. The **camera hole** can be found automatically, set by hand (size and place, shown as a blue ring on the real screen) or turned off. Text inside the pill keeps away from the hole. The pill's height, narrowest and widest width can be set too (and it can keep its widest width), with the same live preview.
 - Four kinds of settings: switches, values that open a choice, links to sub pages and actions. A switch that is off dims what depends on it.
 
