@@ -69,7 +69,7 @@ public class BlurLayerLifecycleTest {
         assertTrue(painted[0] > 0);
         assertEquals("the foreground still paints after the native backdrop is gone", Color.BLACK, bitmap.getPixel(120, 50));
     }
-    @Test public void releaseClearsTheBackdropImmediatelyEvenWhileItsPaintedSurfaceLingers() {
+    @Test public void releaseRemovesBothBackdropAndCachedPaintedSurfaceImmediately() {
         Backend backend = new Backend();
         BlurLayer layer = new BlurLayer(RuntimeEnvironment.getApplication(), backend);
         Object owner = new Object();
@@ -79,7 +79,9 @@ public class BlurLayerLifecycleTest {
         assertEquals(1, backend.cleared);
         assertEquals(View.GONE, slot.getChildAt(0).getVisibility());
         assertEquals(0, slot.getChildAt(0).getAlpha(), 0);
-        assertEquals(1, slot.getChildAt(1).getAlpha(), 0);
+        assertEquals(View.GONE, slot.getVisibility());
+        assertEquals(0, layer.getChildCount());
+        assertNull(slot.getParent());
     }
     @Test public void aMissedPlacementNeverKeepsAStaleNativeBackdrop() {
         Backend backend = new Backend();

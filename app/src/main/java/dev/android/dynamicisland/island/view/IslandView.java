@@ -735,6 +735,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (alpha < 0.995f) {
             canvas.saveLayerAlpha(0.0f, 0.0f, metrics.screenW, getHeight(), Math.round(255.0f * alpha));
         }
+        stackPainter.drawFoldingCards(canvas, now());
         stackPainter.drawGoo(canvas);
         float scale = springs.press.value() * (springs.pulse.value() + 1.0f);
         int pillSave = canvas.save();
