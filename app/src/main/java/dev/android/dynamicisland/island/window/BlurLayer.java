@@ -3,6 +3,8 @@ package dev.android.dynamicisland.island.window;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.graphics.Outline;
+import android.view.ViewOutlineProvider;
 import android.view.View;
 import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.view.BlurSink;
@@ -32,9 +34,23 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     private static final float MIN_SLOT_SIZE = 2.0f;
     /** Frames a slot may go unplaced before it is hidden. */
     private static final int MISSED_FRAMES_BEFORE_HIDE = 1;
-    /** How long a released slot keeps its blur after its view is gone, so the blur does not leave before the picture does. */
-    private static final long RELEASE_BLUR_LINGER_MS = 32;
+    /** How long the final painted surface may remain; its native backdrop is cleared immediately. */
+    private static final long RELEASE_SURFACE_LINGER_MS = 32;
 
+    interface Backend {
+        boolean available();
+        void apply(View view, int radius, float corner, int tint) throws ReflectiveOperationException;
+        void clear(View view);
+        void disable();
+    }
+
+    private static final Backend SYSTEM = new Backend() {
+        @Override public boolean available() { return SemBlur.isSupported(); }
+        @Override public void apply(View view, int radius, float corner, int tint) throws ReflectiveOperationException { SemBlur.apply(view, radius, corner, tint); }
+        @Override public void clear(View view) { SemBlur.clear(view); }
+        @Override public void disable() { SemBlur.giveUp(); }
+    };
+    private final Backend backend;
     private final Map<Object, Slot> slots = new IdentityHashMap<>();
     private CardPainter painter;
     /** The slots placed in the current frame, back to front. */
@@ -42,8 +58,11 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     /** Counts frames so a slot can tell whether it was placed in the current one. */
     private int frame;
 
-    BlurLayer(Context context) {
+    BlurLayer(Context context) { this(context, SYSTEM); }
+
+    BlurLayer(Context context, Backend backend) {
         super(context);
+        this.backend = backend;
         setClipChildren(false);
         setWillNotDraw(true);
     }
@@ -63,7 +82,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
 
     @Override
     public boolean available() {
-        return SemBlur.isSupported();
+        return backend.available();
     }
 
     @Override
@@ -79,6 +98,11 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
 
     @Override
     public void place(Object owner, RectF bounds, float corner, float alpha) {
+        place(owner, bounds, corner, alpha, 1);
+    }
+
+    @Override
+    public void place(Object owner, RectF bounds, float corner, float alpha, float backdropAlpha) {
         Slot slot = slots.get(owner);
         if (slot == null) {
             slot = new Slot(getContext(), owner);
@@ -87,14 +111,14 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
         }
         slot.placedInFrame = frame;
         placed.add(slot);
-        slot.update(bounds, corner, alpha);
+        slot.update(bounds, corner, alpha, backdropAlpha);
     }
 
     @Override
     public void endFrame() {
         for (Slot slot : slots.values()) {
-            // one frame without a placement is tolerated: the blur drops out for a frame when its card is hidden and
-            // shown again, while the card's own last picture is still on screen
+            // Tolerate one missing painted-surface frame, but never keep a stale native backdrop.
+            if (frame != slot.placedInFrame) slot.hideBackdrop();
             if (frame - slot.placedInFrame > MISSED_FRAMES_BEFORE_HIDE) {
                 slot.hide();
             }
@@ -120,45 +144,68 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     public void release(Object owner) {
         Slot slot = slots.remove(owner);
         if (slot != null) {
-            // the card's last picture is still on screen for a frame: the blur goes after it, not before
-            postDelayed(() -> {
-                slot.removeBlur();
-                removeView(slot);
-            }, RELEASE_BLUR_LINGER_MS);
+            // Only the painted surface may linger. Native blur must never survive the handoff to the pill.
+            slot.hideBackdrop();
+            postDelayed(() -> removeView(slot), RELEASE_SURFACE_LINGER_MS);
         }
     }
 
-    /** One blurred rectangle belonging to one card. */
-    private final class Slot extends View {
-        private final Object owner;
+    /** The native backdrop and Canvas surface have separate RenderNodes and opacity. */
+    private final class Slot extends FrameLayout {
         int placedInFrame = -1;
+        private final View backdrop;
+        private final View surface;
         private boolean blurApplied;
-        /** Corner radius the current blur was built with. */
         private float blurCorner;
-        /** Corner radius of the previous frame: when it stops moving, the blur is rebuilt with the exact value. */
-        private float lastCorner = -1.0f;
+        private float lastCorner = -1;
+        private float clipCorner;
 
         Slot(Context context, Object owner) {
             super(context);
-            this.owner = owner;
-            setWillNotDraw(false);
+            setWillNotDraw(true);
+            setClipChildren(true);
+            backdrop = new View(context);
+            backdrop.setWillNotDraw(false);
+            backdrop.setClipToOutline(true);
+            backdrop.setOutlineProvider(new ViewOutlineProvider() {
+                @Override public void getOutline(View view, Outline outline) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), clipCorner);
+                }
+            });
+            surface = new View(context) {
+                @Override protected void onDraw(Canvas canvas) {
+                    if (painter != null) painter.paintCard(owner, canvas, Slot.this.getLeft(), Slot.this.getTop());
+                }
+            };
+            surface.setWillNotDraw(false);
+            addView(backdrop, new FrameLayout.LayoutParams(-1, -1));
+            addView(surface, new FrameLayout.LayoutParams(-1, -1));
             setVisibility(View.GONE);
         }
 
-        void update(RectF bounds, float corner, float alpha) {
+        // Bounds come from the spring geometry, never the zero-sized layout params in the parent.
+        @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) { }
+
+        void update(RectF bounds, float corner, float alpha, float backdropAlpha) {
             if (bounds.width() < MIN_SLOT_SIZE || bounds.height() < MIN_SLOT_SIZE) {
                 hide();
                 return;
             }
             setLeftTopRightBottom(Math.round(bounds.left), Math.round(bounds.top), Math.round(bounds.right), Math.round(bounds.bottom));
+            backdrop.layout(0, 0, getWidth(), getHeight());
+            surface.layout(0, 0, getWidth(), getHeight());
             setAlpha(alpha);
-            if (SemBlur.isSupported()) {
+            clipCorner = Math.min(corner, Math.min(getWidth(), getHeight()) / 2f);
+            backdrop.invalidateOutline();
+            if (backdropAlpha > 0.001f && backend.available()) {
                 refreshBlur(corner);
-            }
-            if (getVisibility() != View.VISIBLE) {
-                setVisibility(View.VISIBLE);
-            }
-            invalidate();
+                if (blurApplied) {
+                    backdrop.setAlpha(Math.min(1, backdropAlpha));
+                    backdrop.setVisibility(View.VISIBLE);
+                } else hideBackdrop();
+            } else hideBackdrop();
+            if (getVisibility() != View.VISIBLE) setVisibility(View.VISIBLE);
+            surface.invalidate();
         }
 
         private void refreshBlur(float corner) {
@@ -167,39 +214,31 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
             lastCorner = corner;
             if (blurApplied) {
                 float off = Math.abs(corner - blurCorner);
-                // while the radius is moving a rough blur is fine; once it settles it must match the card, or the
-                // blur sticks out of the card's corners
-                if (off < CORNER_EPSILON_DP * density && (!steady || off < 0.5f * density)) {
-                    return;
-                }
+                if (off < CORNER_EPSILON_DP * density && (!steady || off < 0.5f * density)) return;
             }
             try {
-                SemBlur.apply(this, BLUR_RADIUS, corner, BLUR_TINT);
+                backend.apply(backdrop, BLUR_RADIUS, corner, BLUR_TINT);
                 blurApplied = true;
                 blurCorner = corner;
             } catch (Throwable t) {
                 XLog.e("blur update failed", t);
-                SemBlur.giveUp();
+                backend.disable();
+            }
+        }
+
+        void hideBackdrop() {
+            backdrop.setAlpha(0);
+            backdrop.setVisibility(View.GONE);
+            if (blurApplied) {
+                backend.clear(backdrop);
+                blurApplied = false;
+                lastCorner = -1;
             }
         }
 
         void hide() {
-            if (getVisibility() != View.GONE) {
-                setVisibility(View.GONE);
-            }
-        }
-
-        void removeBlur() {
-            if (blurApplied && SemBlur.isSupported()) {
-                SemBlur.clear(this);
-            }
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            if (painter != null) {
-                painter.paintCard(owner, canvas, getLeft(), getTop());
-            }
+            hideBackdrop();
+            if (getVisibility() != View.GONE) setVisibility(View.GONE);
         }
     }
 }

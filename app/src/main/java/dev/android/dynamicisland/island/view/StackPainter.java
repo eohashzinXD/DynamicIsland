@@ -36,6 +36,9 @@ final class StackPainter {
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
     private static final float GLASS_FROM = 0.1f;
+    /** Stop the native backdrop well before the compact pill takes over; its compositor can lag a frame. */
+    private static final float FOLD_BLUR_FADE_FROM = 0.1f;
+    private static final float FOLD_BLUR_FADE_TO = 0.55f;
     /** Necks thinner than this are not drawn; they reach full opacity this much wider. */
     private static final float NECK_FADE_FROM_DP = 4.0f;
     private static final float NECK_FADE_RANGE_DP = 6.0f;
@@ -109,13 +112,11 @@ final class StackPainter {
      * pill's) it showed as a flash of flat grey just before the black.
      */
     float blurFraction(Card c, float opening) {
-        if (ModuleSettings.legacyAnimation()) {
-            return 1.0f;
-        }
         if (c.leaving) {
-            return 1.0f - Easing.easeInOut(clamp01(foldProgress(c)));
+            float fold = (foldProgress(c) - FOLD_BLUR_FADE_FROM) / (FOLD_BLUR_FADE_TO - FOLD_BLUR_FADE_FROM);
+            return 1.0f - Easing.easeInOut(clamp01(fold));
         }
-        return 1.0f;
+        return ModuleSettings.legacyAnimation() ? 1 : Easing.easeInOut(clamp01((opening - GLASS_FROM) / 0.6f));
     }
 
     /** The "opening" a card is drawn with: a leaving card goes back to the pill's black along its fold, not along its height. */
@@ -166,7 +167,8 @@ final class StackPainter {
                 Card c = scene.cards.get(legacy ? n : scene.cards.size() - 1 - n);
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
-                    blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha);
+                    float opening = visualOpening(c, shapes.expansion(c));
+                    blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha, blurFraction(c, opening));
                 }
             }
         }
