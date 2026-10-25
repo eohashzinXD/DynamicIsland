@@ -1,0 +1,67 @@
+{
+ "status_labels": {
+  "food": {
+   "tr": {
+    "0": "Sipariş alındı",
+    "1": "Hazırlanıyor",
+    "2": "Yolda",
+    "3": "Varış yaklaşıyor",
+    "4": "Teslim edildi"
+   }
+  },
+  "parcel": {
+   "tr": {
+    "0": "Gönderi etiketi oluşturuldu",
+    "1": "Taşınıyor",
+    "2": "Yerel dağıtım merkezinde",
+    "3": "Dağıtıma çıktı",
+    "4": "Teslim edildi"
+   }
+  },
+  "taxi": {
+   "tr": {
+    "0": "Sürücü aranıyor",
+    "1": "Sürücü atandı",
+    "2": "Sürücü yolda",
+    "3": "Sürücü geldi",
+    "4": "Yolculuk tamamlandı"
+   }
+  },
+  "navigation": {
+   "tr": {
+    "1": "Yol tarifi sürüyor",
+    "2": "Yolculuk sürüyor",
+    "3": "İniş yaklaşıyor",
+    "4": "Hedefe ulaşıldı"
+   }
+  },
+  "wearable": {
+   "tr": {
+    "0": "Bağlantı kesildi",
+    "2": "Bağlandı",
+    "3": "Tam şarj oldu"
+   }
+  },
+  "battery": {
+   "tr": {
+    "1": "Pil az"
+   }
+  },
+  "external_device": {
+   "tr": {
+    "1": "Bağlanıyor",
+    "2": "Bağlandı"
+   }
+  },
+  "relay": {
+   "tr": {
+    "1": "Çalışıyor"
+   }
+  },
+  "assistant": {
+   "tr": {
+    "1": "İşleniyor"
+   }
+  }
+ }
+}

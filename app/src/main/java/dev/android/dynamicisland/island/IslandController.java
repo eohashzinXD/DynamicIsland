@@ -310,10 +310,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         if (window == null) {
             return false;
         }
-        boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
         CharSequence name = item.title == null ? "" : item.title;
         long originalExpiry = item.expiresAtUptime;
-        boolean shown = window.showReply(ko ? name + "에게 답장" : "Reply to " + name, ko ? "전송" : "Send", new IslandWindow.ReplyListener() {
+        boolean shown = window.showReply(IslandText.select(ctx, name + "에게 답장", "Reply to " + name, name + " kişisine yanıtla"),
+                IslandText.select(ctx, "전송", "Send", "Gönder"), new IslandWindow.ReplyListener() {
             @Override
             public void onSend(CharSequence text) {
                 launcher.sendReply(action, text);

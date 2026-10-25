@@ -25,6 +25,29 @@ public class ActionWordsTest {
     }
 
     @Test
+    public void turkishActionsHandleDottedAndDotlessI() {
+        for (String title : new String[]{"Durdur", "İptal", "İPTAL", "İptal et", "Iptal", "Bitir",
+                "Sonlandır", "SONLANDIR", "Reddet", "Sil", "Aramayı kapat", "ÇAĞRIYI KAPAT"}) {
+            assertTrue(title, ActionWords.isDestructive(title));
+        }
+        for (String title : new String[]{"Duraklat", "Beklet", "Beklemeye al", "Sesi kapat",
+                "Silah", "Durduruldu", "Gönder"}) {
+            assertFalse(title, ActionWords.isDestructive(title));
+        }
+        assertFalse(ActionWords.isDestructive("Durdur / Duraklat"));
+        assertTrue(ActionWords.isSpeaker("HOPARLÖR"));
+        assertTrue(ActionWords.isMute("SESSİZ"));
+        assertTrue(ActionWords.isMute("MİKROFON"));
+        assertTrue(ActionWords.isMute("Sesi kapat"));
+        assertTrue(ActionWords.isMute("Sessize al"));
+        assertTrue(ActionWords.isMute("SESSİZE AL"));
+        assertTrue(ActionWords.isMute("Sessizden çıkar"));
+        assertTrue(ActionWords.isMute("SESSİZDEN ÇIKAR"));
+        assertFalse(ActionWords.isSpeaker(null));
+        assertFalse(ActionWords.isMute(null));
+    }
+
+    @Test
     public void callToggleTitles() {
         assertTrue(ActionWords.isSpeaker("Speaker"));
         assertTrue(ActionWords.isSpeaker("스피커"));

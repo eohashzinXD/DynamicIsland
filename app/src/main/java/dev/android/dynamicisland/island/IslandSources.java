@@ -141,18 +141,18 @@ final class IslandSources {
 
     /** What the island shows while the position page of the settings app is open, so there is something to move. */
     private IslandItem placementSample() {
-        boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
         IslandItem it = new IslandItem("preview:position");
         it.kind = IslandItem.Kind.EVENT;
         it.iconIsImage = false;
-        it.title = ko ? "아일랜드 위치" : "Island position";
-        it.subtitle = ko ? "슬라이더로 옮겨 보세요" : "Move it with the sliders";
+        it.title = IslandText.select(ctx, "아일랜드 위치", "Island position", "Ada konumu");
+        it.subtitle = IslandText.select(ctx, "슬라이더로 옮겨 보세요", "Move it with the sliders", "Kaydırıcılarla taşıyın");
         it.icon = GlyphIcon.of(GlyphIcon.Kind.HOTSPOT);
         it.accent = 0xFF3E91FF;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = ModuleSettings.previewSampleLong()
-                ? (ko ? "미리보기 · 알림 글이 길면 이만큼까지 넓어집니다" : "Preview · a long text stretches the pill this far")
-                : (ko ? "미리보기" : "Preview");
+                ? IslandText.select(ctx, "미리보기 · 알림 글이 길면 이만큼까지 넓어집니다",
+                        "Preview · a long text stretches the pill this far", "Önizleme · uzun metin adayı bu kadar genişletir")
+                : IslandText.select(ctx, "미리보기", "Preview", "Önizleme");
         it.postTime = SystemClock.uptimeMillis();
         return it;
     }

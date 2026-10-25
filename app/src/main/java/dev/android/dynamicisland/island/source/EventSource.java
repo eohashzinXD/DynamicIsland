@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -24,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -222,53 +222,60 @@ public final class EventSource {
         GlyphIcon.Kind icon;
         String ko;
         String en;
+        String tr;
         int color;
         switch (name) {
             case "dnd":
                 icon = GlyphIcon.Kind.MOON;
                 ko = "방해금지";
                 en = "Do Not Disturb";
+                tr = "Rahatsız etmeyin";
                 color = INDIGO;
                 break;
             case "airplane":
                 icon = GlyphIcon.Kind.PLANE;
                 ko = "비행기 모드";
                 en = "Airplane mode";
+                tr = "Uçak modu";
                 color = ORANGE;
                 break;
             case "powersave":
                 icon = GlyphIcon.Kind.POWER_SAVE;
                 ko = "절전 모드";
                 en = "Power saving";
+                tr = "Güç tasarrufu";
                 color = YELLOW;
                 break;
             case "torch":
                 icon = GlyphIcon.Kind.TORCH;
                 ko = "손전등";
                 en = "Flashlight";
+                tr = "El feneri";
                 color = YELLOW;
                 break;
             case "hotspot":
                 icon = GlyphIcon.Kind.HOTSPOT;
                 ko = "핫스팟";
                 en = "Hotspot";
+                tr = "Mobil erişim noktası";
                 color = GREEN;
                 break;
             case "rotate":
                 icon = GlyphIcon.Kind.ROTATE_LOCK;
                 ko = "자동 회전";
                 en = "Auto-rotate";
+                tr = "Otomatik döndürme";
                 color = BLUE;
                 break;
             default:
                 return;
         }
-        it.title = t(ko + (on ? " 켜짐" : " 꺼짐"), en + (on ? " on" : " off"));
+        it.title = t(ko + (on ? " 켜짐" : " 꺼짐"), en + (on ? " on" : " off"), tr + (on ? " açık" : " kapalı"));
         it.icon = icon == GlyphIcon.Kind.POWER_SAVE ? GlyphIcon.powerSave(lastPercent >= 0 ? lastPercent / 100f : 1f) : GlyphIcon.of(icon);
         it.accent = on ? color : GREY;
         it.trailing = IslandItem.Trailing.TEXT;
-        it.trailingText = t(on ? "켜짐" : "꺼짐", on ? "On" : "Off");
-        it.subtitle = t("설정 변경", "Setting changed");
+        it.trailingText = t(on ? "켜짐" : "꺼짐", on ? "On" : "Off", on ? "Açık" : "Kapalı");
+        it.subtitle = t("설정 변경", "Setting changed", "Ayar değiştirildi");
         show(it, TOGGLE_MS);
     }
 
@@ -347,7 +354,7 @@ public final class EventSource {
 
     private IslandItem chargingItem(int percent, int plugged, Intent battery) {
         IslandItem it = base("event:charging");
-        it.title = t("충전 중", "Charging");
+        it.title = t("충전 중", "Charging", "Şarj oluyor");
         String label = chargingLabel(plugged, battery);
         // the percentage first; plain charging has the same words as the title, so they are said once, while fast
         // and wireless charging add something
@@ -362,8 +369,8 @@ public final class EventSource {
 
     private IslandItem lowBatteryItem(int percent) {
         IslandItem it = base("event:lowbattery");
-        it.title = t("배터리 부족", "Low battery");
-        it.subtitle = t(percent + "% 남았어요", percent + "% remaining");
+        it.title = t("배터리 부족", "Low battery", "Pil az");
+        it.subtitle = t(percent + "% 남았어요", percent + "% remaining", "%" + percent + " kaldı");
         it.accent = RED;
         it.icon = GlyphIcon.battery(percent / 100f, false);
         it.progress = percent / 100f;
@@ -379,12 +386,12 @@ public final class EventSource {
         double watts = (microAmps / 1_000_000.0) * (microVolts / 1_000_000.0);
         boolean wireless = (plugged & BatteryManager.BATTERY_PLUGGED_WIRELESS) != 0;
         if (watts >= 25) {
-            return wireless ? t("무선 초고속 충전", "Super fast wireless charging") : t("초고속 충전", "Super fast charging");
+            return wireless ? t("무선 초고속 충전", "Super fast wireless charging", "Süper hızlı kablosuz şarj") : t("초고속 충전", "Super fast charging", "Süper hızlı şarj");
         }
         if (watts >= 15) {
-            return wireless ? t("무선 고속 충전", "Fast wireless charging") : t("고속 충전", "Fast charging");
+            return wireless ? t("무선 고속 충전", "Fast wireless charging", "Hızlı kablosuz şarj") : t("고속 충전", "Fast charging", "Hızlı şarj");
         }
-        return wireless ? t("무선 충전", "Wireless charging") : t("충전 중", "Charging");
+        return wireless ? t("무선 충전", "Wireless charging", "Kablosuz şarj") : t("충전 중", "Charging", "Şarj oluyor");
     }
 
     // ----------------------------------------------------------------- ringer
@@ -401,22 +408,22 @@ public final class EventSource {
         IslandItem it = base("event:ringer");
         switch (mode) {
             case AudioManager.RINGER_MODE_SILENT:
-                it.title = t("무음", "Silent");
+                it.title = t("무음", "Silent", "Sessiz");
                 it.icon = GlyphIcon.of(GlyphIcon.Kind.BELL_OFF);
                 it.accent = ORANGE;
                 break;
             case AudioManager.RINGER_MODE_VIBRATE:
-                it.title = t("진동", "Vibrate");
+                it.title = t("진동", "Vibrate", "Titreşim");
                 it.icon = GlyphIcon.of(GlyphIcon.Kind.VIBRATE);
                 it.accent = ORANGE;
                 break;
             default:
-                it.title = t("소리", "Ring");
+                it.title = t("소리", "Ring", "Sesli");
                 it.icon = GlyphIcon.of(GlyphIcon.Kind.BELL);
                 it.accent = -1;
                 break;
         }
-        it.subtitle = t("소리 모드", "Sound mode");
+        it.subtitle = t("소리 모드", "Sound mode", "Ses modu");
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = it.title;
         show(it, RINGER_MS);
@@ -478,8 +485,8 @@ public final class EventSource {
             // permission / hidden state: fall back to a generic name
         }
         IslandItem it = base("event:bt:" + device.getAddress());
-        it.title = name != null ? name : t("블루투스 기기", "Bluetooth device");
-        it.subtitle = battery >= 0 ? t("연결됨 · 배터리 " + battery + "%", "Connected · " + battery + "% battery") : t("연결됨", "Connected");
+        it.title = name != null ? name : t("블루투스 기기", "Bluetooth device", "Bluetooth cihazı");
+        it.subtitle = battery >= 0 ? t("연결됨 · 배터리 " + battery + "%", "Connected · " + battery + "% battery", "Bağlandı · Pil %" + battery) : t("연결됨", "Connected", "Bağlandı");
         it.accent = BLUE;
         it.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
         if (battery >= 0) {
@@ -488,7 +495,7 @@ public final class EventSource {
             it.trailingText = battery + "%";
         } else {
             it.trailing = IslandItem.Trailing.TEXT;
-            it.trailingText = t("연결됨", "Connected");
+            it.trailingText = t("연결됨", "Connected", "Bağlandı");
         }
         return it;
     }
@@ -504,9 +511,8 @@ public final class EventSource {
     }
 
     /** The module has no string resources inside System UI, so pick the language here. */
-    private String t(String ko, String en) {
-        Locale locale = ctx.getResources().getConfiguration().getLocales().get(0);
-        return "ko".equals(locale.getLanguage()) ? ko : en;
+    private String t(String ko, String en, String tr) {
+        return IslandText.select(ctx, ko, en, tr);
     }
 
     /** For tests. */

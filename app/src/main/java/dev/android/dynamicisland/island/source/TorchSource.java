@@ -5,6 +5,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.SystemClock;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -93,7 +94,8 @@ public final class TorchSource {
             return false;
         }
         String title = it.title.toString().toLowerCase(Locale.ROOT);
-        return title.contains("flashlight") || title.contains("torch") || title.contains("손전등");
+        return title.contains("flashlight") || title.contains("torch") || title.contains("손전등")
+                || title.contains("el feneri");
     }
 
     /** True while the card is up, so the stock notification (and its Now Bar copy) must not be shown as well. */
@@ -227,7 +229,7 @@ public final class TorchSource {
         it.kind = IslandItem.Kind.EVENT;
         it.iconIsImage = false;
         it.pillColor = 0;
-        it.title = t("손전등", "Flashlight");
+        it.title = t("손전등", "Flashlight", "El feneri");
         it.icon = GlyphIcon.of(GlyphIcon.Kind.TORCH);
         it.accent = YELLOW;
         it.trailing = IslandItem.Trailing.TEXT;
@@ -239,13 +241,13 @@ public final class TorchSource {
             it.sliderTrailing = v -> Math.round(100.0f * levelFor(v) / maxLevel) + "%";
         } else {
             // one level only: nothing to drag, so the card carries the state and the off button
-            it.trailingText = t("켜짐", "On");
+            it.trailingText = t("켜짐", "On", "Açık");
             it.sliderValue = -1.0f;
             it.sliderSteps = 0;
             it.sliderChange = null;
             it.sliderTrailing = null;
         }
-        it.actions.add(new IslandItem.Action(t("끄기", "Turn off"), null, null, this::turnOff, false));
+        it.actions.add(new IslandItem.Action(t("끄기", "Turn off", "Kapat"), null, null, this::turnOff, false));
         it.postTime = onSince;
         return it;
     }
@@ -295,8 +297,7 @@ public final class TorchSource {
         }
     }
 
-    private String t(String ko, String en) {
-        Locale locale = ctx.getResources().getConfiguration().getLocales().get(0);
-        return "ko".equals(locale.getLanguage()) ? ko : en;
+    private String t(String ko, String en, String tr) {
+        return IslandText.select(ctx, ko, en, tr);
     }
 }

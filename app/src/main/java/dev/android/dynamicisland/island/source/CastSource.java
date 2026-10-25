@@ -3,6 +3,7 @@ package dev.android.dynamicisland.island.source;
 import android.content.Context;
 import android.os.SystemClock;
 import android.view.View;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.Refl;
 import java.time.Duration;
@@ -72,7 +73,7 @@ public final class CastSource {
         Object share = Refl.get(bundle, "shareToApp");
         Object cast = Refl.get(bundle, "castToOtherDevice");
         if (isActive(record)) {
-            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, tr("Screen recording", "Запись экрана"));
+            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, tr("Screen recording", "Ekran kaydı", "Запись экрана"));
             out.add(card);
             if (card.packageName != null) {
                 recorders.add(card.packageName);
@@ -81,7 +82,7 @@ public final class CastSource {
             String manager = (String) Refl.get(share, "managingPackageName");
             // Samsung's own recorder reports itself as a share
             boolean ownRecorder = manager != null && manager.contains("com.samsung.android.app.smartcapture");
-            String title = ownRecorder ? tr("Screen recording", "Запись экрана") : tr("Sharing screen", "Демонстрация экрана");
+            String title = ownRecorder ? tr("Screen recording", "Ekran kaydı", "Запись экрана") : tr("Sharing screen", "Ekran paylaşılıyor", "Демонстрация экрана");
             IslandItem card = item("cast:share", share, IslandItem.Kind.RECORDING, RED, title);
             out.add(card);
             if (ownRecorder && card.packageName != null) {
@@ -89,7 +90,7 @@ public final class CastSource {
             }
         }
         if (isActive(cast)) {
-            out.add(item("cast:device", cast, IslandItem.Kind.LIVE, BLUE, tr("Casting screen", "Трансляция экрана")));
+            out.add(item("cast:device", cast, IslandItem.Kind.LIVE, BLUE, tr("Casting screen", "Ekran yansıtılıyor", "Трансляция экрана")));
         }
     }
 
@@ -112,7 +113,7 @@ public final class CastSource {
         }
         Object chip = castController == null ? null : Refl.get(castController, "chipView");
         if (chip instanceof View) {
-            it.actions.add(new IslandItem.Action(tr("Stop", "Остановить"), null, null, () -> clickStopChip((View) chip), true));
+            it.actions.add(new IslandItem.Action(tr("Stop", "Durdur", "Остановить"), null, null, () -> clickStopChip((View) chip), true));
         }
         it.postTime = Long.MAX_VALUE - 1; // above everything else of its kind
         return it;
@@ -128,8 +129,9 @@ public final class CastSource {
         }
     }
 
-    private static String tr(String english, String russian) {
-        return "ru".equals(Locale.getDefault().getLanguage()) ? russian : english;
+    private static String tr(String english, String turkish, String russian) {
+        // This source previously used English for Korean and all other non-Russian locales.
+        return IslandText.select(Locale.getDefault(), english, english, turkish, russian);
     }
 
     private static boolean isActive(Object model) {
