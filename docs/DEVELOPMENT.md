@@ -107,7 +107,7 @@ The module hooks private System UI classes by name, so each One UI update can br
 Open bugs are tracked as issues; the ones that are planned carry the `planned` label.
 
 - The voice recorder's media session can show up as a music card next to the recorder card (issue #1).
-- The favorite (star) button of the shade music player looks bigger than the stock one (issue #2).
+- The favorite (star) button size and aspect-ratio fix (issue #2) is prepared in 0.1.12-dev7; real-device confirmation is pending.
 - The island's open / close motion feels stiffer than the system's unlock animation (issue #3).
 - The status bar icons can come back a moment late after the shade is closed again; the cause is not known and has not been confirmed to be this module.
 - Tapping a shade card does not remove the notification.

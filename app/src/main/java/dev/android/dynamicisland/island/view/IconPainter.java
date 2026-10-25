@@ -90,14 +90,14 @@ final class IconPainter {
         }
     }
 
-    /** Draws {@code d} in a square; images are centre-cropped into rounded corners, icons are tinted. */
+    /** Draws in a square slot: artwork is centre-cropped; tinted icons fit inside without stretching. */
     void drawDrawable(Canvas c, Drawable d, boolean image, int tint, float left, float top, float size, float alpha, float corner) {
         int l = Math.round(left);
         int t = Math.round(top);
         int sz = Math.round(size);
         d.setAlpha(Math.round(255.0f * alpha));
         if (!image) {
-            d.setBounds(l, t, l + sz, t + sz);
+            d.setBounds(centerInside(d, l, t, sz));
             d.setTint(tint);
             d.draw(c);
             return;
@@ -111,6 +111,21 @@ final class IconPainter {
         d.setTintList(null);
         d.draw(c);
         c.restoreToCount(save);
+    }
+
+    /** Fits a symbol inside its slot, preserving its intrinsic aspect ratio and centring both axes. */
+    private static android.graphics.Rect centerInside(Drawable d, int l, int t, int sz) {
+        int iw = d.getIntrinsicWidth();
+        int ih = d.getIntrinsicHeight();
+        if (sz <= 0 || iw <= 0 || ih <= 0 || iw == ih) {
+            return new android.graphics.Rect(l, t, l + sz, t + sz);
+        }
+        float scale = Math.min(sz / (float) iw, sz / (float) ih);
+        int width = Math.max(1, Math.round(iw * scale));
+        int height = Math.max(1, Math.round(ih * scale));
+        int left = l + ((sz - width) / 2);
+        int top = t + ((sz - height) / 2);
+        return new android.graphics.Rect(left, top, left + width, top + height);
     }
 
     /**

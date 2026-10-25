@@ -107,7 +107,9 @@ public abstract class CardBody {
         }
         owner.fillPaint.setColor(Colors.withAlpha(b.bg, alpha));
         c.drawOval(owner.tmpRect, owner.fillPaint);
-        float contentSize = owner.tmpRect.height() * (b.bg == Colors.TRANSPARENT_MARK ? 0.6f : 0.44f);
+        // Bare media custom actions use the same half-button icon size as previous/next. Their
+        // touch bounds stay unchanged; the old 60% scale made favorites look oversized (#2).
+        float contentSize = owner.tmpRect.height() * (b.bg == Colors.TRANSPARENT_MARK ? 0.5f : 0.44f);
         if (b.glyph != 0) {
             // a white fill gets a black glyph, anything else a white one
             owner.fillPaint.setColor(Colors.withAlpha(b.bg == Colors.WHITE ? Colors.BLACK : Colors.WHITE, alpha));
