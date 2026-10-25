@@ -19,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import dev.android.dynamicisland.island.graphics.Easing;
+import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
@@ -592,24 +593,31 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             need = it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
         }
         if (main != null) {
-            need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item));
+            need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item))
+                    || iconPlaying(main.content.item);
         }
         need |= clock.rolling();
         if (bubble != null) {
             IslandItem it = bubble.content.item;
-            need |= it.pulsingDot || runningStopwatch(it) || (it.isMedia && mediaFx.animating(it));
+            need |= it.pulsingDot || runningStopwatch(it) || (it.isMedia && mediaFx.animating(it)) || iconPlaying(it);
         }
         if (sliderSettleKey != null) {
             need |= now() - sliderSettleStart < SliderBody.SETTLE_MS;
         }
         for (Card c : scene.cards) {
-            need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item)
+            need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
                     || (scene.mode == Mode.EXPANDED && c.item.isMedia);
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
         }
         return need;
+    }
+
+    /** An animated pictogram (battery, ringer, camera ...) is still playing, so frames must keep coming. */
+    private static boolean iconPlaying(IslandItem item) {
+        return (item.icon instanceof GlyphIcon && ((GlyphIcon) item.icon).animating())
+                || (item.mediaOutputIcon instanceof GlyphIcon && ((GlyphIcon) item.mediaOutputIcon).animating());
     }
 
     private static boolean runningStopwatch(IslandItem item) {

@@ -28,6 +28,11 @@ import org.robolectric.shadows.ShadowSystemClock;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class PrivacySourceTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private PrivacySource source() {
         Application app = RuntimeEnvironment.getApplication();
         return new PrivacySource(app, new Handler(Looper.getMainLooper()), () -> { });

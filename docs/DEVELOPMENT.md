@@ -115,3 +115,7 @@ Open bugs are tracked as issues; the ones that are planned carry the `planned` l
 - The call card green differs slightly between sources (0xFF30D158 / 0xFF34C759).
 - A verification code made only of lowercase letters and digits is not detected.
 - One UI 7 and Nothing OS are not confirmed on a real device (see [COMPATIBILITY.md](COMPATIBILITY.md)).
+
+## Icons
+
+The island's pictograms (`GlyphIcon`) play Lottie animations. The animations live in `tools/lottie/json`; `tools/lottie/embed.py` packs them into `LottieData.java`, because a System UI process cannot read this module's resources. `LottiePlayer` is a small player that handles what these files use (shape and pre-composition layers, mattes, trim, merge and round-corner modifiers, bezier-eased keyframes) and paints every shape in the colour the island asks for. `tools/lottie/mk.py` draws the icons that are not from the ColorOS pack; run `python3 tools/lottie/mk.py <dir>` and copy the result into `json/` to change them. `LottieFilmTest` writes a strip of frames per icon to `app/build/render/lottie`. The canvas drawings in `GlyphIcon` remain as the fallback if an animation fails to parse.

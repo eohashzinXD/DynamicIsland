@@ -31,6 +31,11 @@ import org.robolectric.shadows.ShadowSystemClock;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class EventSourceTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private final IslandHost host = IslandHost.NONE;
 
     private static Intent battery(int level, int plugged) {
