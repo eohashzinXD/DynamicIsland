@@ -6,6 +6,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.widget.RemoteViews;
+import dev.android.dynamicisland.island.detect.IconContrast;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
@@ -144,6 +145,9 @@ final class OaCardBuilder {
             icon = (Icon) Refl.get(data, "mCardIcon");
         }
         it.icon = icons.load(icon, pkg);
+        // Some apps send a logo on an opaque disc. Tinting it as a glyph erases its inner detail
+        // in both the pill and the live card (#8); artwork uses the existing grayscale/colour path.
+        it.iconIsImage = IconContrast.isArtwork(it.icon);
 
         int color = Refl.getInt(data, "mChipBackground", 0);
         if (color == 0) {

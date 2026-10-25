@@ -12,6 +12,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -62,5 +64,31 @@ public class IconContrastTest {
         Bitmap discBitmap = ((BitmapDrawable) onDisc).getBitmap();
         assertFalse(IconContrast.analyze(discBitmap).nearlyWhite);
         assertSame(app1, IconContrast.readable(app, null, app1));
+    }
+
+    @Test
+    public void singleToneGlyphsAndTheirTransparentEdgesRemainTintable() {
+        assertFalse(IconContrast.isArtwork(null));
+        assertFalse(IconContrast.isArtwork(whiteGlyph()));
+        assertFalse(IconContrast.isArtwork(solid(0xFF03C75A)));
+        assertFalse(IconContrast.isArtwork(new ColorDrawable(Color.BLACK)));
+    }
+
+    @Test
+    public void blackAndWhiteArtworkAlsoNeedsItsInternalContrast() {
+        Bitmap bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
+        Paint paint = new Paint();
+        paint.setColor(Color.BLACK);
+        canvas.drawRect(32, 32, 64, 64, paint);
+        assertTrue(IconContrast.isArtwork(new BitmapDrawable(app.getResources(), bitmap)));
+    }
+
+    @Test
+    public void artworkDetectionDoesNotDependOnTheDrawableBeingABitmap() {
+        Drawable gradient = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.WHITE, 0xFF03C75A});
+        assertTrue(IconContrast.isArtwork(gradient));
     }
 }
