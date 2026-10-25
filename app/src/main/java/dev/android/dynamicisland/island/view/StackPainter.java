@@ -73,19 +73,31 @@ final class StackPainter {
 
     /** Fade of a card's content: in once the card is nearly open, out quickly when it leaves. */
     static float contentAlpha(Card c, long t, float opening) {
+        if (c.handoff != null) return clamp01(c.handoff.expanded(t) * c.handoffScale);
         if (c.leaving) {
             if (ModuleSettings.legacyAnimation()) {
-                return 1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS);
+                return c.leaveContentAlpha * (1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS));
             }
-            // the content stays crisp and fades out in the first part of the fold, while the card is still large; what
+            // the content blurs and fades out in the first part of the fold, while the card is still large; what
             // travels back into the pill is the plain shape, which does not leave a smear of tiny text behind
-            return 1.0f - Easing.easeInOut(clamp01(foldProgress(c) / FOLD_FADE_TO));
+            return c.leaveContentAlpha * (1.0f - Easing.easeInOut(clamp01(foldProgress(c) / FOLD_FADE_TO)));
         }
         if (!ModuleSettings.legacyAnimation()) {
             // the mirror of folding: the content grows with the card from the first moment instead of appearing in an empty shape
             return clamp01(opening / OPEN_FADE_TO);
         }
         return clamp01((opening - 0.85f) / IslandView.PAUSED_SPEED) * clamp01((t - c.contentStart) / 150.0f);
+    }
+
+    /** Internal material transition, independent of the card surface and its native backdrop. */
+    static float contentBlurAmount(Card card, long time, float opening) {
+        if (card.leaving) {
+            float fade = 1 - contentAlpha(card, time, opening) / Math.max(.001f, card.leaveContentAlpha);
+            return lerp(card.leaveContentBlur, 1, clamp01(fade));
+        }
+        if (card.handoff != null) return 1 - contentAlpha(card, time, opening);
+        float clarity = Easing.easeInOut(clamp01((opening - 0.08f) / 0.82f));
+        return Math.max(1 - clarity, 1 - contentAlpha(card, time, opening));
     }
 
     /** How far a leaving card has folded towards the size it is going to (0 = not yet, 1 = there). */
@@ -236,24 +248,32 @@ final class StackPainter {
         clip.addRoundRect(r, corner, corner, Path.Direction.CW);
         canvas.clipPath(clip);
         drawBackground(c.body, canvas, r, alpha);
-        if (!c.leaving && alpha < 1.0f && ModuleSettings.legacyAnimation()) {
-            // the content rises into place and settles from a slightly smaller size while it fades in
-            float settle = easeOutBack(alpha);
-            float scale = CONTENT_SCALE_FROM + ((1.0f - CONTENT_SCALE_FROM) * settle);
-            canvas.translate(0.0f, (1.0f - settle) * m.dp(CONTENT_RISE_DP));
-            canvas.scale(scale, scale, r.centerX(), r.top);
+        Canvas target = canvas;
+        canvas = c.contentBlur.begin(target, r, contentBlurAmount(c, t, opening), m.dp(ContentBlur.RADIUS_DP));
+        int contentSave = canvas.save();
+        try {
+            if (!c.leaving && alpha < 1.0f && ModuleSettings.legacyAnimation()) {
+                // the content rises into place and settles from a slightly smaller size while it fades in
+                float settle = easeOutBack(alpha);
+                float scale = CONTENT_SCALE_FROM + ((1.0f - CONTENT_SCALE_FROM) * settle);
+                canvas.translate(0.0f, (1.0f - settle) * m.dp(CONTENT_RISE_DP));
+                canvas.scale(scale, scale, r.centerX(), r.top);
+            }
+            // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
+            // when it leaves) instead of keeping its laid-out size and being cut off at the edges
+            long elapsed = c.leaving || c.handoff != null ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
+            if (c.leaving && !ModuleSettings.legacyAnimation()) {
+                // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
+                drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
+            } else {
+                canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
+                drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
+            }
+        } finally {
+            canvas.restoreToCount(contentSave);
+            c.contentBlur.end(target, canvas);
+            target.restoreToCount(save);
         }
-        // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
-        // when it leaves) instead of keeping its laid-out size and being cut off at the edges
-        long elapsed = c.leaving ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
-        if (c.leaving && !ModuleSettings.legacyAnimation()) {
-            // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
-            drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
-        } else {
-            canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
-            drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
-        }
-        canvas.restoreToCount(save);
     }
 
     /** The light rim gradient of a card; rebuilt only when the card moved or changed height noticeably. */

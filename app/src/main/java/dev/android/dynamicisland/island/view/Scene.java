@@ -12,6 +12,7 @@ final class Scene {
 
     final Springs springs;
     Mode mode = Mode.HIDDEN;
+    ContentHandoff contentHandoff;
     /** Shown items, most important first. */
     final List<IslandItem> items = new ArrayList<>();
     /** Minimized items that still show up (behind the live ones) when the stack is opened. */

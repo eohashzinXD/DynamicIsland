@@ -103,9 +103,6 @@ public class MotionFilmTest {
             if (frame == 160) {
                 view.collapse();
             }
-            if (frame == 164) {
-                fireTask(view, "regrowPill"); // what the 70 ms timer after collapse() runs on a device
-            }
             if (frame == 230) {
                 view.setItems(new ArrayList<>(), 0, new ArrayList<>());
             }

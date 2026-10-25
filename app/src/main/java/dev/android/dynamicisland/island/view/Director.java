@@ -36,9 +36,6 @@ final class Director {
     /** The first bubble waits this long after the pill appeared. */
     private static final long SPLIT_AFTER_APPEAR_MS = 220;
     private static final long BUBBLE_FIRST_IN_MS = 180;
-    private static final long COLLAPSE_IN_MS = 330;
-    private static final long REGROW_DELAY_MS = 70;
-    private static final long LEGACY_REGROW_DELAY_MS = 420;
     /** A closing card waits for the pill to grow back at most this long before it is dropped anyway. */
     private static final long PILL_SETTLE_TIMEOUT_MS = 1200;
     /** How close a folding card has to be to the pill's size before the pill is drawn again. */
@@ -66,7 +63,6 @@ final class Director {
 
     private final Runnable autoCollapse = this::collapseIfExpanded;
     private final Runnable fadePillBlob = this::fadePillBlobNow;
-    private final Runnable regrowPill = () -> regrowPill(false);
 
     private final Runnable startSplit = this::startSplitNow;
     /** When the pill last appeared from nothing, for the timing of the first bubble. */
@@ -249,6 +245,7 @@ final class Director {
     }
 
     private void appear(IslandItem primary, boolean fromLeft) {
+        scene.contentHandoff = null;
         scene.mode = Mode.COMPACT;
         appearedAt = IslandView.now();
         view.removeCallbacks(fadePillBlob);
@@ -316,12 +313,21 @@ final class Director {
             return;
         }
         boolean wasExpanded = scene.mode == Mode.EXPANDED;
+        if (!wasExpanded) scene.contentHandoff = new ContentHandoff(scene.contentHandoff, true, IslandView.now());
         scene.mode = Mode.EXPANDED;
         layoutCards(show);
+        if (!wasExpanded) {
+            for (Card card : scene.cards) {
+                if (!card.leaving && card.order == 0) {
+                    card.handoff = scene.contentHandoff;
+                    card.handoffScale = 1;
+                }
+            }
+        }
         sp.width.animateTo(m.restWidth(), Motion.PILL_GATHER);
         sp.height.animateTo(Math.min(m.restWidth(), m.pillH), Motion.PILL_GATHER);
         if (!wasExpanded && scene.mainIn != null) {
-            scene.mainOut = scene.mainIn.toOutgoing(IslandView.now(), 0);
+            scene.mainOut = scene.mainIn.toOutgoing(IslandView.now(), 0).handoff(scene.contentHandoff);
         }
         sp.split.animateTo(0.0f, Motion.BUBBLE_MERGE);
         sp.offsetX.animateTo(0.0f);
@@ -364,6 +370,7 @@ final class Director {
         if (scene.mode != Mode.EXPANDED) {
             return;
         }
+        scene.contentHandoff = new ContentHandoff(scene.contentHandoff, false, IslandView.now());
         boolean peek = scene.peekOpen;
         scene.peekOpen = false;
         scene.held = false;
@@ -372,8 +379,7 @@ final class Director {
         if (legacy() || scene.cards.isEmpty()) {
             sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
         }
-        // otherwise the pill stays out of sight while the cards fold: the card itself is the pill on its way back, and
-        // stepCards brings the pill in when the card arrives, so there is one pill instead of a pill and a card
+        // The compact and expanded contents share one crossfade; neither waits for an empty shape to finish folding.
         view.scheduleFrame();
         if (peek) {
             host.onPeekClosed(); // a notification popup is not kept as a pill: it goes away with its card
@@ -388,9 +394,8 @@ final class Director {
         scene.mode = Mode.COMPACT;
         collapseCards(true);
         replaceMain(new CompactContent(view, scene.primary), true, 0, 0);
-        scene.mainIn = Layer.incoming(scene.mainIn.content, IslandView.now(), COLLAPSE_IN_MS);
-        view.removeCallbacks(regrowPill);
-        view.postDelayed(regrowPill, legacy() ? LEGACY_REGROW_DELAY_MS : REGROW_DELAY_MS);
+        scene.mainIn = Layer.incoming(scene.mainIn.content, IslandView.now(), 0).handoff(scene.contentHandoff);
+        regrowPill(false);
         view.scheduleFrame();
         host.onExpandedChanged(false);
         view.notifyHost();
@@ -436,6 +441,13 @@ final class Director {
         for (IslandItem it : show) {
             Card c = scene.findCard(it.key);
             CardBody body = bodies.create(it, w, false);
+            if (c != null && c.leaving && c.handoff != null && !c.handoff.expanding
+                    && scene.contentHandoff != null && scene.contentHandoff.expanding) {
+                // A quick reopen retargets the same moving card instead of duplicating it at the pill.
+                c.leaving = false;
+                c.handoff = null;
+                c.startAt = t;
+            }
             if (c == null || c.leaving) {
                 c = new Card(it, body);
                 if (created == 0 && pill.width() > m.pillH) {
@@ -498,11 +510,18 @@ final class Director {
             if (!c.leaving) {
                 long delay = (animate && c.order == 0 && staying > 1) ? CARD_STAGGER_MS : 0L;
                 startLeaving(c, t + delay);
+                if (scene.contentHandoff != null && !scene.contentHandoff.expanding) {
+                    c.handoff = scene.contentHandoff;
+                    c.handoffScale = c.leaveContentAlpha / Math.max(.001f, scene.contentHandoff.fromExpanded);
+                }
             }
         }
     }
 
     private void startLeaving(Card c, long at) {
+        c.leaveContentBlur = StackPainter.contentBlurAmount(c, IslandView.now(), shapes.expansion(c));
+        c.leaveContentAlpha = StackPainter.contentAlpha(c, IslandView.now(), shapes.expansion(c));
+        c.handoff = null;
         c.leaving = true;
         c.leaveAt = at;
         c.leaveFromH = c.h.value();
@@ -573,7 +592,6 @@ final class Director {
         if (scene.cards.isEmpty() && scene.mode != Mode.EXPANDED) {
             host.onWindowHeightNeeded(m.compactWindowHeight());
             if (scene.mode == Mode.COMPACT) {
-                view.removeCallbacks(regrowPill);
                 regrowPillNow();
                 if (legacy()) {
                     sp.pulse.impulse(1.4f);

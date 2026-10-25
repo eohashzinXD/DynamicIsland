@@ -50,10 +50,6 @@ public class FoldOutlineLifecycleTest {
         RectF pill = new RectF();
         boolean partial = false;
         for (int i = 0; i < fps; i++) {
-            if (i == (int)Math.ceil(.07 * fps)) {
-                Runnable regrow = ReflectionHelpers.getField(director, "regrowPill");
-                regrow.run();
-            }
             ShadowSystemClock.advanceBy(Duration.ofNanos(dt));
             view.doFrame(nanos += dt);
             float blob = scene.springs.pillBlob.value();

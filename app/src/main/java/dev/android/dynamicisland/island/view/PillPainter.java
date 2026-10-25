@@ -198,7 +198,7 @@ final class PillPainter {
 
     private void drawLayer(Canvas canvas, Layer layer, RectF shape, long t, float extraAlpha) {
         // the content goes with the pill's body: a pill that is out of sight (the cards are folding back into it) shows nothing
-        float alpha = layer.alpha(t) * clamp01(sp.pillBlob.value()) * extraAlpha;
+        float alpha = layer.alpha(t) * (layer.handoff != null ? 1 : clamp01(sp.pillBlob.value())) * extraAlpha;
         if (alpha <= IslandView.MIN_VISIBLE_ALPHA) {
             return;
         }
@@ -206,8 +206,13 @@ final class PillPainter {
         int save = canvas.save();
         canvas.translate(layer.offset(t) * m.dp(LAYER_SLIDE_DP), 0.0f);
         canvas.scale(scale, scale, shape.centerX(), shape.centerY());
-        layer.content.draw(canvas, shape, alpha, layer.elapsedIn(t));
-        canvas.restoreToCount(save);
+        Canvas content = layer.contentBlur.begin(canvas, shape, layer.blurAmount(t), m.dp(ContentBlur.RADIUS_DP));
+        try {
+            layer.content.draw(content, shape, alpha, layer.elapsedIn(t));
+        } finally {
+            layer.contentBlur.end(canvas, content);
+            canvas.restoreToCount(save);
+        }
     }
 
     private void drawBubbleLayer(Canvas canvas, Layer layer, long t, float extraAlpha) {
@@ -216,7 +221,14 @@ final class PillPainter {
         }
         float alpha = layer.alpha(t) * extraAlpha;
         if (alpha > IslandView.MIN_VISIBLE_ALPHA) {
-            layer.content.draw(canvas, bubble, alpha, layer.elapsedIn(t));
+            float merging = 1 - clamp01(sp.split.value());
+            float blur = Math.max(layer.blurAmount(t), merging);
+            Canvas content = layer.contentBlur.begin(canvas, bubble, blur, m.dp(ContentBlur.RADIUS_DP));
+            try {
+                layer.content.draw(content, bubble, alpha, layer.elapsedIn(t));
+            } finally {
+                layer.contentBlur.end(canvas, content);
+            }
         }
     }
 }
