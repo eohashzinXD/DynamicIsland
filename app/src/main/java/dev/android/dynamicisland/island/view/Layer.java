@@ -88,7 +88,7 @@ public final class Layer {
     }
 
     float blurAmount(long now) {
-        if (handoff != null) return handoff.expanded(now);
+        if (handoff != null) return handoff.compactBlur(now);
         if (!materialTransition) return 0;
         float progress = Easing.easeInOut(progress(now));
         return outgoing ? fromBlur + (1 - fromBlur) * progress : 1 - progress;

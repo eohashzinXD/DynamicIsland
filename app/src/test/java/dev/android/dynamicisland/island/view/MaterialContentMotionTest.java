@@ -92,4 +92,34 @@ public class MaterialContentMotionTest {
         assertEquals(1, closing.compact(1400), 0);
     }
 
+    @Test public void returningCompactContentStaysSoftAfterItsCrossfadeIsFullyVisible() {
+        ContentHandoff opening = new ContentHandoff(null, true, 0);
+        ContentHandoff closing = new ContentHandoff(opening, false, 1000);
+        Layer compact = Layer.incoming(null, 1000, 0).handoff(closing);
+        assertEquals("opacity timing stays at 220ms", 1, compact.alpha(1220), 0);
+        assertTrue("focus must retain visible blur while the card is still folding", compact.blurAmount(1220) > .25f);
+        assertFalse("frames must continue for the longer focus tail", compact.settled(1220));
+        float previous = 1;
+        for (int time = 1000; time <= 1380; time++) {
+            float blur = compact.blurAmount(time);
+            assertTrue(blur >= 0 && blur <= previous + .00001f);
+            previous = blur;
+        }
+        assertEquals(0, compact.blurAmount(1380), 0);
+        assertTrue(compact.settled(1380));
+    }
+
+    @Test public void reopeningDuringTheFocusTailPreservesItsBlurInsteadOfJumpingSharp() {
+        ContentHandoff opening = new ContentHandoff(null, true, 0);
+        ContentHandoff closing = new ContentHandoff(opening, false, 1000);
+        Layer compact = Layer.incoming(null, 1000, 0).handoff(closing);
+        float before = compact.blurAmount(1240);
+        assertTrue(before > .1f);
+        ContentHandoff reopening = new ContentHandoff(closing, true, 1240);
+        Layer outgoing = compact.toOutgoing(1240, 0).handoff(reopening);
+        assertEquals(before, outgoing.blurAmount(1240), .00001f);
+        assertEquals(compact.alpha(1240), outgoing.alpha(1240), .00001f);
+        assertTrue(outgoing.blurAmount(1290) > before);
+    }
+
 }
