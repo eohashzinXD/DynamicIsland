@@ -187,7 +187,7 @@ final class CallCardBuilder {
         AudioManager audio = ctx.getSystemService(AudioManager.class);
         if (audio != null && (telecom || speaker != null)) {
             PendingIntent viaAction = speaker;
-            IslandItem.Action toggle = new IslandItem.Action(IslandText.select(ctx, "Speaker", "Speaker", "Hoparlör"), null, null, () -> toggleSpeaker(viaAction, telecom), false);
+            IslandItem.Action toggle = new IslandItem.Action(IslandText.get(ctx, "island_speaker"), null, null, () -> toggleSpeaker(viaAction, telecom), false);
             toggle.glyph = GLYPH_SPEAKER;
             toggle.active = isSpeakerRoute(audio);
             it.actions.add(toggle);
@@ -197,7 +197,7 @@ final class CallCardBuilder {
         }
         if (telecom || hangUp != null) {
             PendingIntent viaAction = hangUp;
-            IslandItem.Action end = new IslandItem.Action(IslandText.select(ctx, "End call", "End call", "Aramayı bitir"), hangUpIcon, null, () -> endCall(telecom, viaAction), true);
+            IslandItem.Action end = new IslandItem.Action(IslandText.get(ctx, "island_end_call"), hangUpIcon, null, () -> endCall(telecom, viaAction), true);
             if (hangUpIcon == null) {
                 end.glyph = GLYPH_END_CALL;
             }

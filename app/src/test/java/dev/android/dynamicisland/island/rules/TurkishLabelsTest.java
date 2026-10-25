@@ -21,7 +21,7 @@ public class TurkishLabelsTest {
         RuleDictionary rules = RuleStore.build(new RuleConfig(null));
         JSONObject turkish;
         try (java.io.InputStream in = RuleStore.class.getResourceAsStream(
-                "/dev/android/dynamicisland/rules/builtin-tr.json")) {
+                "/dev/android/dynamicisland/rules/builtin-translations.json")) {
             assertNotNull(in);
             turkish = new JSONObject(new String(in.readAllBytes(), StandardCharsets.UTF_8))
                     .getJSONObject("status_labels");
@@ -83,7 +83,7 @@ public class TurkishLabelsTest {
         assertEquals(original.smartRules.size(), translated.smartRules.size());
         for (String id : original.statusLabels.keySet()) {
             for (int stage = 0; stage <= 9; stage++) {
-                for (Locale locale : new Locale[]{Locale.ENGLISH, Locale.KOREAN, Locale.JAPANESE}) {
+                for (Locale locale : new Locale[]{Locale.ENGLISH, Locale.KOREAN, Locale.GERMAN}) {
                     assertEquals(id + "/" + stage + "/" + locale,
                             original.statusText(id, stage, locale), translated.statusText(id, stage, locale));
                 }

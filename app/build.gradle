@@ -10,8 +10,8 @@ android {
         applicationId 'dev.android.dynamicisland'
         minSdk 35
         targetSdk 36
-        versionCode 76
-        versionName '0.1.12-dev12'
+        versionCode 77
+        versionName '0.1.12-dev13'
     }
 
     buildTypes {
@@ -55,3 +55,5 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xmaxerrs' << '1000'
 }
+
+apply from: rootProject.file('gradle/localization.gradle')

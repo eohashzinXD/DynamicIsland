@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Dynamic Island</string>
+    <!-- ENGLISH SOURCE OF TRUTH. Translate values, never resource keys or placeholders.
+         %1$s = text; %1$d = integer; %% = literal percent. Reordering indexed arguments is safe.
+         Use Android escapes (\n, \') and XML escapes (&amp;, &lt;).
+         Settings strings, island_* runtime strings and stage_label_* stage names share this file.
+         See docs/TRANSLATING.md and run python3 scripts/translations.py check. -->
+    <string name="app_name" translatable="false">Dynamic Island</string>
     <string name="xposed_description">Dynamic Island in the style of ColorOS / HyperOS: replaces the One UI Now Bar status bar capsule.</string>
     <string name="settings_hint">Enable the module for System UI in LSPosed. Changes apply within a few seconds.</string>
     <string name="setting_card_header">Card header</string>
@@ -194,7 +199,7 @@
     <string name="stage_pattern_bad">This pattern is not accepted. Check the brackets, or make it shorter and simpler.</string>
     <string name="group_apps">Apps</string>
     <string name="rule_apps">Apps of this rule</string>
-    <string name="rule_apps_sum">%d</string>
+    <string name="rule_apps_sum" translatable="false">%d</string>
     <string name="rule_apps_help">Parts of package names. Untick the ones you added (marked with a pencil) to remove them.</string>
     <string name="rule_app_add">Add an app</string>
     <string name="group_excludes">Words that cancel it</string>
@@ -225,7 +230,7 @@
     <string name="test_help">The check uses your current rules, including the ones you switched off or added.</string>
     <string name="test_input">Notification</string>
     <string name="test_result">Result</string>
-    <string name="test_package_hint">com.example.app</string>
+    <string name="test_package_hint" translatable="false">com.example.app</string>
     <string name="test_text_hint">Title and body of the notification</string>
     <string name="test_stage">Stage %d</string>
     <string name="test_code_title">Verification code</string>
@@ -241,7 +246,7 @@
     <string name="anim_applied">Applied</string>
     <string name="anim_after">The change reaches the island within a few seconds.</string>
     <string name="hub_author">Made by</string>
-    <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
+    <string name="hub_author_text" translatable="false">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">Credits</string>
     <string name="hub_credits_text">Inspired by @cryyear\'s DynamicIsland (github.com/Spottq) and reimplemented. Rule file format by LiveBridge. Xposed API by rovo89 (Apache-2.0).\n\nBug fixes and assistance: @UnkilBonki (Telegram).</string>
     <string name="pos_title">Island position and size</string>
@@ -315,4 +320,82 @@
     <string name="accent_teal">Teal</string>
     <string name="compact_event_icons">Small event card icons</string>
     <string name="compact_event_icons_desc">Use the original smaller icons in expanded charging, sound-mode and other event cards. Off by default.</string>
+    <!-- Module-owned status-bar text. Generated JVM catalog uses these same translations. -->
+    <string name="island_do_not_disturb">Do Not Disturb</string>
+    <string name="island_airplane_mode">Airplane mode</string>
+    <string name="island_power_saving">Power saving</string>
+    <string name="island_flashlight">Flashlight</string>
+    <string name="island_hotspot">Hotspot</string>
+    <string name="island_auto_rotate">Auto-rotate</string>
+    <string name="island_setting_on">%1$s on</string>
+    <string name="island_setting_off">%1$s off</string>
+    <string name="island_on">On</string>
+    <string name="island_off">Off</string>
+    <string name="island_battery_remaining">%1$d%% remaining</string>
+    <string name="island_connected_battery">Connected · %1$d%% battery</string>
+    <string name="island_reply_to">Reply to %1$s</string>
+    <string name="island_send">Send</string>
+    <string name="island_island_position">Island position</string>
+    <string name="island_move_it_with_the_sliders">Move it with the sliders</string>
+    <string name="island_preview_a_long_text_stretches_the_pill_this_far">Preview · a long text stretches the pill this far</string>
+    <string name="island_preview">Preview</string>
+    <string name="island_screen_recording">Screen recording</string>
+    <string name="island_stop">Stop</string>
+    <string name="island_recording">Recording</string>
+    <string name="island_turn_off">Turn off</string>
+    <string name="island_speaker">Speaker</string>
+    <string name="island_end_call">End call</string>
+    <string name="island_reply">Reply</string>
+    <string name="island_copied">Copied</string>
+    <string name="island_verification_code">Verification code</string>
+    <string name="island_copy">Copy</string>
+    <string name="island_otp">OTP</string>
+    <string name="island_camera_microphone_in_use">Camera &amp; microphone in use</string>
+    <string name="island_camera_in_use">Camera in use</string>
+    <string name="island_microphone_in_use">Microphone in use</string>
+    <string name="island_location_in_use">Location in use</string>
+    <string name="island_setting_changed">Setting changed</string>
+    <string name="island_charging">Charging</string>
+    <string name="island_low_battery">Low battery</string>
+    <string name="island_super_fast_wireless_charging">Super fast wireless charging</string>
+    <string name="island_super_fast_charging">Super fast charging</string>
+    <string name="island_fast_wireless_charging">Fast wireless charging</string>
+    <string name="island_fast_charging">Fast charging</string>
+    <string name="island_wireless_charging">Wireless charging</string>
+    <string name="island_silent">Silent</string>
+    <string name="island_vibrate">Vibrate</string>
+    <string name="island_ring">Ring</string>
+    <string name="island_sound_mode">Sound mode</string>
+    <string name="island_bluetooth_device">Bluetooth device</string>
+    <string name="island_connected">Connected</string>
+    <string name="island_sharing_screen">Sharing screen</string>
+    <string name="island_casting_screen">Casting screen</string>
+    <string name="island_more_apps">" +%1$d"</string>
+    <string name="stage_label_food_0">Order placed</string>
+    <string name="stage_label_food_1">Preparing</string>
+    <string name="stage_label_food_2">On the way</string>
+    <string name="stage_label_food_3">Arriving</string>
+    <string name="stage_label_food_4">Delivered</string>
+    <string name="stage_label_parcel_0">Label created</string>
+    <string name="stage_label_parcel_1">In transit</string>
+    <string name="stage_label_parcel_2">At local facility</string>
+    <string name="stage_label_parcel_3">Out for delivery</string>
+    <string name="stage_label_parcel_4">Delivered</string>
+    <string name="stage_label_taxi_0">Finding a driver</string>
+    <string name="stage_label_taxi_1">Driver assigned</string>
+    <string name="stage_label_taxi_2">Driver on the way</string>
+    <string name="stage_label_taxi_3">Driver arrived</string>
+    <string name="stage_label_taxi_4">Trip complete</string>
+    <string name="stage_label_navigation_1">Navigating</string>
+    <string name="stage_label_navigation_2">On transit</string>
+    <string name="stage_label_navigation_3">Getting off soon</string>
+    <string name="stage_label_navigation_4">Arrived</string>
+    <string name="stage_label_wearable_0">Disconnected</string>
+    <string name="stage_label_wearable_2">Connected</string>
+    <string name="stage_label_wearable_3">Fully charged</string>
+    <string name="stage_label_battery_1">Low battery</string>
+    <string name="stage_label_external_device_1">Connecting</string>
+    <string name="stage_label_external_device_2">Connected</string>
+    <string name="stage_label_relay_1">Running</string>
+    <string name="stage_label_assistant_1">Working</string>
 </resources>

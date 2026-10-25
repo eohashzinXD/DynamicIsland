@@ -1,32 +1,49 @@
 package dev.android.dynamicisland.island;
 
 import android.content.Context;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
-/** Module-owned text drawn inside System UI, where the module's string resources are unavailable. */
+/** Module-owned text generated from the English-first Android string resources, readable inside SystemUI. */
 public final class IslandText {
+    private static final String ROOT = "/dev/android/dynamicisland/i18n/";
+    private static final ConcurrentHashMap<String, Properties> CACHE = new ConcurrentHashMap<>();
+
     private IslandText() { }
 
-    /** Follow the host context's configuration, including a locale change without a process restart. */
-    public static String select(Context context, String ko, String en, String tr) {
-        return select(context.getResources().getConfiguration().getLocales().get(0), ko, en, tr);
+    public static String get(Context host, String key, Object... arguments) {
+        return get(host.getResources().getConfiguration().getLocales().get(0), key, arguments);
     }
 
-    /** Explicit translations at each call site; unsupported languages keep the English fallback. */
-    public static String select(Locale locale, String ko, String en, String tr) {
-        String language = locale == null ? "" : locale.getLanguage();
-        switch (language) {
-            case "ko":
-                return ko;
-            case "tr":
-                return tr;
-            default:
-                return en;
-        }
+    public static String get(Locale locale, String key, Object... arguments) {
+        Locale use = locale == null ? Locale.ENGLISH : locale;
+        String text = catalog(use.getLanguage()).getProperty(key);
+        if (text == null || text.isEmpty()) text = catalog("en").getProperty(key, key);
+        return arguments.length == 0 ? text : String.format(use, text, arguments);
     }
 
-    /** Preserve existing Russian translations at call sites that already supplied them. */
-    public static String select(Locale locale, String ko, String en, String tr, String ru) {
-        return locale != null && "ru".equals(locale.getLanguage()) ? ru : select(locale, ko, en, tr);
+    public static List<String> languages() {
+        String supported = catalog("languages").getProperty("supported", "en");
+        return Collections.unmodifiableList(Arrays.asList(supported.split(",")));
+    }
+
+    private static Properties catalog(String language) {
+        return CACHE.computeIfAbsent(language, name -> {
+            Properties values = new Properties();
+            if (!name.matches("[a-zA-Z-]+")) return values;
+            try (InputStream input = IslandText.class.getResourceAsStream(ROOT + name + ".properties")) {
+                if (input != null) values.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+            } catch (java.io.IOException ignored) {
+                // Missing locale data must not break SystemUI; the caller tries the English catalog.
+            }
+            return values;
+        });
     }
 }

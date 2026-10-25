@@ -148,15 +148,14 @@ final class IslandSources {
         IslandItem it = new IslandItem("preview:position");
         it.kind = IslandItem.Kind.EVENT;
         it.iconIsImage = false;
-        it.title = IslandText.select(ctx, "아일랜드 위치", "Island position", "Ada konumu");
-        it.subtitle = IslandText.select(ctx, "슬라이더로 옮겨 보세요", "Move it with the sliders", "Kaydırıcılarla taşıyın");
+        it.title = IslandText.get(ctx, "island_island_position");
+        it.subtitle = IslandText.get(ctx, "island_move_it_with_the_sliders");
         it.icon = GlyphIcon.of(GlyphIcon.Kind.HOTSPOT);
         it.accent = 0xFF3E91FF;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = ModuleSettings.previewSampleLong()
-                ? IslandText.select(ctx, "미리보기 · 알림 글이 길면 이만큼까지 넓어집니다",
-                        "Preview · a long text stretches the pill this far", "Önizleme · uzun metin adayı bu kadar genişletir")
-                : IslandText.select(ctx, "미리보기", "Preview", "Önizleme");
+                ? IslandText.get(ctx, "island_preview_a_long_text_stretches_the_pill_this_far")
+                : IslandText.get(ctx, "island_preview");
         it.postTime = SystemClock.uptimeMillis();
         return it;
     }

@@ -229,7 +229,7 @@ public final class TorchSource {
         it.kind = IslandItem.Kind.EVENT;
         it.iconIsImage = false;
         it.pillColor = 0;
-        it.title = t("손전등", "Flashlight", "El feneri");
+        it.title = IslandText.get(ctx, "island_flashlight");
         it.icon = GlyphIcon.of(GlyphIcon.Kind.TORCH);
         it.accent = YELLOW;
         it.trailing = IslandItem.Trailing.TEXT;
@@ -241,13 +241,13 @@ public final class TorchSource {
             it.sliderTrailing = v -> Math.round(100.0f * levelFor(v) / maxLevel) + "%";
         } else {
             // one level only: nothing to drag, so the card carries the state and the off button
-            it.trailingText = t("켜짐", "On", "Açık");
+            it.trailingText = IslandText.get(ctx, "island_on");
             it.sliderValue = -1.0f;
             it.sliderSteps = 0;
             it.sliderChange = null;
             it.sliderTrailing = null;
         }
-        it.actions.add(new IslandItem.Action(t("끄기", "Turn off", "Kapat"), null, null, this::turnOff, false));
+        it.actions.add(new IslandItem.Action(IslandText.get(ctx, "island_turn_off"), null, null, this::turnOff, false));
         it.postTime = onSince;
         return it;
     }
@@ -297,7 +297,4 @@ public final class TorchSource {
         }
     }
 
-    private String t(String ko, String en, String tr) {
-        return IslandText.select(ctx, ko, en, tr);
-    }
 }

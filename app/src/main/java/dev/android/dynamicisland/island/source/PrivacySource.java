@@ -231,13 +231,13 @@ public final class PrivacySource {
         it.iconIsImage = false;
         it.packageName = null;
         if (cam && mic) {
-            it.title = t("카메라·마이크 사용 중", "Camera & microphone in use", "Kamera ve mikrofon kullanımda");
+            it.title = IslandText.get(ctx, "island_camera_microphone_in_use");
         } else if (cam) {
-            it.title = t("카메라 사용 중", "Camera in use", "Kamera kullanımda");
+            it.title = IslandText.get(ctx, "island_camera_in_use");
         } else if (mic) {
-            it.title = t("마이크 사용 중", "Microphone in use", "Mikrofon kullanımda");
+            it.title = IslandText.get(ctx, "island_microphone_in_use");
         } else {
-            it.title = t("위치 사용 중", "Location in use", "Konum kullanımda");
+            it.title = IslandText.get(ctx, "island_location_in_use");
         }
         it.icon = GlyphIcon.of(cam ? GlyphIcon.Kind.CAMERA : mic ? GlyphIcon.Kind.MIC : GlyphIcon.Kind.LOCATION);
         it.accent = cam ? GREEN : mic ? ORANGE : BLUE;
@@ -250,7 +250,7 @@ public final class PrivacySource {
             who.append(label(packages.get(i)));
         }
         if (packages.size() > 2) {
-            who.append(t(" 외 " + (packages.size() - 2) + "개", " +" + (packages.size() - 2), " ve " + (packages.size() - 2) + " uygulama daha"));
+            who.append(IslandText.get(ctx, "island_more_apps", packages.size() - 2));
         }
         it.subtitle = who.toString();
         it.trailing = IslandItem.Trailing.TEXT;
@@ -288,7 +288,4 @@ public final class PrivacySource {
     }
 
     /** The module has no string resources inside System UI, so pick the language here. */
-    private String t(String ko, String en, String tr) {
-        return IslandText.select(ctx, ko, en, tr);
-    }
 }

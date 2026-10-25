@@ -230,7 +230,7 @@ public final class PeekSource {
                 }
                 boolean reply = a.getRemoteInputs() != null && a.getRemoteInputs().length > 0;
                 // a reply button asks for the text on the island and sends it with the app's own reply intent
-                IslandItem.Action action = new IslandItem.Action(reply ? t("답장", "Reply", "Yanıtla") : a.title, null,
+                IslandItem.Action action = new IslandItem.Action(reply ? IslandText.get(ctx, "island_reply") : a.title, null,
                         a.actionIntent, null, !reply && OaSource.isDestructive(a.title));
                 if (reply) {
                     action.remoteInputs = a.getRemoteInputs();
@@ -255,7 +255,7 @@ public final class PeekSource {
         try {
             for (Notification.Action a : new Notification.WearableExtender(n).getActions()) {
                 if (a.getRemoteInputs() != null && a.getRemoteInputs().length > 0 && a.actionIntent != null) {
-                    IslandItem.Action reply = new IslandItem.Action(t("답장", "Reply", "Yanıtla"), null, a.actionIntent, null, false);
+                    IslandItem.Action reply = new IslandItem.Action(IslandText.get(ctx, "island_reply"), null, a.actionIntent, null, false);
                     reply.remoteInputs = a.getRemoteInputs();
                     it.actions.add(0, reply);
                     return;
@@ -299,7 +299,7 @@ public final class PeekSource {
         // who sent it (the SMS sender / service name) reads better than "Messages"
         CharSequence sender = sbn.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE);
         String from = sender != null && sender.toString().trim().length() > 0 ? sender.toString().trim() : String.valueOf(it.appName);
-        it.title = from + " · " + (copied ? t("복사됨", "Copied", "Kopyalandı") : t("인증번호", "Verification code", "Doğrulama kodu"));
+        it.title = from + " · " + (copied ? IslandText.get(ctx, "island_copied") : IslandText.get(ctx, "island_verification_code"));
         it.contentIntent = sbn.getNotification().contentIntent;
         it.postTime = sbn.getPostTime();
         Notification n = sbn.getNotification();
@@ -313,7 +313,7 @@ public final class PeekSource {
         it.peekMillis = OTP_MS;
         it.otpCode = otp.code;
         final String code = otp.code;
-        IslandItem.Action copy = new IslandItem.Action(copied ? t("복사됨", "Copied", "Kopyalandı") : t("복사", "Copy", "Kopyala"), null, null, () -> {
+        IslandItem.Action copy = new IslandItem.Action(copied ? IslandText.get(ctx, "island_copied") : IslandText.get(ctx, "island_copy"), null, null, () -> {
             copy(code);
             show(otpItem(sbn, otp, true), OTP_COPIED_MS);
             onChange.run();
@@ -331,7 +331,7 @@ public final class PeekSource {
             if (cm == null) {
                 return;
             }
-            ClipData clip = ClipData.newPlainText(t("OTP", "OTP", "Doğrulama kodu"), code);
+            ClipData clip = ClipData.newPlainText(IslandText.get(ctx, "island_otp"), code);
             PersistableBundle extras = new PersistableBundle();
             extras.putBoolean("android.content.extra.IS_SENSITIVE", true); // keeps the code out of the clipboard preview
             clip.getDescription().setExtras(extras);
@@ -369,7 +369,4 @@ public final class PeekSource {
     }
 
     /** The module has no string resources inside System UI, so pick the language here. */
-    private String t(String ko, String en, String tr) {
-        return IslandText.select(ctx, ko, en, tr);
-    }
 }

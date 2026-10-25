@@ -26,5 +26,10 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Validate translations
+        run: |
+          python3 scripts/translations.py check
+          python3 -m unittest discover -s scripts/tests
+
       - name: Unit tests and render tests
         run: ./gradlew --no-daemon testReleaseUnitTest assembleRelease

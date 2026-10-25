@@ -335,8 +335,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         }
         CharSequence name = item.title == null ? "" : item.title;
         long originalExpiry = item.expiresAtUptime;
-        boolean shown = window.showReply(IslandText.select(ctx, name + "에게 답장", "Reply to " + name, name + " kişisine yanıtla"),
-                IslandText.select(ctx, "전송", "Send", "Gönder"), new IslandWindow.ReplyListener() {
+        boolean shown = window.showReply(IslandText.get(ctx, "island_reply_to", name),
+                IslandText.get(ctx, "island_send"), new IslandWindow.ReplyListener() {
             @Override
             public void onSend(CharSequence text) {
                 launcher.sendReply(action, text);

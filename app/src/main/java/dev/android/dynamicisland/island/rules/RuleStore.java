@@ -17,7 +17,7 @@ public final class RuleStore {
     /** The module's own rule file, always in force. */
     private static final String[] BUILTIN = {
             "/dev/android/dynamicisland/rules/builtin-ko.json", "/dev/android/dynamicisland/rules/builtin-en.json",
-            "/dev/android/dynamicisland/rules/builtin-tr.json"};
+            "/dev/android/dynamicisland/rules/builtin-translations.json"};
     private static final Object LOCK = new Object();
     private static volatile RuleDictionary current = RuleDictionary.empty();
     private static volatile int builtFor = 0;
@@ -49,7 +49,7 @@ public final class RuleStore {
     /** Builds the merged rules for {@code config}. A file that does not parse is skipped. */
     public static RuleDictionary build(RuleConfig config) {
         RuleDictionary merged = RuleDictionary.empty();
-        // Korean and English detection rules, then Turkish display labels; custom rules still go last.
+        // Korean and English detection rules, then generated display labels; custom rules still go last.
         for (String path : BUILTIN) {
             RuleDictionary builtin = RuleDictionary.fromJson(readResource(path));
             if (builtin != null) {
@@ -59,15 +59,15 @@ public final class RuleStore {
             }
         }
         RuleDictionary custom = RuleDictionary.fromJson(config.custom);
-        // Before Turkish shipped, user labels fell back to English. Keep those edits above the new defaults.
-        RuleDictionary fallback = custom == null ? null : turkishCustomFallback(config.custom);
+        // Keep existing user English edits above newly supplied language defaults.
+        RuleDictionary fallback = custom == null ? null : translatedCustomFallback(config.custom);
         if (fallback != null) {
             merged = merged.mergedWith(fallback);
         }
         return (custom == null ? merged : merged.mergedWith(custom)).without(config.disabled);
     }
 
-    private static RuleDictionary turkishCustomFallback(String raw) {
+    private static RuleDictionary translatedCustomFallback(String raw) {
         try {
             JSONObject labels = new JSONObject(raw).optJSONObject("status_labels");
             if (labels == null) {
@@ -80,7 +80,11 @@ public final class RuleStore {
                 JSONObject languages = labels.optJSONObject(id);
                 JSONObject english = languages == null ? null : languages.optJSONObject("en");
                 if (english != null) {
-                    fallback.put(id, new JSONObject().put("tr", english));
+                    JSONObject defaults = new JSONObject();
+                    for (String language : dev.android.dynamicisland.island.IslandText.languages()) {
+                        if (!language.equals("en") && !language.equals("ko")) defaults.put(language, english);
+                    }
+                    fallback.put(id, defaults);
                 }
             }
             return RuleDictionary.fromJson(new JSONObject().put("status_labels", fallback).toString());

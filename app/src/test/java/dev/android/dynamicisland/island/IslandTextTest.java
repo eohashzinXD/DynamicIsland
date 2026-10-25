@@ -1,58 +1,40 @@
 package dev.android.dynamicisland.island;
 
-import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.*;
 import java.util.Locale;
 import org.junit.Test;
 
-/** Locale selection only: no notification classification or Android resources are involved. */
+/** Exercise the generated catalog used by SystemUI, without any Android resource context. */
 public class IslandTextTest {
-    @Test
-    public void selectsKoreanEnglishAndTurkishIncludingRegionalVariants() {
-        assertEquals("한국어", text("ko-KR"));
-        assertEquals("한국어", text("ko"));
-        assertEquals("English", text("en-US"));
-        assertEquals("Türkçe", text("tr-TR"));
-        assertEquals("Türkçe", text("tr-CY"));
-        assertEquals("Türkçe", text("tr"));
+    @Test public void selectsAllSixLanguagesIncludingRegionalVariants() {
+        assertEquals("Charging", text("en-US", "island_charging"));
+        assertEquals("충전 중", text("ko-KR", "island_charging"));
+        assertEquals("充電中", text("ja-JP", "island_charging"));
+        assertEquals("正在充电", text("zh-CN", "island_charging"));
+        assertEquals("正在充电", text("zh-TW", "island_charging"));
+        assertEquals("Зарядка", text("ru-RU", "island_charging"));
+        assertEquals("Şarj oluyor", text("tr-CY", "island_charging"));
+        assertTrue(IslandText.languages().containsAll(java.util.List.of("en", "ko", "ja", "zh", "ru", "tr")));
     }
-
-    @Test
-    public void unsupportedAndNullLocalesKeepEnglishFallback() {
-        for (String tag : new String[] {"ru-RU", "ja-JP", "zh-CN", "de-DE", "und"}) {
-            assertEquals("English", text(tag));
-        }
-        assertEquals("English", IslandText.select((Locale) null, "한국어", "English", "Türkçe"));
+    @Test public void unsupportedAndNullLocalesKeepEnglishFallback() {
+        assertEquals("Charging", text("de-DE", "island_charging"));
+        assertEquals("Charging", IslandText.get((Locale) null, "island_charging"));
     }
-
-    @Test
-    public void optionalRussianPreservesExistingCastTranslation() {
-        assertEquals("Запись экрана", cast("ru-RU"));
-        assertEquals("Ekran kaydı", cast("tr-TR"));
-        assertEquals("Screen recording", cast("ko-KR"));
-        assertEquals("Screen recording", cast("fr-FR"));
-        assertEquals("Screen recording", IslandText.select((Locale) null,
-                "Screen recording", "Screen recording", "Ekran kaydı", "Запись экрана"));
+    @Test public void formatsArgumentsAndLiteralPercentAndPreservesSuffixSpacing() {
+        assertEquals("Reply to Minji", IslandText.get(Locale.ENGLISH, "island_reply_to", "Minji"));
+        assertEquals("回复 Minji", IslandText.get(Locale.CHINESE, "island_reply_to", "Minji"));
+        assertEquals("54% remaining", IslandText.get(Locale.ENGLISH, "island_battery_remaining", 54));
+        assertEquals("%54 kaldı", IslandText.get(Locale.forLanguageTag("tr"), "island_battery_remaining", 54));
+        assertEquals(" +3", IslandText.get(Locale.ENGLISH, "island_more_apps", 3));
+        assertEquals("Do Not Disturb on", IslandText.get(Locale.ENGLISH, "island_setting_on", "Do Not Disturb"));
     }
-
-    @Test
-    public void explicitLocaleDoesNotDependOnTheJvmDefault() {
+    @Test public void explicitLocaleDoesNotDependOnTheJvmDefault() {
         Locale previous = Locale.getDefault();
         try {
-            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
-            assertEquals("English", text("en-US"));
-            assertEquals("한국어", text("ko-KR"));
-        } finally {
-            Locale.setDefault(previous);
-        }
+            Locale.setDefault(Locale.JAPANESE);
+            assertEquals("Charging", text("en-US", "island_charging"));
+            assertEquals("충전 중", text("ko", "island_charging"));
+        } finally { Locale.setDefault(previous); }
     }
-
-    private static String text(String tag) {
-        return IslandText.select(Locale.forLanguageTag(tag), "한국어", "English", "Türkçe");
-    }
-
-    private static String cast(String tag) {
-        return IslandText.select(Locale.forLanguageTag(tag),
-                "Screen recording", "Screen recording", "Ekran kaydı", "Запись экрана");
-    }
+    private String text(String tag, String key) { return IslandText.get(Locale.forLanguageTag(tag), key); }
 }

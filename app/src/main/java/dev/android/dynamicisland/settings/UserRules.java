@@ -16,7 +16,7 @@ public final class UserRules {
     /** Language key of the stage names written here: the fallback every language reads. */
     static final String LABEL_LANGUAGE = "en";
     /** Write user stage names for every shipped label language, ahead of the built-in translations. */
-    private static final String[] LABEL_LANGUAGES = {"en", "ko", "tr"};
+    private static final java.util.List<String> LABEL_LANGUAGES = dev.android.dynamicisland.island.IslandText.languages();
     static final int MAX_STAGE = 9;
 
     private JSONObject root;
