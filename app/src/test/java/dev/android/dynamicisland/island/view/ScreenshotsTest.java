@@ -92,7 +92,7 @@ public class ScreenshotsTest {
         drawWallpaper(canvas);
         drawStatusBar(canvas, ko);
         for (Card card : new ArrayList<>(view.cards())) {
-            if (!card.leaving) view.drawCard(canvas, card, SystemClock.uptimeMillis());
+            view.drawCard(canvas, card, SystemClock.uptimeMillis());
         }
         view.draw(canvas);
         drawHole(canvas);

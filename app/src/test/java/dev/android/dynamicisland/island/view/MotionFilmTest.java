@@ -117,7 +117,7 @@ public class MotionFilmTest {
             List<Card> back = new ArrayList<>(view.cards());
             java.util.Collections.reverse(back); // back to front, as the blur layer places them
             for (Card card : back) {
-                if (!card.leaving) view.drawCard(canvas, card, SystemClock.uptimeMillis());
+                view.drawCard(canvas, card, SystemClock.uptimeMillis());
             }
             view.draw(canvas);
             view.computeMain(r);
@@ -191,7 +191,7 @@ public class MotionFilmTest {
             List<Card> back = new ArrayList<>(view.cards());
             java.util.Collections.reverse(back);
             for (Card card : back) {
-                if (!card.leaving) view.drawCard(canvas, card, SystemClock.uptimeMillis());
+                view.drawCard(canvas, card, SystemClock.uptimeMillis());
             }
             view.draw(canvas);
             if (film) {

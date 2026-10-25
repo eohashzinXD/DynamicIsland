@@ -34,6 +34,8 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     private static final float MIN_SLOT_SIZE = 2.0f;
     /** Frames a slot may go unplaced before it is hidden. */
     private static final int MISSED_FRAMES_BEFORE_HIDE = 1;
+    /** How long the final painted surface may remain; its native backdrop is cleared immediately. */
+    private static final long RELEASE_SURFACE_LINGER_MS = 32;
 
     interface Backend {
         boolean available();
@@ -142,9 +144,9 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
     public void release(Object owner) {
         Slot slot = slots.remove(owner);
         if (slot != null) {
-            // The island paints the departing card now. Never retain the old glass RenderNode.
-            slot.hide();
-            removeView(slot);
+            // Only the painted surface may linger. Native blur must never survive the handoff to the pill.
+            slot.hideBackdrop();
+            postDelayed(() -> removeView(slot), RELEASE_SURFACE_LINGER_MS);
         }
     }
 

@@ -36,6 +36,7 @@ final class PillPainter {
     private final StackPainter stack;
     private final CardBridge bridge;
     private final Path clip = new Path();
+    private final Path outlineCutout = new Path();
     private final Path neck = new Path();
     private final RectF bubble = new RectF();
     private final RectF outlineRect = new RectF();
@@ -93,8 +94,9 @@ final class PillPainter {
         LiquidBridge cardBridge = bridge.update(t, pill, r);
         boolean pillVisible = pill.width() > IslandView.MIN_VISIBLE_SIZE && pill.height() > IslandView.MIN_VISIBLE_SIZE;
 
-        if (((pillVisible && scene.mode == Mode.COMPACT && sp.pillBlob.value() > 0.05f) || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
-            drawOutline(canvas, pill, r, pillVisible, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
+        boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && sp.pillBlob.value() > IslandView.MIN_VISIBLE_ALPHA;
+        if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
+            drawOutline(canvas, pill, r, outlinePill, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
         }
 
         int mainColor = bodyColor(scene.mainIn);
@@ -135,30 +137,38 @@ final class PillPainter {
         }
     }
 
-    /** Thin lighter outline around pill and bubble, drawn first so the black shapes sit on top of it. */
+    /** Only the outer rim is white. Filling underneath a fading black body produces a grey pill. */
     private void drawOutline(Canvas canvas, RectF pill, float r, boolean pillVisible, boolean hasBubble, boolean hasNeck,
                              float neckAlpha, float bubbleX, float bubbleY, float bubbleRadius) {
-        float fade = sp.outlineFade.value();
+        int save = canvas.save();
+        outlineCutout.reset();
+        if (pillVisible) outlineCutout.addRoundRect(pill, r, r, Path.Direction.CW);
+        if (hasBubble) outlineCutout.addCircle(bubbleX, bubbleY, bubbleRadius, Path.Direction.CW);
+        canvas.clipOutPath(outlineCutout);
+        if (hasNeck) canvas.clipOutPath(neck);
+        float fade = clamp01(sp.outlineFade.value());
         Paint paint = paints.outline;
-        paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade));
         paint.setStyle(Paint.Style.FILL);
         if (pillVisible) {
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * clamp01(sp.pillBlob.value())));
             outlineRect.set(pill);
             outlineRect.inset(-m.outlineW, -m.outlineW);
             canvas.drawRoundRect(outlineRect, r + m.outlineW, r + m.outlineW, paint);
         }
-        if (!hasBubble) {
-            return;
+        if (hasBubble) {
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade));
+            canvas.drawCircle(bubbleX, bubbleY, bubbleRadius + m.outlineW, paint);
+            if (hasNeck) {
+                // squared: the outline is wider than the black neck, so it must fade before the neck is thin
+                paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE,
+                        fade * (ModuleSettings.legacyAnimation() ? neckAlpha : neckAlpha * neckAlpha)));
+                paint.setStyle(Paint.Style.FILL_AND_STROKE);
+                paint.setStrokeWidth(m.outlineW * 2.0f);
+                canvas.drawPath(neck, paint);
+                paint.setStyle(Paint.Style.FILL);
+            }
         }
-        canvas.drawCircle(bubbleX, bubbleY, bubbleRadius + m.outlineW, paint);
-        if (hasNeck) {
-            // squared: the outline is wider than the black neck, so it must be gone before the neck is thin
-            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * (ModuleSettings.legacyAnimation() ? neckAlpha : neckAlpha * neckAlpha)));
-            paint.setStyle(Paint.Style.FILL_AND_STROKE);
-            paint.setStrokeWidth(m.outlineW * 2.0f);
-            canvas.drawPath(neck, paint);
-            paint.setStyle(Paint.Style.FILL);
-        }
+        canvas.restoreToCount(save);
     }
 
     private void drawPillContent(Canvas canvas, RectF pill, float r, long t, float extraAlpha) {

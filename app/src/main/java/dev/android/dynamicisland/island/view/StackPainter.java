@@ -36,6 +36,9 @@ final class StackPainter {
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
     private static final float GLASS_FROM = 0.1f;
+    /** Stop the native backdrop well before the compact pill takes over; its compositor can lag a frame. */
+    private static final float FOLD_BLUR_FADE_FROM = 0.1f;
+    private static final float FOLD_BLUR_FADE_TO = 0.55f;
     /** Necks thinner than this are not drawn; they reach full opacity this much wider. */
     private static final float NECK_FADE_FROM_DP = 4.0f;
     private static final float NECK_FADE_RANGE_DP = 6.0f;
@@ -103,10 +106,15 @@ final class StackPainter {
         return clamp01((waist - m.dp(NECK_FADE_FROM_DP)) / m.dp(NECK_FADE_RANGE_DP));
     }
 
-    /** Blur is used for opening/staying cards only; departures are opaque in the island Canvas. */
+    /**
+     * How much of the card's glass look is kept while it folds back into the pill (0..1): it turns from the grey glass
+     * into the pill's black gradually along the fold. Taken in one go (as soon as the card's height was nearly the
+     * pill's) it showed as a flash of flat grey just before the black.
+     */
     float blurFraction(Card c, float opening) {
         if (c.leaving) {
-            return 0; // Native Samsung blur must never follow a shrinking card into the pill.
+            float fold = (foldProgress(c) - FOLD_BLUR_FADE_FROM) / (FOLD_BLUR_FADE_TO - FOLD_BLUR_FADE_FROM);
+            return 1.0f - Easing.easeInOut(clamp01(fold));
         }
         return ModuleSettings.legacyAnimation() ? 1 : Easing.easeInOut(clamp01((opening - GLASS_FROM) / 0.6f));
     }
@@ -131,34 +139,12 @@ final class StackPainter {
         return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn * (glass ? blurFraction : 1.0f)));
     }
 
-    /** Folding surfaces are opaque from the first frame, including any stagger before launch. */
-    int cardFill(Card card, float opening) {
-        if (card.leaving) {
-            return Colors.blend(Colors.BLACK, Colors.CARD_SOLID, visualOpening(card, opening));
-        }
-        return fillColor(opening, blurFraction(card, opening));
-    }
-
-    /** Draw departures in the pill's own Canvas, without a separately cached shrinking RenderNode. */
-    void drawFoldingCards(Canvas canvas, long time) {
-        boolean legacy = ModuleSettings.legacyAnimation();
-        for (int n = 0; n < scene.cards.size(); n++) {
-            Card card = scene.cards.get(legacy ? n : scene.cards.size() - 1 - n);
-            if (!card.leaving) continue;
-            shapes.card(card, slot);
-            if (slot.width() >= 1 && slot.height() >= 1) {
-                drawCard(canvas, card, slot, time, shapes.expansion(card));
-            }
-        }
-    }
-
     /** Blur callback: paints a card into its blur slot, whose canvas origin is the slot, not the view. */
     void paintInBlurSlot(Object owner, Canvas canvas, float viewLeft, float viewTop) {
         if (!(owner instanceof Card)) {
             return;
         }
         Card c = (Card) owner;
-        if (c.leaving) return; // Ownership has already moved to the island Canvas.
         shapes.card(c, slot);
         int save = canvas.save();
         canvas.translate(-viewLeft, -viewTop);
@@ -179,10 +165,6 @@ final class StackPainter {
             boolean legacy = ModuleSettings.legacyAnimation();
             for (int n = 0; n < scene.cards.size(); n++) {
                 Card c = scene.cards.get(legacy ? n : scene.cards.size() - 1 - n);
-                if (c.leaving) {
-                    blur.release(c); // Remove both native blur and the cached surface before any folding frame.
-                    continue;
-                }
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     float opening = visualOpening(c, shapes.expansion(c));
@@ -237,7 +219,7 @@ final class StackPainter {
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
         opening = visualOpening(c, opening);
-        paints.card.setColor(cardFill(c, opening));
+        paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
         canvas.drawRoundRect(r, corner, corner, paints.card);
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
                 ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE) // before 0.1.4: no outline until the card has nearly opened
