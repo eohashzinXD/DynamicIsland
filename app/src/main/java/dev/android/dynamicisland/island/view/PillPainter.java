@@ -23,8 +23,6 @@ final class PillPainter {
     /** The bubble's content only shows once the bubble has split off this far, fully at +0.4. */
     private static final float BUBBLE_CONTENT_FROM = 0.55f;
     private static final float BUBBLE_CONTENT_RANGE = 0.4f;
-    /** Diameter of the dot the island shrinks into when the shade comes down, as a fraction of the pill's height. */
-    private static final float SHADE_DOT = 0.65f;
     /** The shade gate (1 = there, 0 = gone): the bubble has merged into the pill by here, the content is gone before this. */
     private static final float SHADE_MERGED_BY = 0.55f;
     private static final float SHADE_CONTENT_GONE_BY = 0.45f;
@@ -62,20 +60,11 @@ final class PillPainter {
         // while the shade comes down the bubble merges into the pill, then the body shrinks into a dot with its content
         // growing smaller and fading; the other way round when the shade has gone
         float gate = IslandView.clamp01(sp.shadeGate.value());
-        RectF pill = full;
-        float contentScale = 1.0f;
-        float contentAlpha = 1.0f;
-        float split = sp.split.value();
-        if (gate < 0.999f) {
-            float dot = full.height() * SHADE_DOT;
-            float w = dot + ((full.width() - dot) * gate);
-            float h = dot + ((full.height() - dot) * gate);
-            shrunk.set(full.centerX() - (w / 2.0f), full.centerY() - (h / 2.0f), full.centerX() + (w / 2.0f), full.centerY() + (h / 2.0f));
-            pill = shrunk;
-            contentScale = w / Math.max(1.0f, full.width());
-            contentAlpha = clamp01((gate - SHADE_CONTENT_GONE_BY) / SHADE_CONTENT_RANGE);
-            split *= clamp01((gate - SHADE_MERGED_BY) / (1.0f - SHADE_MERGED_BY));
-        }
+        shapes.shadePill(full, shrunk);
+        RectF pill = shrunk;
+        float contentScale = pill.width() / Math.max(1.0f, full.width());
+        float contentAlpha = clamp01((gate - SHADE_CONTENT_GONE_BY) / SHADE_CONTENT_RANGE);
+        float split = sp.split.value() * clamp01((gate - SHADE_MERGED_BY) / (1.0f - SHADE_MERGED_BY));
         float r = pill.height() / 2.0f;
         // the bubble also stays while a stack opens: it merges back into the pill instead of vanishing in one frame
         boolean hasBubble = split > 0.003f && (scene.mode != Mode.EXPANDED || !legacyMerge());
@@ -132,7 +121,7 @@ final class PillPainter {
 
         if (pillVisible && contentAlpha > IslandView.MIN_VISIBLE_ALPHA) {
             int contentSave = canvas.save();
-            if (contentScale < 0.999f) {
+            if (Math.abs(contentScale - 1.0f) > 0.001f) {
                 canvas.scale(contentScale, contentScale, full.centerX(), full.centerY());
             }
             // the content keeps its full-size layout and is clipped to the (still shrinking) body

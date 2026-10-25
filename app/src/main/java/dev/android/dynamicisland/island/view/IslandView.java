@@ -88,7 +88,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** Shrinking into the dot is quick and does not overshoot; growing back is slower, with a small bounce. */
     static final float SHADE_GO_RESPONSE = 0.24f;
     static final float SHADE_GO_DAMPING = 1.0f;
-    static final float SHADE_BACK_RESPONSE = 0.34f;
+    static final float SHADE_BACK_RESPONSE = 0.46f;
     static final float SHADE_BACK_DAMPING = 0.72f;
     private static final float DEFAULT_FRAME_DT = 0.008333334f;
 
@@ -247,7 +247,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     void computeMain(RectF out) {
-        shapes.main(out);
+        shapes.paintedMain(out);
     }
 
     void computeCard(Card card, RectF out) {
