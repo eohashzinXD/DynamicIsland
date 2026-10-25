@@ -346,7 +346,10 @@ public final class EventSource {
     private IslandItem chargingItem(int percent, int plugged, Intent battery) {
         IslandItem it = base("event:charging");
         it.title = t("충전 중", "Charging");
-        it.subtitle = chargingLabel(plugged, battery);
+        String label = chargingLabel(plugged, battery);
+        // the percentage first; plain charging has the same words as the title, so they are said once, while fast
+        // and wireless charging add something
+        it.subtitle = label.equals(String.valueOf(it.title)) ? percent + "%" : percent + "% · " + label;
         it.accent = GREEN;
         it.icon = GlyphIcon.battery(percent / 100f, true);
         it.progress = percent / 100f;

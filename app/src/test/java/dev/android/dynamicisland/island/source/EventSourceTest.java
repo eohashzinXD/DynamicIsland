@@ -64,6 +64,36 @@ public class EventSourceTest {
     }
 
     @Test
+    public void plainChargingSaysChargingOnlyOnce() throws Exception {
+        EventSource s = source(new int[]{0});
+        Intent unplugged = battery(40, 0);
+        s.onBattery(unplugged);
+        Intent slow = battery(40, BatteryManager.BATTERY_PLUGGED_USB)
+                .putExtra("max_charging_current", 500_000)
+                .putExtra("max_charging_voltage", 5_000_000);
+        s.onBattery(slow);
+        List<IslandItem> out = new ArrayList<>();
+        s.collect(out);
+        assertEquals(1, out.size());
+        IslandItem it = out.get(0);
+        assertEquals("the title says charging, the subtitle only the percentage", "40%", it.subtitle.toString());
+        render("event_charging_plain", it);
+    }
+
+    @Test
+    public void fastChargingKeepsItsSubtitle() {
+        EventSource s = source(new int[]{0});
+        s.onBattery(battery(40, 0));
+        s.onBattery(battery(40, BatteryManager.BATTERY_PLUGGED_AC)); // 3 A x 9 V = 27 W
+        List<IslandItem> out = new ArrayList<>();
+        s.collect(out);
+        assertEquals(1, out.size());
+        String subtitle = out.get(0).subtitle.toString();
+        assertTrue(subtitle, subtitle.startsWith("40% · "));
+        assertTrue(!subtitle.endsWith(out.get(0).title.toString()));
+    }
+
+    @Test
     public void chargingPopupAppearsOnPlugAndExpires() throws Exception {
         int[] changes = {0};
         EventSource s = source(changes);
