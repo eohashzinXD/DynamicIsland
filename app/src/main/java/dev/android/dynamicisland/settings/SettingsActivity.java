@@ -180,7 +180,9 @@ public final class SettingsActivity extends Activity {
         LinearLayout about = ui.card(page);
         ui.actionRow(about, getString(R.string.hub_version), "Dynamic Island " + version(), null);
         ui.actionRow(about, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
-        ui.actionRow(about, getString(R.string.hub_credits), getString(R.string.hub_credits_text), null);
+        TextView credits = ui.actionRow(about, getString(R.string.hub_credits), getString(R.string.hub_credits_text), null);
+        credits.setMaxLines(Integer.MAX_VALUE);
+        credits.setEllipsize(null);
     }
 
     private static String firstLines(String text, int count) {

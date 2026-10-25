@@ -243,7 +243,7 @@
     <string name="hub_author">만든 사람</string>
     <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">크레딧</string>
-    <string name="hub_credits_text">@cryyear의 DynamicIsland(github.com/Spottq)에서 영감을 받아 새로 구현했습니다. 규칙 파일 형식은 LiveBridge를 따릅니다. Xposed API는 rovo89 (Apache-2.0).</string>
+    <string name="hub_credits_text">@cryyear의 DynamicIsland(github.com/Spottq)에서 영감을 받아 새로 구현했습니다. 규칙 파일 형식은 LiveBridge를 따릅니다. Xposed API는 rovo89 (Apache-2.0).\n\n오류 수정 및 도움: @UnkilBonki (텔레그램).</string>
     <string name="pos_title">아일랜드 위치와 크기</string>
     <string name="pos_sum">아일랜드를 옮기고 크기를 바꾸고 카메라 구멍을 맞춥니다</string>
     <string name="pos_where">위치</string>

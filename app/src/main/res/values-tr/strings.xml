@@ -243,7 +243,7 @@
     <string name="hub_author">Geliştirici</string>
     <string name="hub_author_text">sampple-korea (github.com/sampple-korea/dynamicisland)</string>
     <string name="hub_credits">Katkıda bulunanlar</string>
-    <string name="hub_credits_text">\@cryyear\'ın DynamicIsland (github.com/Spottq) projesinden ilham alınarak yeniden geliştirildi. Kural dosyası biçimi: LiveBridge. Xposed API: rovo89 (Apache-2.0).</string>
+    <string name="hub_credits_text">\@cryyear\'ın DynamicIsland (github.com/Spottq) projesinden ilham alınarak yeniden geliştirildi. Kural dosyası biçimi: LiveBridge. Xposed API: rovo89 (Apache-2.0).\n\nHata düzeltmeleri ve yardım: @UnkilBonki (Telegram).</string>
     <string name="pos_title">Ada konumu ve boyutu</string>
     <string name="pos_sum">Adayı taşıyın, boyutunu değiştirin ve kamera deliğini ayarlayın</string>
     <string name="pos_where">Konum</string>
