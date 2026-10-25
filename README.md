@@ -50,6 +50,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 ## Features
 
 - **Live notifications as cards:** Every System UI ongoing activity gets a compact pill and an expanded card: header, chronometer, description, plain / segmented / indeterminate progress, icon or text buttons, custom chip views, work profile badge. Calls, cast, screen recording, timers and a music player (seek bar, art-tinted glow, waveform, output route) are included.
+- **Artwork-coloured waveform:** The compact music waveform blends a harmonious three-stop palette derived from the album art, with visible tonal variation and smooth colour changes between covers. Grayscale artwork keeps a neutral gradient.
 - **Ordinary notifications as cards:**
   - Messages and banners open as an island card instead of the stock heads-up banner (calls and alarms keep the stock banner).
   - Verification codes get a card with a Copy button (optional auto-copy, marked sensitive).

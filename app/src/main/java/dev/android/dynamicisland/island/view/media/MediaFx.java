@@ -72,6 +72,9 @@ public final class MediaFx {
     public float seekPhase;
     final ToneSet setFrom;
     final ToneSet setTo;
+    /** Separate from the scalar accent/ToneSet: secondary artwork colours only affect the waveform. */
+    private final WaveformPaletteTransition waveformPalette = new WaveformPaletteTransition();
+    private final WaveformGradient waveformGradient = new WaveformGradient();
     /** Drift speed easing between paused and playing. */
     final Tween speed;
 
@@ -98,6 +101,7 @@ public final class MediaFx {
             return;
         }
         lastSeq = item.seq;
+        waveformPalette.sync(item.mediaPalette, item.accent, item.seq, now);
         float targetSpeed = item.playing ? 1.0f : IslandView.PAUSED_SPEED;
         float targetGlow = item.playing ? 1.0f : IslandView.PAUSED_GLOW;
         if (!primed) {
@@ -212,9 +216,24 @@ public final class MediaFx {
         return Colors.blend(accentFrom, accentTo, IslandView.easeInOut((now - accentStart) / ACCENT_FADE_MS));
     }
 
+    /** Current waveform colour at a clamped horizontal position (0..1), without allocating a palette. */
+    public int waveformColorAt(float position, long now) {
+        return waveformPalette.colorAt(position, now);
+    }
+
+    /**
+     * Borrowed per-item paint, valid until the next call; draw immediately and do not mutate it.
+     * Its normalized shader spans the complete waveform bounds. Never touches the shared Paints.fill.
+     */
+    public Paint waveformPaint(float left, float width, float alpha, long now) {
+        return waveformGradient.paint(waveformColorAt(0.0f, now), waveformColorAt(0.5f, now),
+                waveformColorAt(1.0f, now), left, width, alpha);
+    }
+
     /** Whether something is still easing, so the view must keep redrawing. */
     public boolean animating(long now) {
-        return speed.running(now) || glow.running(now) || now - accentStart < IslandView.FX_COLOR_MS || now - flipStart < IslandView.FLIP_MS;
+        return speed.running(now) || glow.running(now) || waveformPalette.running(now)
+                || now - accentStart < IslandView.FX_COLOR_MS || now - flipStart < IslandView.FLIP_MS;
     }
 
     /** Advances the blob phases by the time since the previous frame; call once per drawn frame. */

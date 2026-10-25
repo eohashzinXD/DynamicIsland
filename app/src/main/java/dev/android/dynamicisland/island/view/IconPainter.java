@@ -175,8 +175,11 @@ final class IconPainter {
                 drawRing(c, right - (m.ringSize / 2.0f), midY, m.ringSize / 2.0f, item.progress, -1, alpha);
                 break;
             case WAVEFORM:
-                int barColor = item.isMedia ? mediaFx.obtain(item).accent(IslandView.now()) : item.accent;
-                waveform.draw(c, paints.fill, scratch, right - w, midY, barColor, alpha);
+                if (item.isMedia) {
+                    waveform.draw(c, scratch, right - w, midY, mediaFx.obtain(item), alpha, IslandView.now());
+                } else {
+                    waveform.draw(c, scratch, right - w, midY, item.accent, alpha);
+                }
                 break;
             default:
                 break;
