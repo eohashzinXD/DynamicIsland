@@ -313,4 +313,6 @@
     <string name="accent_pink">Pembe</string>
     <string name="accent_purple">Mor</string>
     <string name="accent_teal">Turkuaz</string>
+    <string name="compact_event_icons">Küçük etkinlik kartı simgeleri</string>
+    <string name="compact_event_icons_desc">Açılan şarj, ses modu ve diğer etkinlik kartlarında önceki küçük simgeleri kullanır. Varsayılan olarak kapalıdır.</string>
 </resources>

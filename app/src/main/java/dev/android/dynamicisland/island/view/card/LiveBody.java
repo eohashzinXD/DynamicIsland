@@ -75,7 +75,9 @@ public final class LiveBody extends CardBody {
     public LiveBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
         pad = owner.dp(18.0f);
-        iconSize = owner.dp(22.0f);
+        boolean event = item.kind == IslandItem.Kind.EVENT;
+        boolean hasIcon = item.icon != null || item.cardIcon != null;
+        iconSize = event && !hasIcon ? 0 : owner.dp(event && !ModuleSettings.compactEventIcons() ? 40 : 22);
         logoSize = owner.dp(52.0f);
         progressTop = -1.0f;
         actionsTop = -1.0f;
@@ -83,7 +85,7 @@ public final class LiveBody extends CardBody {
         if (teams && item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null) {
             score = item.trailingText.toString();
         }
-        textW = Math.max(1, Math.round((w - (pad * 2.0f)) - (teams ? 0.0f : iconSize + owner.dp(12.0f))));
+        textW = Math.max(1, Math.round((w - (pad * 2.0f)) - (teams || iconSize == 0 ? 0.0f : iconSize + owner.dp(12.0f))));
         int textWidth = Math.round(textW);
         float y = pad;
         if (teams) {

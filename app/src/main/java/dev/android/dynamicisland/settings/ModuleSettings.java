@@ -80,6 +80,7 @@ public final class ModuleSettings {
     public static final String KEY_FOREGROUND_NOTIFICATIONS = "foreground_notifications";
     public static final String KEY_AUTO_OPEN_CARDS = "auto_open_cards";
     public static final String KEY_EXPERIMENTAL_RECOVERY = "experimental_notification_recovery";
+    public static final String KEY_COMPACT_EVENT_ICONS = "compact_event_icons";
     public static final String KEY_HIDE_BATTERY_ICON = "hide_battery_icon";
     public static final String KEY_ACCENT_CUSTOM = "accent_custom";
     public static final String KEY_ACCENT_COLOR = "accent_color";
@@ -134,6 +135,7 @@ public final class ModuleSettings {
     private static volatile boolean autoOpenCards;
     private static volatile boolean experimentalRecovery;
     private static volatile boolean hideBatteryIcon = true;
+    private static volatile boolean compactEventIcons;
     private static volatile boolean accentCustom;
     private static volatile int accentColor = DEFAULT_ACCENT;
     private static volatile boolean progressNotifications = true;
@@ -450,6 +452,7 @@ public final class ModuleSettings {
             foregroundNotifications = source.getBoolean(KEY_FOREGROUND_NOTIFICATIONS, false);
             autoOpenCards = source.getBoolean(KEY_AUTO_OPEN_CARDS, false);
             experimentalRecovery = source.getBoolean(KEY_EXPERIMENTAL_RECOVERY, false);
+            compactEventIcons = source.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
             hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
             accentCustom = source.getBoolean(KEY_ACCENT_CUSTOM, false);
             accentColor = source.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
@@ -480,6 +483,7 @@ public final class ModuleSettings {
     public static boolean foregroundNotifications() { return foregroundNotifications; }
     public static boolean autoOpenCards() { return autoOpenCards; }
     public static boolean experimentalRecovery() { return experimentalRecovery; }
+    public static boolean compactEventIcons() { return compactEventIcons; }
     public static boolean hideBatteryIcon() { return hideBatteryIcon; }
     public static boolean accentCustom() { return accentCustom; }
     public static int accentColor() { return accentColor; }
@@ -487,7 +491,7 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + foregroundNotifications + autoOpenCards + experimentalRecovery + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + foregroundNotifications + autoOpenCards + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }

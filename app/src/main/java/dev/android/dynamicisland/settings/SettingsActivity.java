@@ -265,6 +265,7 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.group_charging));
         LinearLayout device = ui.card(page);
         toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        toggle(device, R.string.compact_event_icons, R.string.compact_event_icons_desc, ModuleSettings.KEY_COMPACT_EVENT_ICONS, false);
         toggle(device, R.string.hide_battery_icon, R.string.hide_battery_icon_desc, ModuleSettings.KEY_HIDE_BATTERY_ICON, true);
         toggle(device, R.string.setting_event_ringer, R.string.setting_event_ringer_desc, ModuleSettings.KEY_EVENT_RINGER, true);
         toggle(device, R.string.setting_event_bluetooth, R.string.setting_event_bluetooth_desc, ModuleSettings.KEY_EVENT_BLUETOOTH, true);

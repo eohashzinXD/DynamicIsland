@@ -313,4 +313,6 @@
     <string name="accent_pink">분홍</string>
     <string name="accent_purple">보라</string>
     <string name="accent_teal">청록</string>
+    <string name="compact_event_icons">작은 이벤트 카드 아이콘</string>
+    <string name="compact_event_icons_desc">펼친 충전·소리 모드 등 이벤트 카드의 아이콘을 기존의 작은 크기로 표시해요. 기본값은 꺼짐이에요.</string>
 </resources>

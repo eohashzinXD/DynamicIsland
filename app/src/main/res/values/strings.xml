@@ -313,4 +313,6 @@
     <string name="accent_pink">Pink</string>
     <string name="accent_purple">Purple</string>
     <string name="accent_teal">Teal</string>
+    <string name="compact_event_icons">Small event card icons</string>
+    <string name="compact_event_icons_desc">Use the original smaller icons in expanded charging, sound-mode and other event cards. Off by default.</string>
 </resources>
