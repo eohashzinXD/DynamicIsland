@@ -24,6 +24,13 @@ public final class ShadeLiveCards {
     /** Position of the row argument in {@code NotificationRowContentBinderImpl.Companion.access$apply}. */
     private static final int APPLY_ROW_ARG = 8;
 
+    private static final java.util.Map<View, Boolean> boundRows = new java.util.WeakHashMap<>();
+
+    /** Reconcile already-bound rows when the overlay opens, closes or gives way to the shade. */
+    public static void refreshVisibleCards() {
+        for (View row : new java.util.ArrayList<>(boundRows.keySet())) bind(row);
+    }
+
     private ShadeLiveCards() {
     }
 
@@ -146,15 +153,20 @@ public final class ShadeLiveCards {
             return;
         }
         String key = (String) Refl.call(Refl.get(row, "mEntryAdapter|mEntry"), "getKey");
+        boundRows.put((View) row, Boolean.TRUE);
         IslandItem item = item(key);
         Object layout = Refl.get(row, "mPrivateLayout");
-        if (item == null || !(layout instanceof ViewGroup)) {
+        if (!(layout instanceof ViewGroup)) {
             return;
         }
         CardRowState previous = CardRowState.installedIn(layout);
+        if (previous == null) previous = CardRowState.exposedIn(layout);
         if (previous != null) {
             previous.restore();
         }
+        IslandController controller = IslandController.get();
+        // Restore first: an earlier binding may already contain our duplicate card.
+        if (item == null || controller != null && controller.isShownAsCard(item)) return;
         ViewGroup group = (ViewGroup) layout;
         for (int i = group.getChildCount() - 1; i >= 0; i--) {
             View child = group.getChildAt(i);

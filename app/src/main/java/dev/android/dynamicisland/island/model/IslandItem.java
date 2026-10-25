@@ -98,6 +98,9 @@ public final class IslandItem {
     public int accent = -1;
     /** Background colour of the compact pill; 0 = default black. Set by the ongoing-activity and event sources. */
     public int pillColor;
+    /** Optional user accent for fills only; media, artwork and destructive controls retain their semantics. */
+    public int customAccent;
+    public int fillAccent() { return customAccent != 0 ? customAccent : accent; }
     /** Compact pill shows a pulsing dot instead of the icon (screen cast). */
     public boolean pulsingDot;
     /** Android 16 ProgressStyle notification (title/text/progress/segments straight from the notification). */
@@ -288,7 +291,7 @@ public final class IslandItem {
 
     /** True when the compact pill would look the same for both items, so it need not animate a swap. */
     public boolean sameCompactLook(IslandItem o) {
-        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && hasTeams() == o.hasTeams();
+        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && customAccent == o.customAccent && hasTeams() == o.hasTeams();
     }
 
     @Override

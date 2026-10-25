@@ -107,10 +107,21 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         return sources.media.isRecordingSession(token);
     }
 
+    private final AutoOpenCards autoOpenCards = new AutoOpenCards();
+    private List<StatusBarNotification> lastNotifications = java.util.Collections.emptyList();
+
+    public boolean ownsHeadsUp(String key) { return headsUp.owns(key); }
+
+    public boolean isShownAsCard(IslandItem item) {
+        IslandView view = placement.view();
+        return view != null && view.isPaintingCard(item);
+    }
+
     public void start() {
         sources.start(this::requestRefresh);
         // the position settings take effect without a restart (and the sample item comes and goes with them)
         ModuleSettings.setOnSwitchesChanged(() -> main.post(() -> {
+            onNotificationsSnapshot(lastNotifications);
             requestRefresh();
             HideDuplicated.rebuild();
         }));
@@ -197,12 +208,14 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     /** Fed by the notification list hook: progress notifications become cards. */
     public void onNotificationsSnapshot(List<StatusBarNotification> all) {
+        lastNotifications = new ArrayList<>(all);
         List<StatusBarNotification> allowed = new ArrayList<>(all.size());
         for (StatusBarNotification sbn : all) {
-            if (sbn == null || ModuleSettings.appAllowed(sbn.getPackageName())) {
+            if (sbn != null && ModuleSettings.appAllowed(sbn.getPackageName())) {
                 allowed.add(sbn);
             }
         }
+        headsUp.setSnapshot(allowed);
         sources.recorder.update(allowed);
         sources.promoted.update(allowed);
         sources.progress.update(allowed);
@@ -265,7 +278,9 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void setShadeExpansion(float fraction) {
         IslandView view = placement.view();
         if (view != null) {
+            boolean pulled = view.shadePulled();
             view.setShadeFraction(fraction);
+            if (pulled != view.shadePulled()) dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         }
     }
 
@@ -282,9 +297,17 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         return window != null && window.setSurfaceFade(alpha, scale, px, py);
     }
 
+    private int shadeCardCoverage;
+
     @Override
     public void onIslandFrame() {
         placement.onFrame();
+        IslandView view = placement.view();
+        int coverage = view == null ? 0 : view.shadeCardCoverageToken();
+        if (coverage != shadeCardCoverage) {
+            shadeCardCoverage = coverage;
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+        }
     }
 
     @Override
@@ -357,6 +380,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     @Override
     public void onExpandedChanged(boolean expanded) {
         haptics.tick();
+        dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+        if (!expanded) requestRefresh();
         IslandWindow window = placement.window();
         if (window != null) {
             window.setWatchOutsideTouch(expanded && !placement.view().isPeekOpen());
@@ -460,6 +485,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             long now = SystemClock.uptimeMillis();
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
+            IslandItem nextCard = autoOpenCards.next(shape.shown, ModuleSettings.autoOpenCards(), now);
+            if (nextCard != null && !view.isExpanded() && view.canPeek() && view.peek(nextCard, 4000)) autoOpenCards.opened(nextCard);
             logItemChanges(shape);
             Diagnostics.fact("islands", shape.shown.size() + " shown, " + shape.bubbled.size() + " minimized");
             Diagnostics.publish(ctx);

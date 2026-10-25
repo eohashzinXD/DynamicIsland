@@ -77,6 +77,13 @@ public final class ModuleSettings {
     public static final int PILL_Y_MIN_DP = -16;
     public static final int PILL_Y_MAX_DP = 64;
     public static final String KEY_HEADS_UP_ISLAND = "heads_up_island";
+    public static final String KEY_FOREGROUND_NOTIFICATIONS = "foreground_notifications";
+    public static final String KEY_AUTO_OPEN_CARDS = "auto_open_cards";
+    public static final String KEY_EXPERIMENTAL_RECOVERY = "experimental_notification_recovery";
+    public static final String KEY_HIDE_BATTERY_ICON = "hide_battery_icon";
+    public static final String KEY_ACCENT_CUSTOM = "accent_custom";
+    public static final String KEY_ACCENT_COLOR = "accent_color";
+    public static final int DEFAULT_ACCENT = 0xFF3E91FF;
     public static final String KEY_ALL_NOTIFICATIONS = "all_notifications_island";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
@@ -123,6 +130,12 @@ public final class ModuleSettings {
     private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
+    private static volatile boolean foregroundNotifications;
+    private static volatile boolean autoOpenCards;
+    private static volatile boolean experimentalRecovery;
+    private static volatile boolean hideBatteryIcon = true;
+    private static volatile boolean accentCustom;
+    private static volatile int accentColor = DEFAULT_ACCENT;
     private static volatile boolean progressNotifications = true;
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
@@ -434,6 +447,12 @@ public final class ModuleSettings {
             if (listener != null && rulesConfig.revision != before.revision) {
                 listener.run();
             }
+            foregroundNotifications = source.getBoolean(KEY_FOREGROUND_NOTIFICATIONS, false);
+            autoOpenCards = source.getBoolean(KEY_AUTO_OPEN_CARDS, false);
+            experimentalRecovery = source.getBoolean(KEY_EXPERIMENTAL_RECOVERY, false);
+            hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
+            accentCustom = source.getBoolean(KEY_ACCENT_CUSTOM, false);
+            accentColor = source.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
@@ -458,10 +477,17 @@ public final class ModuleSettings {
         }
     }
 
+    public static boolean foregroundNotifications() { return foregroundNotifications; }
+    public static boolean autoOpenCards() { return autoOpenCards; }
+    public static boolean experimentalRecovery() { return experimentalRecovery; }
+    public static boolean hideBatteryIcon() { return hideBatteryIcon; }
+    public static boolean accentCustom() { return accentCustom; }
+    public static int accentColor() { return accentColor; }
+
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + foregroundNotifications + autoOpenCards + experimentalRecovery + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
@@ -469,7 +495,7 @@ public final class ModuleSettings {
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges(SharedPreferences source) {
         String now = "haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
-                + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
+                + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision

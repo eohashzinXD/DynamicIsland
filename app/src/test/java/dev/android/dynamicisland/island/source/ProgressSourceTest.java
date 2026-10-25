@@ -153,19 +153,21 @@ public class ProgressSourceTest {
     }
 
     @Test
-    public void snapshotKeepsTwoPackagesAndCollectHidesTheForegroundApp() throws Exception {
+    public void snapshotKeepsFourPackagesAndCollectHidesTheForegroundApp() throws Exception {
         ProgressSource s = source();
         List<StatusBarNotification> list = new ArrayList<>();
         list.add(sbn("com.a", 1, download("a1", 10, 100)));
         list.add(sbn("com.a", 2, download("a2", 20, 100)));   // same package: only the first
         list.add(sbn("com.b", 3, download("b", 30, 100)));
-        list.add(sbn("com.c", 4, download("c", 40, 100)));    // beyond the limit
+        list.add(sbn("com.c", 4, download("c", 40, 100)));
+        list.add(sbn("com.d", 5, download("d", 40, 100)));
+        list.add(sbn("com.e", 6, download("e", 40, 100)));    // beyond the limit
         s.update(list);
-        assertEquals(2, s.snapshot().size());
+        assertEquals(4, s.snapshot().size());
 
         List<IslandItem> out = new ArrayList<>();
         s.collect(out, "com.a");
-        assertEquals(1, out.size());
+        assertEquals(3, out.size());
         assertEquals("com.b", out.get(0).packageName);
     }
 

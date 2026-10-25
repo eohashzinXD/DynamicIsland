@@ -134,6 +134,10 @@ final class IslandSources {
             // System UI's own "flashlight in use" notification would show next to the brightness card
             items.removeIf(TorchSource::isStockItem);
         }
+        for (IslandItem item : items) {
+            item.customAccent = ModuleSettings.accentCustom() && !item.isMedia
+                    ? dev.android.dynamicisland.island.graphics.Colors.readableOnBlack(ModuleSettings.accentColor()) : 0;
+        }
         SwitchGate.apply(items);
         ItemDedupe.apply(items, HideDuplicated::copyKeysOf);
         return out;

@@ -438,11 +438,47 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     /** Pops the island open on {@code item} for {@code ms}, like a banner. */
     public boolean peek(IslandItem item, long ms) {
-        if (metrics.screenW == 0 || scene.suppressed || item == null) {
+        if (!canPeek() || item == null) {
             return false;
         }
         director.peek(item, ms);
         return true;
+    }
+
+    /** Incoming cards may replace a manual card, but never a reply or a pulled-down shade. */
+    public boolean canPeek() {
+        return metrics.screenW > 0 && !scene.suppressed && !scene.held && !scene.shadePulled();
+    }
+
+    public boolean isShowingCard(IslandItem item) {
+        if (item == null || !isExpanded() || scene.shadePulled()) return false;
+        for (Card card : scene.cards) {
+            if (card.item != null && (card.item.key.equals(item.key)
+                    || item.sourceKey != null && item.sourceKey.equals(card.item.sourceKey))) return true;
+        }
+        return false;
+    }
+
+    private boolean cardOccupiesOverlay(Card card) {
+        return scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
+                || card.leaving && StackPainter.contentAlpha(card, now(), 1) > MIN_VISIBLE_ALPHA);
+    }
+
+    /** Keep the shade copy out until the overlay's departing text has actually faded. */
+    public boolean isPaintingCard(IslandItem item) {
+        if (item == null) return false;
+        for (Card card : scene.cards) {
+            if (cardOccupiesOverlay(card) && card.item != null && (card.item.key.equals(item.key)
+                    || item.sourceKey != null && item.sourceKey.equals(card.item.sourceKey))) return true;
+        }
+        return false;
+    }
+
+    /** Changes only when the set of painted overlay cards changes, so rows need no per-frame rebinding. */
+    public int shadeCardCoverageToken() {
+        int token = 0;
+        for (Card card : scene.cards) if (cardOccupiesOverlay(card) && card.item != null) token += card.item.key.hashCode();
+        return token;
     }
 
     public boolean isExpanded() {

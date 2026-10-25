@@ -27,35 +27,101 @@ public final class HeadsUpHooks {
 
     static void install(ClassLoader cl) {
         Refl.hookAll(cl, MANAGER, "shouldHeadsUpBecomePinned", SafeHook.after("heads-up to island", HeadsUpHooks::afterPinDecision));
+        Refl.hookAll(cl, MANAGER, "addListener", SafeHook.after("heads-up manager", p -> manager = p.thisObject));
+        Refl.hookAll(cl, MANAGER, "updateNotificationInternal", SafeHook.after("heads-up manager", p -> manager = p.thisObject));
         // Android 17 also pins from a delayed runnable (several banners in a row) without asking the method above again
         Refl.hookAll(cl, MANAGER, "setEntryPinned", SafeHook.before("heads-up pin to island", HeadsUpHooks::beforeSetPinned));
     }
 
-    /** Removes the stock banner of {@code key} when it is up: the island shows the notification now. */
+    /** Only dismiss a banner while the matching posting is still actually displayed by our overlay. */
+    private static boolean owned(String key) {
+        IslandController controller = IslandController.get();
+        return controller != null && controller.ownsHeadsUp(key);
+    }
+
     public static String dismissStock(String key) {
         Object heads = manager;
-        if (heads == null || key == null) {
-            return "no heads-up manager seen yet";
-        }
+        if (heads == null || key == null || !owned(key)) return "not currently owned by the island";
         try {
-            // One UI 9 / Android 17: removeNotification(String key, String reason, boolean releaseImmediately)
-            if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
-                Refl.call(heads, "removeNotification", key, "dynamic island", Boolean.TRUE);
-                return "removeNotification(key, reason, immediately) called";
+            if (!remove(heads, key)) return "unsupported removal API";
+            Boolean up = status(heads, key);
+            if (Boolean.FALSE.equals(up)) return "stock banner removed";
+            for (long delay : new long[]{150, 500}) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    if (manager != heads || !owned(key) || Boolean.FALSE.equals(status(heads, key))) return;
+                    try { remove(heads, key); }
+                    catch (Throwable t) { XLog.once("heads-up retry", t); }
+                }, delay);
             }
-            if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
-                Refl.call(heads, "removeNotification", key, Boolean.TRUE);
-                return "removeNotification(key, immediately) called";
-            }
-            return "no removeNotification with 2 or 3 parameters";
+            return up == null ? "removal requested; state unknown" : "removal requested; retrying";
         } catch (Throwable t) {
             XLog.once("HeadsUpHooks.dismissStock", t);
             return "failed: " + t.getClass().getSimpleName();
         }
     }
 
+    private static boolean remove(Object heads, String key) throws ReflectiveOperationException {
+        for (Class<?> level = heads.getClass(); level != null; level = level.getSuperclass()) {
+            for (java.lang.reflect.Method method : level.getDeclaredMethods()) {
+                if (!method.getName().equals("removeNotification")) continue;
+                Class<?>[] types = method.getParameterTypes();
+                boolean two = java.util.Arrays.equals(types, new Class<?>[]{String.class, boolean.class});
+                boolean three = java.util.Arrays.equals(types, new Class<?>[]{String.class, String.class, boolean.class});
+                if (!two && !three) continue;
+                method.setAccessible(true);
+                method.invoke(heads, three ? new Object[]{key, "dynamic island", true} : new Object[]{key, true});
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** null means the build has no readable accessor, never a proven removal. */
+    static Boolean status(Object heads, String key) {
+        if (Refl.method(heads.getClass(), "getHeadsUpEntry", 1) != null) {
+            try { return Refl.method(heads.getClass(), "getHeadsUpEntry", 1).invoke(heads, key) != null; }
+            catch (ReflectiveOperationException | RuntimeException unreadable) { return null; }
+        }
+        for (String accessor : new String[]{"getHeadsUpEntryList", "getAllEntries"}) {
+            if (Refl.method(heads.getClass(), accessor, 0) == null) continue;
+            Object entries;
+            try { entries = Refl.method(heads.getClass(), accessor, 0).invoke(heads); }
+            catch (ReflectiveOperationException | RuntimeException unreadable) { continue; }
+            if (entries instanceof java.util.Map) entries = ((java.util.Map<?, ?>) entries).values();
+            if (!(entries instanceof Iterable)) continue;
+            boolean readable = true;
+            for (Object entry : (Iterable<?>) entries) {
+                StatusBarNotification notification = notificationOf(entry);
+                if (notification == null) readable = false;
+                else if (key.equals(notification.getKey())) return true;
+            }
+            if (readable) return false;
+        }
+        return null;
+    }
+
+    private static StatusBarNotification notificationOf(Object entry) {
+        for (int depth = 0; entry != null && depth < 3; depth++) {
+            if (entry instanceof StatusBarNotification) return (StatusBarNotification) entry;
+            if (Refl.method(entry.getClass(), "getSbn", 0) != null) {
+                Object value = Refl.call(entry, "getSbn");
+                if (value instanceof StatusBarNotification) return (StatusBarNotification) value;
+            }
+            Object nested = null;
+            for (String name : new String[]{"mSbn", "mEntry", "entry"}) {
+                if (Refl.field(entry.getClass(), name) != null) {
+                    Object value = Refl.get(entry, name);
+                    if (value != null) { nested = value; break; }
+                }
+            }
+            entry = nested;
+        }
+        return null;
+    }
+
     /** Before {@code setEntryPinned(entry, status, reason)}: a system pin the island takes over becomes "not pinned". */
     private static void beforeSetPinned(XC_MethodHook.MethodHookParam p) {
+        manager = p.thisObject;
         if (p.args.length < 2 || p.args[0] == null || p.args[1] == null || !"PinnedBySystem".equals(String.valueOf(p.args[1]))) {
             return;
         }

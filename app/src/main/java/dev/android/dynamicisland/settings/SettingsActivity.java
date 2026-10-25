@@ -46,6 +46,7 @@ public final class SettingsActivity extends Activity {
     private RulesScreen rules;
     private AnimationScreen animation;
     private PositionScreen position;
+    private AppearanceScreen appearance;
     private LinearLayout page;
     private ScrollView scroll;
     /** Builders of the open pages, the visible one on top. */
@@ -60,6 +61,7 @@ public final class SettingsActivity extends Activity {
         rules = new RulesScreen(this, ui, prefs);
         animation = new AnimationScreen(this, ui, prefs);
         position = new PositionScreen(this, ui, prefs);
+        appearance = new AppearanceScreen(this, ui, prefs);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -165,6 +167,7 @@ public final class SettingsActivity extends Activity {
         LinearLayout main = ui.card(page);
         ui.linkRow(main, getString(R.string.hub_display), getString(R.string.hub_display_sum), () -> open(this::displayPage));
         ui.linkRow(main, getString(R.string.anim_title), getString(R.string.anim_sum), () -> open(animation::open));
+        ui.linkRow(main, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
         ui.linkRow(main, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
         ui.linkRow(main, getString(R.string.hub_notifications), getString(R.string.hub_notifications_sum), () -> open(this::notificationsPage));
         ui.linkRow(main, getString(R.string.hub_events), getString(R.string.hub_events_sum), () -> open(this::eventsPage));
@@ -232,9 +235,19 @@ public final class SettingsActivity extends Activity {
         LinearLayout banners = ui.card(page);
         toggle(banners, R.string.setting_heads_up, R.string.setting_heads_up_desc, ModuleSettings.KEY_HEADS_UP_ISLAND, true);
         toggle(banners, R.string.setting_all_notifications, R.string.setting_all_notifications_desc, ModuleSettings.KEY_ALL_NOTIFICATIONS, false);
+        toggle(banners, R.string.foreground_notifications, R.string.foreground_notifications_desc, ModuleSettings.KEY_FOREGROUND_NOTIFICATIONS, false);
+        toggle(banners, R.string.auto_open_cards, R.string.auto_open_cards_desc, ModuleSettings.KEY_AUTO_OPEN_CARDS, false);
         Switch progress = toggle(banners, R.string.setting_progress, R.string.setting_progress_desc, ModuleSettings.KEY_PROGRESS_NOTIFICATIONS, true);
         Switch hide = toggle(banners, R.string.setting_hide_progress, R.string.setting_hide_progress_desc, ModuleSettings.KEY_HIDE_PROGRESS_ORIGINALS, true);
         dependent(progress, OneUi.rowOf(hide));
+
+        ui.category(page, getString(R.string.group_recovery));
+        LinearLayout recovery = ui.card(page);
+        Switch compatibility = toggle(recovery, R.string.experimental_recovery, R.string.experimental_recovery_desc, ModuleSettings.KEY_EXPERIMENTAL_RECOVERY, false);
+        // The compatibility explanation needs more than the standard five-line row summary.
+        android.widget.LinearLayout words = (android.widget.LinearLayout) ((android.view.ViewGroup) OneUi.rowOf(compatibility)).getChildAt(0);
+        ((TextView) words.getChildAt(1)).setMaxLines(Integer.MAX_VALUE);
+        ((TextView) words.getChildAt(1)).setEllipsize(null);
 
         ui.category(page, getString(R.string.group_codes));
         LinearLayout codes = ui.card(page);
@@ -252,6 +265,7 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.group_charging));
         LinearLayout device = ui.card(page);
         toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        toggle(device, R.string.hide_battery_icon, R.string.hide_battery_icon_desc, ModuleSettings.KEY_HIDE_BATTERY_ICON, true);
         toggle(device, R.string.setting_event_ringer, R.string.setting_event_ringer_desc, ModuleSettings.KEY_EVENT_RINGER, true);
         toggle(device, R.string.setting_event_bluetooth, R.string.setting_event_bluetooth_desc, ModuleSettings.KEY_EVENT_BLUETOOTH, true);
         toggle(device, R.string.setting_event_toggles, R.string.setting_event_toggles_desc, ModuleSettings.KEY_EVENT_TOGGLES, true);

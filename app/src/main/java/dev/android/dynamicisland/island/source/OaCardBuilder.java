@@ -85,6 +85,7 @@ final class OaCardBuilder {
         Bundle extras = n != null ? n.extras : new Bundle();
 
         IslandItem it = new IslandItem("oa:" + a.key);
+        it.sourceKey = a.sbn == null ? null : a.sbn.getKey();
         it.packageName = pkg;
         it.userId = Refl.getInt(data, "mUserId", 0);
         it.progressStyle = OaActivity.isProgressStyle(n);

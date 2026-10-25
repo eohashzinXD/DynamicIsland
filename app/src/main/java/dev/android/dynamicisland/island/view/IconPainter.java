@@ -150,7 +150,7 @@ final class IconPainter {
         switch (item.trailing) {
             case TEXT:
             case CHRONOMETER:
-                return text == null ? 0.0f : paints.trail.measureText(text);
+                return text == null ? 0.0f : DigitClock.width(paints.trail, text);
             case PROGRESS_RING:
                 return m.ringSize;
             case WAVEFORM:
@@ -168,7 +168,11 @@ final class IconPainter {
                     Paint.FontMetrics fm = paints.trail.getFontMetrics();
                     paints.trail.setColor(Colors.withAlpha(item.kind == IslandItem.Kind.CALL ? item.accent : -1, alpha));
                     float baseline = midY - ((fm.ascent + fm.descent) / 2.0f);
-                    clock.draw(c, item.key + "#compact", text, paints.trail, right - w, baseline, item.chronoCountDown);
+                    float natural = DigitClock.width(paints.trail, text);
+                    int save = c.save();
+                    if (DigitClock.isClock(text) && w > 0 && natural > w) c.scale(w / natural, w / natural, right, midY);
+                    clock.draw(c, item.key + "#compact", text, paints.trail, right - natural, baseline, item.chronoCountDown);
+                    c.restoreToCount(save);
                 }
                 break;
             case PROGRESS_RING:

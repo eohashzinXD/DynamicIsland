@@ -88,16 +88,17 @@ public final class PeekSource {
 
     /** Which notifications this island takes over from the stock heads-up banner. */
     public static boolean eligible(StatusBarNotification sbn) {
-        Notification n = sbn.getNotification();
+        Notification n = sbn == null ? null : sbn.getNotification();
         if (n == null || n.extras == null) {
             return false;
         }
         if (n.fullScreenIntent != null) {
             return false; // calls and alarms must keep their own full UI
         }
-        if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_GROUP_SUMMARY)) != 0) {
+        if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0) {
             return false;
         }
+        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0 && !hasReadableContent(n)) return false;
         String category = n.category;
         if (Notification.CATEGORY_CALL.equals(category) || Notification.CATEGORY_ALARM.equals(category)
                 || Notification.CATEGORY_NAVIGATION.equals(category) || Notification.CATEGORY_TRANSPORT.equals(category)
@@ -116,6 +117,27 @@ public final class PeekSource {
             if (key.startsWith("android.ongoingActivityNoti")) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    private static boolean hasReadableContent(Notification n) {
+        for (String key : new String[]{Notification.EXTRA_TITLE, Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT}) {
+            CharSequence value = n.extras.getCharSequence(key);
+            if (value != null && value.toString().trim().length() > 0) return true;
+        }
+        return n.extras.getParcelableArray(Notification.EXTRA_MESSAGES, Parcelable.class) != null;
+    }
+
+    /** Prefer a real child to its summary, within the same Android user and notification group. */
+    public static boolean preferred(StatusBarNotification sbn, List<StatusBarNotification> snapshot) {
+        if (sbn == null) return false;
+        if ((sbn.getNotification().flags & Notification.FLAG_GROUP_SUMMARY) == 0) return true;
+        for (StatusBarNotification other : snapshot) {
+            if (other != null && !other.getKey().equals(sbn.getKey()) && other.getUserId() == sbn.getUserId()
+                    && sbn.getPackageName().equals(other.getPackageName())
+                    && java.util.Objects.equals(sbn.getGroupKey(), other.getGroupKey()) && eligible(other)
+                    && (other.getNotification().flags & Notification.FLAG_GROUP_SUMMARY) == 0) return false;
         }
         return true;
     }
@@ -184,6 +206,7 @@ public final class PeekSource {
         boolean personal = avatar != null && avatar != appIcon;
 
         IslandItem it = new IslandItem("peek:" + sbn.getKey());
+        it.sourceKey = sbn.getKey();
         it.kind = IslandItem.Kind.PEEK;
         it.packageName = pkg;
         it.appName = label(pkg);
@@ -267,6 +290,7 @@ public final class PeekSource {
         String pkg = sbn.getPackageName();
         Drawable appIcon = appIcon(pkg);
         IslandItem it = new IslandItem("peek:" + sbn.getKey());
+        it.sourceKey = sbn.getKey();
         it.kind = IslandItem.Kind.PEEK;
         it.packageName = pkg;
         it.appName = label(pkg);

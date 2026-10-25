@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import java.util.Collection;
 import java.util.List;
@@ -101,7 +102,7 @@ public final class OaSource {
             if (a.isMedia() || a.key == null || a.pkg == null) {
                 return order;
             }
-            if (a.isGroupSummary() || a.isNowBarStyle() || a.isCallStyle() || a.isDemoted()) {
+            if (a.isGroupSummary() || (a.isNowBarStyle() && !ModuleSettings.experimentalRecovery()) || a.isCallStyle() || a.isDemoted()) {
                 return order;
             }
             String target = a.targetPackage();
@@ -142,7 +143,7 @@ public final class OaSource {
     }
 
     private IslandItem shadeCard(OaActivity a) {
-        if (a.isMedia() || a.pkg == null || a.isNowBarStyle()) {
+        if (a.isMedia() || a.pkg == null || (a.isNowBarStyle() && !ModuleSettings.experimentalRecovery())) {
             return null;
         }
         Notification n = a.notification;

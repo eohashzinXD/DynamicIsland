@@ -8,6 +8,7 @@ import android.service.notification.StatusBarNotification;
 import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -44,12 +45,22 @@ public final class RecorderNotificationSource {
         }
         String channel = n.getChannelId() == null ? "" : n.getChannelId().toLowerCase(Locale.ROOT);
         return (channel.contains("screen") && channel.contains("record")) || channel.contains("screenrecord")
-                || SMART_CAPTURE.equals(sbn.getPackageName());
+                || SMART_CAPTURE.equals(sbn.getPackageName())
+                || (ModuleSettings.experimentalRecovery() && recorderPackage(sbn.getPackageName()));
+    }
+
+    private static boolean recorderPackage(String pkg) {
+        String name = pkg == null ? "" : pkg.toLowerCase(Locale.ROOT);
+        return name.contains("screenrecord") || name.contains("screen_recorder");
     }
 
     public void update(List<StatusBarNotification> snapshot) {
+        java.util.TreeSet<String> unmatched = new java.util.TreeSet<>();
         IslandItem fresh = null;
         for (StatusBarNotification sbn : snapshot) {
+            Notification n = sbn == null ? null : sbn.getNotification();
+            if (n != null && (n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0
+                    && !isRecorder(sbn) && unmatched.size() < 8) unmatched.add(sbn.getPackageName() + " channel=" + n.getChannelId());
             if (isRecorder(sbn)) {
                 fresh = build(sbn);
                 if (!sbn.getKey().equals(loggedKey)) {
@@ -59,6 +70,7 @@ public final class RecorderNotificationSource {
                 break;
             }
         }
+        dev.android.dynamicisland.xposed.Diagnostics.fact("ongoing not carded", unmatched.isEmpty() ? "none" : String.join(" | ", unmatched));
         IslandItem old = item;
         item = fresh;
         if ((old == null) != (fresh == null) || (old != null && !old.key.equals(fresh.key))) {

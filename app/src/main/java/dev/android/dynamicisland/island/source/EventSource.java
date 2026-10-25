@@ -292,6 +292,10 @@ public final class EventSource {
                 it.remove();
                 continue;
             }
+            if (item.key.equals("event:charging") || item.key.equals("event:lowbattery")) {
+                if (ModuleSettings.hideBatteryIcon()) item.icon = null;
+                else if (item.icon == null) item.icon = batteryIcon(Math.round(item.progress * 100), item.key.equals("event:charging"));
+            }
             out.add(item);
             next = Math.min(next, item.expiresAtUptime);
         }
@@ -352,6 +356,11 @@ public final class EventSource {
         }
     }
 
+    private android.graphics.drawable.Drawable batteryIcon(int percent, boolean charging) {
+        if (ModuleSettings.hideBatteryIcon()) return null;
+        return dev.android.dynamicisland.island.graphics.BatteryIcon.load(ctx, percent, charging);
+    }
+
     private IslandItem chargingItem(int percent, int plugged, Intent battery) {
         IslandItem it = base("event:charging");
         it.title = t("충전 중", "Charging", "Şarj oluyor");
@@ -360,7 +369,7 @@ public final class EventSource {
         // and wireless charging add something
         it.subtitle = label.equals(String.valueOf(it.title)) ? percent + "%" : percent + "% · " + label;
         it.accent = GREEN;
-        it.icon = GlyphIcon.battery(percent / 100f, true);
+        it.icon = batteryIcon(percent, true);
         it.progress = percent / 100f;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = percent + "%";
@@ -372,7 +381,7 @@ public final class EventSource {
         it.title = t("배터리 부족", "Low battery", "Pil az");
         it.subtitle = t(percent + "% 남았어요", percent + "% remaining", "%" + percent + " kaldı");
         it.accent = RED;
-        it.icon = GlyphIcon.battery(percent / 100f, false);
+        it.icon = batteryIcon(percent, false);
         it.progress = percent / 100f;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = percent + "%";

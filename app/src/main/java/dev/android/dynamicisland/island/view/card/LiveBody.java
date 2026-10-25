@@ -195,9 +195,9 @@ public final class LiveBody extends CardBody {
             } else if (customColor != 0) {
                 b.bg = customColor | Colors.BLACK;
             } else if (i == item.primaryActionIndex) {
-                b.bg = Colors.blend(item.accent, Colors.BLACK, IslandView.PAUSED_SPEED);
+                b.bg = Colors.blend(item.fillAccent(), Colors.BLACK, IslandView.PAUSED_SPEED);
             } else {
-                b.bg = Colors.BUTTON_ACTION_FILL;
+                b.bg = item.customAccent != 0 ? Colors.withAlpha(item.fillAccent(), android.graphics.Color.alpha(Colors.BUTTON_ACTION_FILL) / 255f) : Colors.BUTTON_ACTION_FILL;
             }
             buttons.add(b);
         }
@@ -309,11 +309,11 @@ public final class LiveBody extends CardBody {
             float phase = (IslandView.now() % SWEEP_PERIOD_MS) / (float) SWEEP_PERIOD_MS;
             float eased = IslandView.easeInOut(phase);
             float start = left - sweep + ((width + sweep) * eased);
-            owner.fillPaint.setColor(Colors.withAlpha(item.accent, alpha));
+            owner.fillPaint.setColor(Colors.withAlpha(item.fillAccent(), alpha));
             c.drawRect(Math.max(left, start), barTop, Math.min(left + width, start + sweep), barTop + barHeight, owner.fillPaint);
         } else {
             fillEnd = left + Math.max(barHeight, width * IslandView.clamp01(item.progress));
-            int fillColor = segmented ? (item.progressTrackColor != 0 ? (item.progressTrackColor | Colors.BLACK) : Colors.SEGMENT_UNREACHED) : item.accent;
+            int fillColor = segmented ? (item.progressTrackColor != 0 ? (item.progressTrackColor | Colors.BLACK) : Colors.SEGMENT_UNREACHED) : item.fillAccent();
             owner.fillPaint.setColor(Colors.withAlpha(fillColor, alpha));
             c.drawRect(left, barTop, fillEnd, barTop + barHeight, owner.fillPaint);
         }

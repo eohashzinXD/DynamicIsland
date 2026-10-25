@@ -150,7 +150,8 @@ public abstract class CardBody {
             Btn btn = new Btn();
             btn.r.set((i * (buttonWidth + gap)) + sidePad, top, (i * (buttonWidth + gap)) + sidePad + buttonWidth, top + rowHeight);
             btn.label = action.title != null ? action.title.toString() : null;
-            btn.bg = action.destructive ? Colors.DESTRUCTIVE_RED : Colors.TRACK;
+            btn.bg = action.destructive ? Colors.DESTRUCTIVE_RED : item.customAccent != 0
+                    ? Colors.withAlpha(item.fillAccent(), android.graphics.Color.alpha(Colors.TRACK) / 255f) : Colors.TRACK;
             btn.action = action;
             buttons.add(btn);
         }

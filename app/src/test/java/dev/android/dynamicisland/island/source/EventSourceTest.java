@@ -2,6 +2,7 @@ package dev.android.dynamicisland.island.source;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
@@ -114,7 +115,7 @@ public class EventSourceTest {
         assertEquals(IslandItem.Kind.EVENT, it.kind);
         assertEquals("54%", it.trailingText.toString());
         assertEquals(0.54f, it.progress, 0.001f);
-        assertNotNull(it.icon);
+        assertNull(it.icon); // Battery pictograms are hidden by default.
         assertTrue(changes[0] > 0);
         render("event_charging", it);
 
