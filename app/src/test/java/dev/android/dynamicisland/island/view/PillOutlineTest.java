@@ -21,13 +21,15 @@ import org.robolectric.util.ReflectionHelpers;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35, qualifiers = "mdpi")
 public class PillOutlineTest {
-    private void verify(float blob, boolean bubble) throws Exception {
+    private void verify(float blob, boolean bubble) throws Exception { verify(blob, bubble, Mode.COMPACT); }
+
+    private void verify(float blob, boolean bubble, Mode mode) throws Exception {
         IslandView view = new IslandView(RuntimeEnvironment.getApplication(), IslandHost.NONE);
         view.setGeometry(480, 240, 40, 22, false);
         view.layout(0, 0, 480, 200);
         Scene scene = ReflectionHelpers.getField(view, "scene");
         Springs springs = scene.springs;
-        scene.mode = Mode.COMPACT;
+        scene.mode = mode;
         springs.width.snapTo(200);
         springs.height.snapTo(40);
         springs.visibility.snapTo(1);
@@ -44,10 +46,13 @@ public class PillOutlineTest {
         try (FileOutputStream stream = new FileOutputStream(file)) { bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream); }
         int pixel = bitmap.getPixel(Math.round(pill.centerX()), Math.round(pill.centerY()));
         assertEquals("outline must never add white to the fading pill interior (blob=" + blob + ")", 0, Color.red(pixel));
-        assertEquals("interior alpha must come only from the black body", Math.round(255 * blob), Color.alpha(pixel), 1);
+        assertEquals("compact body stays opaque while expanded body retains its fade",
+                mode == Mode.COMPACT ? 255 : Math.round(255 * blob), Color.alpha(pixel), 1);
     }
-    @Test public void partiallyReturningPillHasNoGreyFill() throws Exception { verify(0.1f, false); }
-    @Test public void halfReturningPillHasNoGreyFill() throws Exception { verify(0.5f, false); }
-    @Test public void splitBubbleDoesNotRevealAHiddenPillAsAGreyRectangle() throws Exception { verify(0, true); }
+    @Test public void partiallyReturningPillIsOpaqueBlack() throws Exception { verify(0.1f, false); }
+    @Test public void halfReturningPillIsOpaqueBlack() throws Exception { verify(0.5f, false); }
+    @Test public void splitBubbleDoesNotRevealAHiddenPillAsAGreyRectangle() throws Exception { verify(0, true, Mode.EXPANDED); }
+    @Test public void returningPillIsBlackEvenBeforeContentStartsAppearing() throws Exception { verify(0, true); }
+    @Test public void openingBodyRetainsItsFade() throws Exception { verify(0.5f, false, Mode.EXPANDED); }
     @Test public void aSettledPillRemainsOpaqueBlack() throws Exception { verify(1, true); }
 }

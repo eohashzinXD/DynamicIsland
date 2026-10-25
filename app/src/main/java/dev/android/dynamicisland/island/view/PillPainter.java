@@ -94,14 +94,16 @@ final class PillPainter {
         LiquidBridge cardBridge = bridge.update(t, pill, r);
         boolean pillVisible = pill.width() > IslandView.MIN_VISIBLE_SIZE && pill.height() > IslandView.MIN_VISIBLE_SIZE;
 
-        boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && sp.pillBlob.value() > IslandView.MIN_VISIBLE_ALPHA;
+        // A returning compact body stays opaque; pillBlob only gates its content until the fold finishes.
+        float bodyAlpha = scene.mode == Mode.COMPACT ? 1.0f : clamp01(sp.pillBlob.value());
+        boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
         if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
-            drawOutline(canvas, pill, r, outlinePill, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
+            drawOutline(canvas, pill, r, outlinePill, bodyAlpha, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
         }
 
         int mainColor = bodyColor(scene.mainIn);
         paints.shape.setColor(mainColor);
-        paints.shape.setAlpha(Math.round(sp.pillBlob.value() * 255.0f));
+        paints.shape.setAlpha(Math.round(bodyAlpha * 255.0f));
         if (pillVisible) {
             canvas.drawRoundRect(pill, r, r, paints.shape);
         }
@@ -138,7 +140,7 @@ final class PillPainter {
     }
 
     /** Only the outer rim is white. Filling underneath a fading black body produces a grey pill. */
-    private void drawOutline(Canvas canvas, RectF pill, float r, boolean pillVisible, boolean hasBubble, boolean hasNeck,
+    private void drawOutline(Canvas canvas, RectF pill, float r, boolean pillVisible, float bodyAlpha, boolean hasBubble, boolean hasNeck,
                              float neckAlpha, float bubbleX, float bubbleY, float bubbleRadius) {
         int save = canvas.save();
         outlineCutout.reset();
@@ -150,7 +152,7 @@ final class PillPainter {
         Paint paint = paints.outline;
         paint.setStyle(Paint.Style.FILL);
         if (pillVisible) {
-            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * clamp01(sp.pillBlob.value())));
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * bodyAlpha));
             outlineRect.set(pill);
             outlineRect.inset(-m.outlineW, -m.outlineW);
             canvas.drawRoundRect(outlineRect, r + m.outlineW, r + m.outlineW, paint);

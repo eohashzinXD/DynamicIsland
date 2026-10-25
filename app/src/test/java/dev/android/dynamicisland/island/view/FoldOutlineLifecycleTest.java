@@ -57,8 +57,7 @@ public class FoldOutlineLifecycleTest {
             ShadowSystemClock.advanceBy(Duration.ofNanos(dt));
             view.doFrame(nanos += dt);
             float blob = scene.springs.pillBlob.value();
-            if (blob <= .01f || blob >= .95f) continue;
-            partial = true;
+            partial |= blob > .01f && blob < .95f;
             bitmap.eraseColor(Color.TRANSPARENT);
             // Device cards are in a sibling BlurLayer under the island; reproduce that draw order.
             for (int c = view.cards().size() - 1; c >= 0; c--) view.drawCard(canvas, view.cards().get(c), SystemClock.uptimeMillis());
@@ -66,6 +65,7 @@ public class FoldOutlineLifecycleTest {
             view.computeMain(pill);
             int x = Math.round(pill.centerX()), y = Math.round(pill.top + 4);
             int pixel = bitmap.getPixel(x, y);
+            assertEquals("returning body must stay opaque even before its content fades in", 255, Color.alpha(pixel));
             assertTrue("white outline leaks into the returning body at " + fps + "Hz frame " + i
                     + ", blob=" + blob + ", pixel=" + Integer.toHexString(pixel), Color.red(pixel) <= 24);
         }
