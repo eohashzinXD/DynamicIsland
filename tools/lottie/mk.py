@@ -80,15 +80,16 @@ def battery(c,level=0.62):
 def bolt_hole(cx,cy,sc):
     P=[(4.5,-16),(-11,3),(-2.5,3),(-5,16),(11,-3.5),(2.5,-3.5)]
     return rpoly([(cx+x*sc,cy+y*sc) for x,y in P],2.2)
+def cut_layer(shape_items,pivot,t0=4):
+    """A layer named "cut" erases what is below it (the player draws it with DST_OUT)."""
+    return layer("cut",[grp("cut",*shape_items,fill([1,1,1,1]))],pivot=pivot,s=pop(t0,t0+12,1.15),o={"f":[(t0,0),(t0+3,100)]})
 def charging(c):
-    g=grp("body",rect(BX,BY,BW,BH,7),bolt_hole(36,40,1.0),CUT,fill(c))
-    return [layer("body",[g],s={"f":[(0,[92,92,100]),(14,[100,100,100])]},o={"f":[(0,0),(4,100)]}),cap(c)]
+    return [cut_layer([bolt_hole(36,40,1.0)],(36,40))]+battery(c)
 def plus_hole(cx,cy,h,t):
     a=t/2
     return rpoly([(cx-a,cy-h),(cx+a,cy-h),(cx+a,cy-a),(cx+h,cy-a),(cx+h,cy+a),(cx+a,cy+a),(cx+a,cy+h),(cx-a,cy+h),(cx-a,cy+a),(cx-h,cy+a),(cx-h,cy-a),(cx-a,cy-a)],1.6)
 def powersave(c):
-    g=grp("body",rect(BX,BY,BW,BH,7),plus_hole(36,40,11,5.4),CUT,fill(c))
-    return [layer("body",[g],s={"f":[(0,[92,92,100]),(14,[100,100,100])]},o={"f":[(0,0),(4,100)]}),cap(c)]
+    return [cut_layer([plus_hole(36,40,11,5.4)],(36,40))]+battery(c)
 def camera(c):
     body=grp("body",rect(7,20,58,42,9),ell(36,42,14.5),ell(55,29,2.8),CUT,fill(c))
     bump=F("bump",[rect(25,12,22,14,5)],c)

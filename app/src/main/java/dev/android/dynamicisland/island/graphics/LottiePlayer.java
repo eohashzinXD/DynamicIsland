@@ -36,6 +36,8 @@ final class LottiePlayer {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mattePaint = new Paint();
     private final Path combined = new Path();
+    /** True while drawing a layer named "cut": it removes what is below instead of adding to it. */
+    private boolean erasing;
     private final Matrix scratch = new Matrix();
     private final RectF clip = new RectF();
     private int color;
@@ -84,7 +86,9 @@ final class LottiePlayer {
         c.translate(dst.left, dst.top);
         c.scale(dst.width() / width, dst.height() / height);
         clip.set(-width, -height, width * 2.0f, height * 2.0f);
+        int group = c.saveLayer(clip, null);
         drawLayers(c, layers, frame, 1.0f);
+        c.restoreToCount(group);
         c.restoreToCount(save);
     }
 
@@ -285,7 +289,9 @@ final class LottiePlayer {
                 drawLayers(c, inner, local, a);
             }
         } else if (l.type == 4) {
+            erasing = l.name.equals("cut");
             drawShapes(c, l.shapes, local, a);
+            erasing = false;
         }
         c.restoreToCount(save);
     }
@@ -396,6 +402,9 @@ final class LottiePlayer {
         paint.reset();
         paint.setAntiAlias(true);
         paint.setColor(argb);
+        if (erasing) {
+            paint.setXfermode(MATTE_OUT);
+        }
         if (corner > 0.0f) {
             paint.setPathEffect(new CornerPathEffect(corner));
         }

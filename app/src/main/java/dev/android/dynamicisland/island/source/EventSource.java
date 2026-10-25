@@ -74,6 +74,7 @@ public final class EventSource {
 
     private int lastPlugged = -1;
     private boolean lowShown;
+    private int lastPercent = -1;
     private int lastRinger = -1;
     /**
      * True while the receiver handles the sticky broadcast it gets right at registration (ringer mode,
@@ -263,7 +264,7 @@ public final class EventSource {
                 return;
         }
         it.title = t(ko + (on ? " 켜짐" : " 꺼짐"), en + (on ? " on" : " off"));
-        it.icon = GlyphIcon.of(icon);
+        it.icon = icon == GlyphIcon.Kind.POWER_SAVE ? GlyphIcon.powerSave(lastPercent >= 0 ? lastPercent / 100f : 1f) : GlyphIcon.of(icon);
         it.accent = on ? color : GREY;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = t(on ? "켜짐" : "꺼짐", on ? "On" : "Off");
@@ -308,6 +309,7 @@ public final class EventSource {
         int scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
         int plugged = i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
         int percent = scale > 0 ? Math.round(level * 100f / scale) : level;
+        lastPercent = percent;
         if (percent < 0) {
             return;
         }

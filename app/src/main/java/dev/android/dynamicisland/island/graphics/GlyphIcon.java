@@ -51,6 +51,11 @@ public final class GlyphIcon extends Drawable {
         return new GlyphIcon(charging ? Kind.BATTERY_CHARGING : Kind.BATTERY, level);
     }
 
+    /** The power-saving battery, filled to the real charge. */
+    public static GlyphIcon powerSave(float level) {
+        return new GlyphIcon(Kind.POWER_SAVE, level);
+    }
+
     public static GlyphIcon of(Kind kind) {
         return new GlyphIcon(kind, 1f);
     }
@@ -166,7 +171,7 @@ public final class GlyphIcon extends Drawable {
         int effectiveAlpha = Math.round((color >>> 24) * (alpha / 255f));
         LottiePlayer player = player(kind);
         if (player != null) {
-            player.setLevel(kind == Kind.BATTERY ? level : -1.0f);
+            player.setLevel(kind == Kind.BATTERY || kind == Kind.BATTERY_CHARGING || kind == Kind.POWER_SAVE ? level : -1.0f);
             float side = Math.min(bounds.width(), bounds.height());
             bounds.set(cx - (side / 2), cy - (side / 2), cx + (side / 2), cy + (side / 2));
             player.draw(c, bounds, elapsedMillis(player), (color & 0x00FFFFFF) | (effectiveAlpha << 24));

@@ -30,7 +30,7 @@ public class LottieFilmTest {
         for (String name : NAMES) {
             LottiePlayer p = LottiePlayer.parse(LottieData.get(name));
             assertNotNull(name, p);
-            p.setLevel(name.equals("battery") ? 0.62f : -1f);
+            p.setLevel(name.startsWith("battery") || name.equals("power_save") ? 0.45f : -1f);
             Bitmap strip = Bitmap.createBitmap(cell * FRACTIONS.length, cell, Bitmap.Config.ARGB_8888);
             Canvas c = new Canvas(strip);
             c.drawColor(0xFF1B1B1F);
