@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.SystemClock;
+import android.view.MotionEvent;
+import dev.android.dynamicisland.island.feedback.AudioLevels;
 import dev.android.dynamicisland.island.model.IslandItem;
 import java.time.Duration;
 import java.util.Collections;
@@ -28,13 +30,18 @@ public class ShadeBounceTest {
     private final Application app = RuntimeEnvironment.getApplication();
 
     private final class Film {
-        final IslandView view = new IslandView(app, IslandHost.NONE);
+        final IslandView view;
         final Bitmap bitmap = Bitmap.createBitmap(600, 160, Bitmap.Config.ARGB_8888);
         long nanos = SystemClock.uptimeMillis() * 1_000_000L;
         final int fps;
 
         Film(int fps) {
+            this(fps, IslandHost.NONE);
+        }
+
+        Film(int fps, IslandHost host) {
             this.fps = fps;
+            view = new IslandView(app, host);
             view.setGeometry(600, 300, 60, 22, false);
             view.layout(0, 0, 600, 160);
             IslandItem item = new IslandItem("motion");
@@ -105,6 +112,71 @@ public class ShadeBounceTest {
 
     @Test public void returnHasAVisibleBounceAt60Hz() { assertBounce(60); }
     @Test public void returnHasAVisibleBounceAt120Hz() { assertBounce(120); }
+
+    /** A successful surface transaction bypasses the painter's opacity, as it does in SystemUI. */
+    private static final class SurfaceHost implements IslandHost {
+        float alpha = 1;
+
+        @Override public boolean onShadeFade(float alpha, float scale, float x, float y) {
+            this.alpha = alpha;
+            return true;
+        }
+        @Override public AudioLevels audio() { return null; }
+        @Override public boolean hasMinimized() { return false; }
+        @Override public void onCycle(int direction) { }
+        @Override public void onExpandedChanged(boolean expanded) { }
+        @Override public void onIslandFrame() { }
+        @Override public void onItemAction(IslandItem item, IslandItem.Action action) { }
+        @Override public void onMinimize(IslandItem item) { }
+        @Override public void onOpenItem(IslandItem item, RectF from) { }
+        @Override public void onRestore() { }
+        @Override public void onShadeDragEvent(MotionEvent event) { }
+        @Override public void onShadeDragStart(float x, float y, long time) { }
+        @Override public void onWindowHeightNeeded(int height) { }
+    }
+
+    private void assertFastPull(int fps, boolean surfaceFade) {
+        SurfaceHost host = surfaceFade ? new SurfaceHost() : null;
+        Film film = new Film(fps, host == null ? IslandHost.NONE : host);
+        RectF bounds = new RectF();
+        film.view.computeMain(bounds);
+        float restingWidth = bounds.width();
+        film.view.setShadeFraction(1); // A fling can skip every intermediate expansion callback.
+        film.view.computeMain(bounds);
+        assertEquals("full expansion must not snap the body away", restingWidth, bounds.width(), 0.01f);
+        assertEquals(1, host == null ? film.view.visibleAlpha() : host.alpha, 0.001f);
+        float previousWidth = restingWidth, previousAlpha = 1;
+        int shrinkingFrames = 0, fadingFrames = 0;
+        for (int i = 0; i < fps; i++) {
+            // Repeated fully-expanded callbacks must not cancel or restart the exit either.
+            film.view.setShadeFraction(1);
+            film.step(1);
+            film.view.computeMain(bounds);
+            float alpha = host == null ? film.view.visibleAlpha() : host.alpha;
+            assertTrue(bounds.width() <= previousWidth + 0.01f);
+            assertTrue(alpha >= 0 && alpha <= previousAlpha + 0.001f);
+            if (bounds.width() < previousWidth - 0.01f && alpha > 0.99f) shrinkingFrames++;
+            if (alpha > 0.01f && alpha < 0.99f) {
+                fadingFrames++;
+                assertTrue("fade only after shrinking near the dot", bounds.width() < restingWidth * 0.3f);
+            }
+            previousWidth = bounds.width();
+            previousAlpha = alpha;
+        }
+        assertTrue("body shrinks over several visible frames", shrinkingFrames >= 3);
+        assertTrue("the dot fades over several frames", fadingFrames >= 3);
+        assertTrue(previousAlpha < 0.003f);
+        assertTrue(film.view.isFullyHidden());
+        film.view.setShadeFraction(0);
+        film.step(fps);
+        assertEquals(1, host == null ? film.view.visibleAlpha() : host.alpha, 0.001f);
+        assertEquals(restingWidth, film.paintedWidth(), 2);
+    }
+
+    @Test public void fullExpansionKeepsAnimatingAt60Hz() { assertFastPull(60, false); }
+    @Test public void fullExpansionKeepsAnimatingAt120Hz() { assertFastPull(120, false); }
+    @Test public void fullExpansionKeepsSurfaceFadeAnimatingAt60Hz() { assertFastPull(60, true); }
+    @Test public void fullExpansionKeepsSurfaceFadeAnimatingAt120Hz() { assertFastPull(120, true); }
 
     @Test
     public void reopeningTheShadeMidReturnStillHidesAndThenRestoresTheIsland() {

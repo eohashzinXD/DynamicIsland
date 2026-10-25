@@ -21,7 +21,7 @@ import dev.android.dynamicisland.xposed.XLog;
 import java.lang.reflect.Field;
 
 /**
- * The overlay window that hosts the island: a {@code TYPE_STATUS_BAR_ADDITIONAL} window inside the
+ * The overlay window that hosts the island: a {@code TYPE_STATUS_BAR_SUB_PANEL} window inside the
  * SystemUI process containing a blur layer, the {@link IslandView} and a layer for remote views.
  *
  * <p>The window is as tall as the island currently needs and only the island's own region takes
@@ -37,8 +37,13 @@ public final class IslandWindow {
             | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
             | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
             | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-    /** WindowManager.LayoutParams.TYPE_STATUS_BAR_ADDITIONAL (hidden): above the status bar. */
-    private static final int TYPE_STATUS_BAR_ADDITIONAL = 2041;
+    /**
+     * WindowManager.LayoutParams.TYPE_STATUS_BAR_SUB_PANEL (hidden): above the notification shade.
+     * ADDITIONAL is below the shade: a fast fling makes the shade opaque before our time-based
+     * shrink/fade finishes, abruptly covering the pill. Keep the exit visible until its own fade ends.
+     * Android's window policy still places this below keyguard dialogs.
+     */
+    private static final int TYPE_STATUS_BAR_SUB_PANEL = 2017;
 
     final Context context;
     public final IslandView view;
@@ -86,7 +91,7 @@ public final class IslandWindow {
     private static Context createWindowContext(Context systemUiContext) {
         Display display = systemUiContext.getSystemService(DisplayManager.class).getDisplay(Display.DEFAULT_DISPLAY);
         try {
-            return systemUiContext.createWindowContext(display, TYPE_STATUS_BAR_ADDITIONAL, null);
+            return systemUiContext.createWindowContext(display, TYPE_STATUS_BAR_SUB_PANEL, null);
         } catch (Throwable t) {
             XLog.e("createWindowContext failed, falling back to display context", t);
             return systemUiContext.createDisplayContext(display);
@@ -99,7 +104,7 @@ public final class IslandWindow {
 
     private static WindowManager.LayoutParams createLayoutParams() {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 1, TYPE_STATUS_BAR_ADDITIONAL, WINDOW_FLAGS, PixelFormat.TRANSLUCENT);
+                ViewGroup.LayoutParams.MATCH_PARENT, 1, TYPE_STATUS_BAR_SUB_PANEL, WINDOW_FLAGS, PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.LEFT;
         lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         lp.setFitInsetsTypes(0);
@@ -217,7 +222,7 @@ public final class IslandWindow {
             float density = context.getResources().getDisplayMetrics().density;
             int margin = Math.round(density * 12.0f);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    windowBounds().width() - (2 * margin), ViewGroup.LayoutParams.WRAP_CONTENT, TYPE_STATUS_BAR_ADDITIONAL,
+                    windowBounds().width() - (2 * margin), ViewGroup.LayoutParams.WRAP_CONTENT, TYPE_STATUS_BAR_SUB_PANEL,
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                             | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     PixelFormat.TRANSLUCENT);
