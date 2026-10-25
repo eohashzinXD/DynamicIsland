@@ -63,7 +63,12 @@ public class ArtworkPaletteCacheTest {
     }
 
     @Test
-    public void hardwareArtIsReadBackWithoutRecyclingInput() {
+    @GraphicsMode(GraphicsMode.Mode.LEGACY)
+    public void modeledHardwareArtIsReadBackWithoutRecyclingInput() {
+        // Desktop native Skia can coerce copy(HARDWARE) back to software. The legacy shadow
+        // explicitly models the HARDWARE config so this test exercises the readback branch;
+        // real GPU-backed readback still needs device verification. Native software sampling
+        // and cleanup remain covered by the other tests in this class.
         Bitmap software = art(24, 0xFF9977BB);
         Bitmap hardware = software.copy(Bitmap.Config.HARDWARE, false);
         assertNotNull(hardware);
