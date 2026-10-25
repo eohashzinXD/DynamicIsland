@@ -22,6 +22,7 @@ import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.window.IslandWindow;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
+import dev.android.dynamicisland.xposed.hooks.ShadeMediaPlayer;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.ArrayList;
@@ -100,6 +101,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     public IslandItem mediaItemForSession(MediaSession.Token token) {
         return sources.media.itemForSession(token);
+    }
+
+    public boolean isRecordingSession(MediaSession.Token token) {
+        return sources.media.isRecordingSession(token);
     }
 
     public void start() {
@@ -445,6 +450,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     private void refreshNow() {
         try {
             refreshPosted = false;
+            ShadeMediaPlayer.refreshRecordingRows();
             placement.ensureWindow(false);
             IslandView view = placement.view();
             if (view == null) {

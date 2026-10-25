@@ -16,12 +16,14 @@ import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.xposed.Refl;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * Tracks the active media sessions and offers the one worth showing as a media card: the playing
@@ -60,6 +62,29 @@ public final class MediaSource {
     private final Map<String, Cover> covers = new HashMap<>();
     private final MediaSessionManager.OnActiveSessionsChangedListener sessionsListener = this::sync;
     private OutputSource output;
+    private BiPredicate<String, Integer> recordingFilter = (pkg, userId) -> false;
+    /** Ended recording sessions must not reappear as stock shade players through the retired cache. */
+    private final Map<MediaSession.Token, Boolean> retiredRecordings = new java.util.LinkedHashMap<MediaSession.Token, Boolean>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<MediaSession.Token, Boolean> eldest) {
+            return size() > MAX_RETIRED;
+        }
+    };
+
+    public void setRecordingFilter(BiPredicate<String, Integer> filter) {
+        recordingFilter = filter;
+    }
+
+    /** Whether this session is a recording rather than playback, including a just-ended recording. */
+    public boolean isRecordingSession(MediaSession.Token token) {
+        Session session = sessions.get(token);
+        if (session != null) {
+            return session.blockedByRecording();
+        }
+        IslandItem previous = retired.get(token);
+        return retiredRecordings.containsKey(token) || (previous != null
+                && recordingFilter.test(previous.packageName, previous.userId));
+    }
 
     public MediaSource(Context ctx, Handler main, Runnable onChange) {
         this.ctx = ctx;
@@ -98,6 +123,7 @@ public final class MediaSource {
             gone.getValue().retire();
         }
         retired.keySet().removeAll(next.keySet());
+        retiredRecordings.keySet().removeAll(next.keySet());
         sessions.clear();
         sessions.putAll(next);
         forgetGonePlayers();
@@ -142,7 +168,7 @@ public final class MediaSource {
         Session playing = null;
         Session paused = null;
         for (Session s : sessions.values()) {
-            if (!s.hasContent()) {
+            if (s.blockedByRecording() || !s.hasContent()) {
                 continue;
             }
             if (s.isPlaying()) {
@@ -161,9 +187,9 @@ public final class MediaSource {
     public IslandItem itemForSession(MediaSession.Token token) {
         Session s = sessions.get(token);
         if (s != null) {
-            return s.hasContent() ? s.card() : null;
+            return !s.blockedByRecording() && s.hasContent() ? s.card() : null;
         }
-        return retired.get(token);
+        return isRecordingSession(token) ? null : retired.get(token);
     }
 
     /**
@@ -247,6 +273,11 @@ public final class MediaSource {
     /** One media session with the latest playback state and metadata it reported. */
     private final class Session extends MediaController.Callback {
         final MediaController controller;
+        final int userId;
+        /** Cleared only by a fresh playback event after the raw recording activity goes away. */
+        boolean recorded;
+        /** Saved-file metadata can arrive just before the old ongoing activity is removed. */
+        boolean playbackPending;
         MediaMetadata meta;
         PlaybackState state;
         long lastActive;
@@ -257,6 +288,8 @@ public final class MediaSource {
 
         Session(MediaController controller) {
             this.controller = controller;
+            int uid = Refl.getInt(controller.getSessionToken(), "mUid", -1);
+            userId = uid < 0 ? -1 : uid / 100_000;
             state = controller.getPlaybackState();
             meta = controller.getMetadata();
             if (isPlaying()) {
@@ -267,7 +300,10 @@ public final class MediaSource {
 
         /** Stops listening and keeps the last card for the shade, which may still show this player. */
         void retire() {
-            if (hasContent()) {
+            if (blockedByRecording()) {
+                retired.remove(controller.getSessionToken());
+                retiredRecordings.put(controller.getSessionToken(), Boolean.TRUE);
+            } else if (hasContent()) {
                 IslandItem last = card();
                 last.playing = false;
                 retired.put(controller.getSessionToken(), last);
@@ -306,10 +342,46 @@ public final class MediaSource {
                     || meta.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE) != null);
         }
 
+        boolean recordingNow() {
+            return recordingFilter.test(controller.getPackageName(), userId);
+        }
+
+        boolean blockedByRecording() {
+            if (recordingNow()) {
+                if (!recorded) {
+                    playbackPending = false;
+                }
+                recorded = true;
+                card = null;
+                retired.remove(controller.getSessionToken());
+            } else if (recorded && playbackPending && isPlaying()) {
+                recorded = false;
+                playbackPending = false;
+            }
+            return recorded;
+        }
+
+        /** A stale STATE_PLAYING or blank recording title alone must not revive a stopped recorder. */
+        void allowFreshPlayback() {
+            if (isPlaying() && meta != null) {
+                CharSequence title = firstText(MediaMetadata.METADATA_KEY_TITLE, MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+                if (title != null && !title.toString().trim().isEmpty()) {
+                    if (!recordingNow()) {
+                        recorded = false;
+                        playbackPending = false;
+                    } else if (recorded && meta.getLong(MediaMetadata.METADATA_KEY_DURATION) > 0) {
+                        playbackPending = true;
+                    }
+                }
+            }
+        }
+
         @Override
         public void onPlaybackStateChanged(PlaybackState newState) {
+            blockedByRecording();
             boolean wasPlaying = isPlaying();
             state = newState;
+            allowFreshPlayback();
             if (wasPlaying || isPlaying()) {
                 lastActive = SystemClock.uptimeMillis();
             }
@@ -319,7 +391,9 @@ public final class MediaSource {
 
         @Override
         public void onMetadataChanged(MediaMetadata newMeta) {
+            blockedByRecording();
             meta = newMeta;
+            allowFreshPlayback();
             card = null;
             onChange.run();
         }
@@ -348,6 +422,7 @@ public final class MediaSource {
             it.kind = IslandItem.Kind.MEDIA;
             it.isMedia = true;
             it.packageName = pkg;
+            it.userId = userId;
             it.playing = isPlaying();
             it.appName = assets.label(pkg);
             it.trailing = IslandItem.Trailing.WAVEFORM;

@@ -87,6 +87,21 @@ final class MediaPlayerBinding {
         return source.mediaItemForSession(((MediaController) controller).getSessionToken());
     }
 
+    /** Suppression is distinct from a missing card: a missing card normally restores the stock player. */
+    boolean recording(View player) {
+        if (!ModuleSettings.shadeMediaPlayer()) {
+            return false;
+        }
+        AccessibilityManager accessibility = player.getContext().getSystemService(AccessibilityManager.class);
+        if (accessibility != null && accessibility.isTouchExplorationEnabled()) {
+            return false;
+        }
+        Object controller = Refl.get(panel.get(), "mController");
+        IslandController source = IslandController.get();
+        return controller instanceof MediaController && source != null
+                && source.isRecordingSession(((MediaController) controller).getSessionToken());
+    }
+
     /** Draws the card scaled down to fit the player's height, centred horizontally and vertically. */
     void draw(View player, Canvas canvas, IslandItem item) {
         float cardHeight = renderer.shadeCardHeight(item, player.getWidth());

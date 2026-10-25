@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.xposed.Refl;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,29 @@ public final class OaSource {
     /** Package of the app on screen, or null when unknown. */
     public String foregroundPackage() {
         return reader.available() ? reader.foregroundPackage() : null;
+    }
+
+    /**
+     * Samsung's non-media recorder activity is the recording signal, including paused recordings.
+     * Read the raw store: foreground suppression must not turn a recording into a music player.
+     * Playback activities from the same app keep their media flag and are left alone.
+     */
+    public boolean isVoiceRecording(String pkg, int userId) {
+        if (!"com.sec.android.app.voicenote".equals(pkg) || userId < 0 || !reader.available()) {
+            return false;
+        }
+        for (Object data : reader.allActivities()) {
+            if (data == null) {
+                continue;
+            }
+            OaActivity a = new OaActivity(data);
+            int owner = a.sbn != null ? a.sbn.getUserId() : Refl.getInt(data, "mUserId", -1);
+            if (pkg.equals(a.pkg) && owner == userId && a.key != null && !a.isMedia()
+                    && !a.isGroupSummary() && !a.isDemoted()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

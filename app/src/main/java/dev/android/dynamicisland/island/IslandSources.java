@@ -63,6 +63,7 @@ final class IslandSources {
         this.onChange = onChange;
         oa = new OaSource(ctx, classLoader);
         media = new MediaSource(ctx, main, onChange);
+        media.setRecordingFilter(oa::isVoiceRecording);
         cast = new CastSource(ctx);
         events = new EventSource(ctx, main, onChange);
         torch = new TorchSource(ctx, main, onChange);
