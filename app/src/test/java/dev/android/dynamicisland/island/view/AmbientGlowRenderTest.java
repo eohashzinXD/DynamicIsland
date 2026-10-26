@@ -28,9 +28,11 @@ import org.robolectric.shadows.ShadowSystemClock;
 public class AmbientGlowRenderTest {
     private static final int W=1180,H=220;
     @Test public void renderReferenceIntensityAndAlbumColours() throws Exception {
+        org.robolectric.shadows.ShadowChoreographer.setPaused(true);
+        org.robolectric.shadows.ShadowChoreographer.setFrameDelay(Duration.ofMillis(16));
         Context ctx=RuntimeEnvironment.getApplication();SharedPreferences prefs=ctx.getSharedPreferences("glow-captures",0);
         try {
-            for(String name:new String[]{"off","champagne","album-warm","album-blue","album-purple","strong","light","theme-blue","individual-pink"}) {
+            for(String name:new String[]{"off","champagne","album-warm","album-blue","album-purple","album-paused","album-pair-blue","album-hidden-blue","album-fading-blue","album-ended-blue","strong","light","theme-blue","individual-pink"}) {
                 boolean album=name.startsWith("album");
                 int primary=name.endsWith("blue")?0xFF438BD8:name.endsWith("purple")?0xFFB05BD3:0xFFB37C43;
                 prefs.edit().putBoolean(ModuleSettings.KEY_AMBIENT_GLOW,!name.equals("off"))
@@ -41,12 +43,29 @@ public class AmbientGlowRenderTest {
                         .putInt(ModuleSettings.KEY_GLOW_STRENGTH,name.equals("strong")?80:ModuleSettings.DEFAULT_GLOW_STRENGTH).apply();
                 ModuleSettings.configurePreview(prefs);
                 Bitmap art=art(primary);int[] pixels=new int[art.getWidth()*art.getHeight()];art.getPixels(pixels,0,art.getWidth(),0,0,art.getWidth(),art.getHeight());
-                IslandItem item=new IslandItem("media:preview");item.kind=IslandItem.Kind.MEDIA;item.isMedia=true;item.playing=true;
+                IslandItem item=new IslandItem("media:preview");item.kind=IslandItem.Kind.MEDIA;item.isMedia=true;item.playing=!name.equals("album-paused");
                 item.title="Preview";item.art=art;item.mediaPalette=ArtworkPalette.fromPixels(pixels);item.accent=item.mediaPalette.primary;
                 item.icon=new BitmapDrawable(ctx.getResources(),art);item.iconIsImage=true;item.trailing=IslandItem.Trailing.WAVEFORM;
                 IslandView view=new IslandView(ctx,IslandHost.NONE);view.setGeometry(W,W/2f,105,60,false);view.setPillSize(0,150,0);
-                view.layout(0,0,W,H);view.setItems(List.of(item));
-                for(int frame=0;frame<120;frame++){ShadowSystemClock.advanceBy(Duration.ofMillis(16));view.doFrame(SystemClock.uptimeMillis()*1_000_000L);}
+                view.layout(0,0,W,H);
+                List<IslandItem> previewItems=List.of(item);
+                if(name.contains("pair")||name.contains("hidden")||name.contains("fading")||name.contains("ended")){
+                    IslandItem event=new IslandItem("event:preview");event.kind=IslandItem.Kind.EVENT;event.title="Timer";
+                    event.icon=new BitmapDrawable(ctx.getResources(),art(0xFFCB773E));event.iconIsImage=true;
+                    IslandItem extra=new IslandItem("event:extra");extra.kind=IslandItem.Kind.EVENT;extra.title="Flashlight";extra.icon=event.icon;
+                    view.setGlowSession(item);previewItems=List.of(event,name.contains("pair")?item:extra);
+                }
+                view.setItems(previewItems);
+                for(int frame=0;frame<120;frame++){
+                    ShadowSystemClock.advanceBy(Duration.ofMillis(16));
+                    // This standalone renderer has no ViewRoot to deliver View.postDelayed's first split.
+                    if(frame==60)view.setItems(previewItems);
+                    view.doFrame(SystemClock.uptimeMillis()*1_000_000L);
+                }
+                if(name.contains("fading")||name.contains("ended")){
+                    view.setGlowSession(null);
+                    for(int frame=0;frame<(name.contains("fading")?35:100);frame++){ShadowSystemClock.advanceBy(Duration.ofMillis(16));view.doFrame(SystemClock.uptimeMillis()*1_000_000L);}
+                }
                 int background=name.equals("light")?0xFFF0F1F3:0xFF101417;
                 view.setPillBackgroundLuma(PillOutlinePolicy.luma(background));
                 Bitmap capture=Bitmap.createBitmap(W*2,H*2,Bitmap.Config.ARGB_8888);Canvas canvas=new Canvas(capture);canvas.scale(2,2);canvas.drawColor(background);

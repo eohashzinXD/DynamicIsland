@@ -6,9 +6,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import dev.android.dynamicisland.island.feedback.AudioLevels;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.LiquidBridge;
 import dev.android.dynamicisland.island.graphics.Metaball;
+import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
@@ -36,15 +38,18 @@ final class PillPainter {
     private final CardBridge bridge;
     private final Path clip = new Path();
     private final Path glowCutout = new Path();
-    private final AmbientGlow glow;
-    private final MediaFxCache mediaFx;
+    private final AmbientGlow glow, bubbleGlow;
+    private final GlowMotion glowMotion = new GlowMotion();
+    private final Tween glowPresence = new Tween(0, 1200);
+    private IslandItem lastGlowSession;
+    private float glowAlpha;
     private final Path outlineCutout = new Path();
     private final Path neck = new Path();
     private final RectF bubble = new RectF();
     private final RectF outlineRect = new RectF();
     private final RectF shrunk = new RectF();
 
-    PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge, MediaFxCache mediaFx) {
+    PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge) {
         this.m = m;
         this.paints = paints;
         this.scene = scene;
@@ -52,8 +57,8 @@ final class PillPainter {
         this.shapes = shapes;
         this.stack = stack;
         this.bridge = bridge;
-        this.mediaFx = mediaFx;
         glow = new AmbientGlow(m.dp(1));
+        bubbleGlow = new AmbientGlow(m.dp(1));
     }
 
     private static boolean legacyMerge() {
@@ -107,9 +112,11 @@ final class PillPainter {
             if (hasBubble) glowCutout.addCircle(bubbleX, bubbleY, bubbleRadius, Path.Direction.CW);
             canvas.clipOutPath(glowCutout);
             if (hasNeck) canvas.clipOutPath(neck);
-            float glowAlpha = bodyAlpha * clamp01(contentScale);
-            if (pillVisible) glow.draw(canvas, pill, glowColour(scene.mainIn, t), glowAlpha, ModuleSettings.glowStrength());
-            if (hasBubble) glow.draw(canvas, bubble, glowColour(scene.bubbleIn, t), glowAlpha, ModuleSettings.glowStrength());
+            // Also prime state if Android draws before admitting the first animation frame.
+            stepGlow(0, null);
+            float alpha = bodyAlpha * clamp01(contentScale) * glowAlpha;
+            if (pillVisible) glow.draw(canvas, pill, glowMotion, alpha, ModuleSettings.glowStrength());
+            if (hasBubble) bubbleGlow.draw(canvas, bubble, glowMotion, alpha, ModuleSettings.glowStrength());
             canvas.restoreToCount(save);
         }
         boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
@@ -156,13 +163,24 @@ final class PillPainter {
         }
     }
 
-    private int glowColour(Layer layer, long time) {
-        if (ModuleSettings.glowAlbum() && layer != null && layer.content.item.isMedia && layer.content.item.accent != -1) {
-            // Share the existing album-colour transition; no new frame loop or artwork readback.
-            int album = mediaFx.obtain(layer.content.item).accent(time);
-            return Colors.blend(album, Colors.WHITE, .22f);
+    boolean stepGlow(float dt, AudioLevels audio) {
+        long now = IslandView.now();
+        if (!ModuleSettings.ambientGlow()) {
+            glowPresence.set(0, now - 1200); glowAlpha = 0; lastGlowSession = null;
+            return false;
         }
-        return ModuleSettings.glowColour();
+        if (scene.mode != Mode.COMPACT && sp.pillBlob.value() <= IslandView.MIN_VISIBLE_ALPHA) return false;
+        IslandItem music = scene.musicForGlow();
+        boolean show = music != null || !ModuleSettings.glowMusicOnly();
+        glowPresence.set(show ? 1 : 0, now);
+        glowAlpha = glowPresence.value(now);
+        if (music != null) lastGlowSession = music;
+        else if (!ModuleSettings.glowMusicOnly()) lastGlowSession = null;
+        if (!show && glowAlpha <= 0) { lastGlowSession = null; return false; }
+        // All compact bodies share this state, including pause and the last album colour on session end.
+        boolean moving = glowMotion.step(dt, lastGlowSession, ModuleSettings.glowAlbum(),
+                ModuleSettings.glowColour(), music == null ? null : audio);
+        return glowPresence.running(now) || (glowAlpha > 0 && moving);
     }
 
     /** Only the outer rim is white. Filling underneath a fading black body produces a grey pill. */

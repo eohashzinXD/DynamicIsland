@@ -20,6 +20,8 @@ final class Scene {
     final List<IslandItem> minimized = new ArrayList<>();
     IslandItem primary;
     IslandItem secondary;
+    IslandItem glowSession;
+    boolean explicitGlowSession;
     Layer mainIn;
     Layer mainOut;
     Layer bubbleIn;
@@ -41,6 +43,18 @@ final class Scene {
 
     Scene(Springs springs) {
         this.springs = springs;
+    }
+
+    /** The controller supplies the real session; standalone previews can use their visible media item. */
+    IslandItem musicForGlow() {
+        if (explicitGlowSession) return glowSession;
+        IslandItem paused = null;
+        for (IslandItem item : items) {
+            if (!item.isMedia) continue;
+            if (item.playing) return item;
+            if (paused == null) paused = item;
+        }
+        return paused;
     }
 
     int pillBodyColor(Layer layer) {

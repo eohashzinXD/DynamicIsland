@@ -464,15 +464,21 @@
     <string name="pill_outline_always">Her zaman</string>
     <string name="pill_outline_none">Yok</string>
     <string name="glow_title">Dış parlama</string>
-    <string name="glow_summary">Küçük adanın kenarının dışında yumuşak ışık gösterir.</string>
+    <string name="glow_summary">Varsayılan olarak müzik oturumunu izleyen, tüm küçük kapsüllerin ortak parıltısı.</string>
     <string name="glow_strength">Parlama yoğunluğu</string>
     <string name="glow_strength_format">Parlama yoğunluğu · %d%%</string>
+    <string name="glow_visibility">Parıltı gösterme koşulu</string>
+    <string name="glow_music_only">Yalnızca müzik oturumu varken</string>
+    <string name="glow_all_activities">Tüm etkinliklerde</string>
+    <string name="glow_motion_strength">Dinamik efekt gücü</string>
+    <string name="glow_motion_format">Dinamik efekt · %d%%</string>
+    <string name="glow_motion_desc" formatted="false">%0: sabit · %50: normal · %100: en güçlü. Önizleme müziği taklit eder; parlaklık ayrıca ayarlanır.</string>
     <string name="glow_album">Müzikte albüm renklerini kullan</string>
-    <string name="glow_album_summary">Müzikte albüm renklerini, diğer etkinliklerde seçilen renk kaynağını kullanır.</string>
+    <string name="glow_album_summary">Tüm küçük kapsüllerde müzik dalgasıyla aynı canlı albüm renklerini kullanır. Kapatıldığında seçilen renk kaynağı kullanılır.</string>
     <string name="glow_colour">Varsayılan parlama rengi</string>
     <string name="glow_champagne">Şampanya</string>
     <string name="glow_pearl">İnci</string>
-    <string name="glow_note">Tema rengi Görünüm → Renkler ayarını izler. Mod değiştirildiğinde ayrı parlama rengi korunur. Açıksa müzikte albüm renkleri önceliklidir; gövde ve çerçeve bağımsızdır.</string>
+    <string name="glow_note">Müzik oturumu varken tüm kapsüller renkleri ve sese tepkiyi paylaşır. Duraklatınca parıltı hafifler; oturum bitince son albüm renkleriyle yumuşakça kaybolur. Mod değiştirirken tema ve ayrı renk korunur.</string>
     <string name="glow_low_mode">Düşük performans modu şu anda parlamayı kapatıyor. Seçimleriniz korunur.</string>
     <string name="glow_colour_source">Renk kaynağı</string>
     <string name="glow_follow_theme">Tema rengini kullan</string>

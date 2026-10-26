@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -13,9 +14,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import dev.android.dynamicisland.R;
 import dev.android.dynamicisland.island.view.AmbientGlow;
+import dev.android.dynamicisland.island.view.GlowMotion;
+import dev.android.dynamicisland.island.graphics.ArtworkPalette;
+import dev.android.dynamicisland.island.model.IslandItem;
 import java.util.Locale;
 
-/** An opt-in subtle halo with independent colour, intensity and optional album colour matching. */
+/** Shared compact glow with independent brightness, motion and session visibility. */
 final class AmbientGlowScreen {
     private final SettingsActivity activity;
     private final OneUi ui;
@@ -30,10 +34,11 @@ final class AmbientGlowScreen {
         return prefs.getInt(ModuleSettings.KEY_GLOW_COLOUR, ModuleSettings.DEFAULT_GLOW_COLOUR);
     }
     private int strength() {return Math.max(0,Math.min(100,prefs.getInt(ModuleSettings.KEY_GLOW_STRENGTH,ModuleSettings.DEFAULT_GLOW_STRENGTH)));}
+    private int motion() {return Math.max(0,Math.min(100,prefs.getInt(ModuleSettings.KEY_GLOW_MOTION,ModuleSettings.DEFAULT_GLOW_MOTION)));}
     void open() {
         activity.subPage(activity.getString(R.string.glow_title));
         LinearLayout control=ui.card(activity.page());
-        Switch enabled=activity.toggle(control,R.string.glow_title,R.string.glow_summary,ModuleSettings.KEY_AMBIENT_GLOW,false);
+        Switch enabled=activity.toggle(control,R.string.glow_title,R.string.glow_summary,ModuleSettings.KEY_AMBIENT_GLOW,true);
         OneUi.listen(enabled,on->activity.refresh());
         if (prefs.getBoolean(ModuleSettings.KEY_LOW_PERFORMANCE,false)) ui.note(activity.page(),activity.getString(R.string.glow_low_mode));
         if (!enabled.isChecked()) return;
@@ -41,19 +46,13 @@ final class AmbientGlowScreen {
         Preview preview=new Preview(colour(),strength());
         example.addView(preview,new LinearLayout.LayoutParams(-1,ui.dp(132)));
         LinearLayout settings=ui.card(activity.page());
-        LinearLayout sliderBox=new LinearLayout(activity);sliderBox.setOrientation(LinearLayout.VERTICAL);
-        sliderBox.setPadding(ui.dp(22),ui.dp(16),ui.dp(22),ui.dp(8));
-        TextView value=ui.text(activity.getString(R.string.glow_strength_format,strength()),17,ui.textColor);sliderBox.addView(value);
-        SeekBar slider=new SeekBar(activity);slider.setMax(100);slider.setProgress(strength());
-        slider.setContentDescription(activity.getString(R.string.glow_strength));
-        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            public void onStartTrackingTouch(SeekBar bar){}
-            public void onProgressChanged(SeekBar bar,int amount,boolean fromUser){
-                value.setText(activity.getString(R.string.glow_strength_format,amount));preview.strength=amount;preview.invalidate();
-            }
-            public void onStopTrackingTouch(SeekBar bar){prefs.edit().putInt(ModuleSettings.KEY_GLOW_STRENGTH,bar.getProgress()).apply();}
-        });
-        sliderBox.addView(slider,new LinearLayout.LayoutParams(-1,ui.dp(48)));settings.addView(sliderBox);
+        activity.choice(settings,R.string.glow_visibility,new int[]{R.string.glow_music_only,R.string.glow_all_activities},
+                prefs.getBoolean(ModuleSettings.KEY_GLOW_MUSIC_ONLY,true)?0:1,
+                selected->prefs.edit().putBoolean(ModuleSettings.KEY_GLOW_MUSIC_ONLY,selected==0).apply());
+        slider(settings,R.string.glow_strength,R.string.glow_strength_format,ModuleSettings.KEY_GLOW_STRENGTH,strength(),amount->{preview.strength=amount;preview.invalidate();});
+        slider(settings,R.string.glow_motion_strength,R.string.glow_motion_format,ModuleSettings.KEY_GLOW_MOTION,motion(),amount->{preview.motion=amount;preview.invalidate();});
+        TextView motionNote=ui.text(activity.getString(R.string.glow_motion_desc),13,ui.muted);
+        motionNote.setPadding(ui.dp(22),0,ui.dp(22),ui.dp(16));settings.addView(motionNote);
         activity.choice(settings, R.string.glow_colour_source,
                 new int[]{R.string.glow_follow_theme, R.string.glow_individual}, followsTheme() ? 0 : 1,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_GLOW_FOLLOW_THEME, selected == 0).apply());
@@ -84,10 +83,30 @@ final class AmbientGlowScreen {
         }
         ui.note(activity.page(),activity.getString(R.string.glow_note));
     }
+    private void slider(LinearLayout settings,int title,int format,String key,int initial,java.util.function.IntConsumer changed) {
+        LinearLayout sliderBox=new LinearLayout(activity);sliderBox.setOrientation(LinearLayout.VERTICAL);
+        sliderBox.setPadding(ui.dp(22),ui.dp(16),ui.dp(22),ui.dp(8));
+        TextView value=ui.text(activity.getString(format,initial),17,ui.textColor);sliderBox.addView(value);
+        SeekBar slider=new SeekBar(activity);slider.setMax(100);slider.setProgress(initial);
+        slider.setContentDescription(activity.getString(title));
+        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            boolean tracking;
+            public void onStartTrackingTouch(SeekBar bar){tracking=true;}
+            public void onProgressChanged(SeekBar bar,int amount,boolean fromUser){
+                value.setText(activity.getString(format,amount));changed.accept(amount);
+                if(fromUser&&!tracking)prefs.edit().putInt(key,amount).apply();
+            }
+            public void onStopTrackingTouch(SeekBar bar){tracking=false;prefs.edit().putInt(key,bar.getProgress()).apply();}
+        });
+        sliderBox.addView(slider,new LinearLayout.LayoutParams(-1,ui.dp(48)));settings.addView(sliderBox);
+    }
     private void save(int colour){prefs.edit().putInt(ModuleSettings.KEY_GLOW_COLOUR,colour).apply();activity.refresh();}
     private final class Preview extends View {
-        int colour,strength;
+        int colour,strength,motion=motion(),sampleColour;
         private final AmbientGlow glow=new AmbientGlow(activity.getResources().getDisplayMetrics().density);
+        private final GlowMotion flow=new GlowMotion();
+        private final IslandItem sample=new IslandItem("glow:settings-preview");
+        private long lastFrame;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF pill=new RectF();
         Preview(int colour,int strength){super(activity);this.colour=colour;this.strength=strength;setContentDescription(activity.getString(R.string.glow_title));}
@@ -95,10 +114,21 @@ final class AmbientGlowScreen {
             canvas.drawColor(0xFF111519);
             float width=Math.min(getWidth()-ui.dp(76),ui.dp(210)),height=ui.dp(34);
             pill.set((getWidth()-width)/2,(getHeight()-height)/2,(getWidth()+width)/2,(getHeight()+height)/2);
-            glow.draw(canvas,pill,colour,prefs.getBoolean(ModuleSettings.KEY_LOW_PERFORMANCE,false)?0:1,strength);
+            if(sample.mediaPalette==null||sampleColour!=colour){
+                sampleColour=colour;sample.accent=colour;sample.isMedia=true;sample.playing=true;
+                sample.mediaPalette=ArtworkPalette.fromPixels(new int[]{colour,colour,colour,colour});
+            }
+            long now=SystemClock.uptimeMillis();float dt=lastFrame==0?0:Math.min(.05f,(now-lastFrame)/1000f);lastFrame=now;
+            // An explicitly labelled music example, without starting the system output visualizer in settings.
+            float beat=(float)Math.pow(Math.max(0,Math.sin(now/360d)),4);
+            boolean moving=flow.step(dt,sample,prefs.getBoolean(ModuleSettings.KEY_GLOW_ALBUM,true),colour,motion,.08f+.85f*beat);
+            boolean low=prefs.getBoolean(ModuleSettings.KEY_LOW_PERFORMANCE,false);
+            glow.draw(canvas,pill,flow,low?0:1,strength);
             paint.setColor(Color.BLACK);canvas.drawRoundRect(pill,height/2,height/2,paint);
             paint.setColor(0x33FFFFFF);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(ui.dp(1));
             canvas.drawRoundRect(pill,height/2,height/2,paint);paint.setStyle(Paint.Style.FILL);
+            if(moving&&!low&&strength>0&&isAttachedToWindow()&&isShown()&&getWindowVisibility()==VISIBLE)postInvalidateDelayed(33);
         }
+        @Override protected void onDetachedFromWindow(){lastFrame=0;super.onDetachedFromWindow();}
     }
 }

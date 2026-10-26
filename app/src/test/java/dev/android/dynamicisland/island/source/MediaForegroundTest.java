@@ -95,6 +95,8 @@ public class MediaForegroundTest {
         sync(controller("Song"));
         int baseline = changes.get(); // sync itself announces a change
         assertHidden(collect(PLAYER, true));
+        assertNotNull(source.glowSession());
+        assertTrue(source.glowSession().playing);
         advance(RETRY_MS * 2);
         assertEquals(baseline, changes.get());
         assertHidden(collect(PLAYER, true));
@@ -107,6 +109,18 @@ public class MediaForegroundTest {
         assertShown(collect(OTHER, true), "Song");
         advance(RETRY_MS * 2);
         assertEquals(baseline, changes.get());
+    }
+
+    @Test public void pausedGlowFollowsTheSessionAfterItsCardTimeoutButNotAfterItsRemoval() throws Exception {
+        MediaController controller=controller("Song");sync(controller);
+        Map<?,?> sessions=ReflectionHelpers.getField(source,"sessions");
+        MediaController.Callback callback=(MediaController.Callback)sessions.get(controller.getSessionToken());
+        callback.onPlaybackStateChanged(new android.media.session.PlaybackState.Builder()
+                .setState(android.media.session.PlaybackState.STATE_PAUSED,4000,0).build());
+        advance(dev.android.dynamicisland.settings.ModuleSettings.pausedTimeoutMs()+100);
+        assertEmpty(collect(OTHER,true));
+        assertNotNull(source.glowSession());assertFalse(source.glowSession().playing);
+        source.sync(Collections.emptyList());assertNull(source.glowSession());
     }
 
     @Test
@@ -148,6 +162,7 @@ public class MediaForegroundTest {
         assertEquals(baseline, changes.get());
         assertEmpty(collect(null, false));
         assertEmpty(collect(OTHER, true));
+        assertNull(source.glowSession());
     }
 
 }

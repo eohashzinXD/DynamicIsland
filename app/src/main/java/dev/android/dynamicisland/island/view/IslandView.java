@@ -209,7 +209,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
         CardBridge bridge = new CardBridge(this, metrics, paints, scene, shapes, stackPainter);
-        pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge, mediaFx);
+        pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge);
         director = new Director(this, this.host, metrics, scene, shapes, bodies, mediaFx);
         touch = new TouchController(this, this.host, metrics, scene, shapes, director, buttons);
         ticker = new SecondTicker(this, scene, stackPainter);
@@ -419,6 +419,14 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         setItems(sorted, HINT_NONE);
     }
 
+    /** Session metadata is independent of whether the music pill is currently visible. */
+    public void setGlowSession(IslandItem item) {
+        if (scene.explicitGlowSession && scene.glowSession == item) return;
+        scene.explicitGlowSession = true;
+        scene.glowSession = item;
+        scheduleFrame();
+    }
+
     public void setItems(List<IslandItem> sorted, int hint, List<IslandItem> minimizedItems) {
         scene.minimized.clear();
         if (minimizedItems != null) {
@@ -618,11 +626,18 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     public boolean needsAudio() {
         if (ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
-        if (scene.mode != Mode.COMPACT || scene.mainIn == null || scene.visibleAlpha() < 0.2f) {
+        if (scene.mode != Mode.COMPACT || scene.visibleAlpha() < 0.2f) {
             return false;
         }
-        IslandItem it = scene.mainIn.content.item;
-        return it.trailing == IslandItem.Trailing.WAVEFORM && it.playing;
+        IslandItem music = scene.musicForGlow();
+        return (music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0)
+                || needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
+    }
+
+    private boolean needsAudio(Layer layer) {
+        if (layer == null) return false;
+        IslandItem item = layer.content.item;
+        return item.playing && item.trailing == IslandItem.Trailing.WAVEFORM && ModuleSettings.visualizer();
     }
 
     public void getCoverageBounds(RectF out) {
@@ -718,6 +733,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         Layer main = scene.mainIn;
         Layer bubble = scene.bubbleIn;
         boolean need = false;
+        need |= pillPainter.stepGlow(dt, host.audio());
         IslandItem waveItem = null;
         if (main != null && scene.mode == Mode.COMPACT) {
             IslandItem it = main.content.item;

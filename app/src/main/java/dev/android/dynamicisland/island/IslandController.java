@@ -500,6 +500,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             IslandSources.Gathered gathered = sources.gather();
             long now = SystemClock.uptimeMillis();
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
+            view.setGlowSession(gathered.glowSession);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
             if (sourcePeekRequests != null) {
                 IslandItem requested = sourcePeekRequests.next(shape.shown, ModuleSettings.autoOpenCards(), now);

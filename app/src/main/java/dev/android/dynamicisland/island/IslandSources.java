@@ -36,6 +36,7 @@ final class IslandSources {
     /** What one gathering pass produced. */
     static final class Gathered {
         final List<IslandItem> items = new ArrayList<>();
+        IslandItem glowSession;
         /** Keys of items a source left out because their app is in the foreground. */
         final Set<String> hiddenByForeground = new HashSet<>();
         /** Packages whose chips the launcher should animate into the island. */
@@ -129,6 +130,7 @@ final class IslandSources {
             items.removeIf(item -> item.transfer);
         }
         guarded("media", () -> media.collect(items, foreground, state.confirmed, out.hiddenByForeground, out.packages));
+        if (ModuleSettings.ambientGlow()) guarded("music glow", () -> out.glowSession = media.glowSession());
         guarded("cast", () -> cast.collect(items));
         guarded("recorder notification", () -> recorder.collect(items));
         guarded("events", () -> events.collect(items));

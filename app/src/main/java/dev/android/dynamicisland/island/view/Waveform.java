@@ -52,7 +52,7 @@ final class Waveform {
      */
     boolean step(float dt, IslandItem item, AudioLevels audio) {
         if (ModuleSettings.lowPerformance()) return false;
-        boolean live = item.playing && audio != null && audio.isLive();
+        boolean live = item.playing && ModuleSettings.visualizer() && audio != null && audio.isLive();
         float k = 1.0f - ((float) Math.exp((-dt) / LEVEL_SMOOTHING_S));
         boolean moving = false;
         for (int i = 0; i < BARS; i++) {

@@ -200,6 +200,16 @@ public final class MediaSource {
 
     /** The most recently active playing session; failing that the most recent one paused within the timeout. */
     private Session pickSession(long now) {
+        return pickSession(now, false);
+    }
+
+    /** Glow follows a real session even while its pill is hidden or its paused-card timeout has elapsed. */
+    public IslandItem glowSession() {
+        Session session = pickSession(SystemClock.uptimeMillis(), true);
+        return session == null ? null : session.card();
+    }
+
+    private Session pickSession(long now, boolean forGlow) {
         Session playing = null;
         Session paused = null;
         for (Session s : sessions.values()) {
@@ -210,7 +220,9 @@ public final class MediaSource {
                 if (playing == null || s.lastActive > playing.lastActive) {
                     playing = s;
                 }
-            } else if (s.lastActive > 0 && now - s.lastActive < ModuleSettings.pausedTimeoutMs()
+            } else if (((forGlow && s.state != null && (s.state.getState() == PlaybackState.STATE_PAUSED
+                    || s.state.getState() == PlaybackState.STATE_STOPPED))
+                    || (s.lastActive > 0 && now - s.lastActive < ModuleSettings.pausedTimeoutMs()))
                     && (paused == null || s.lastActive > paused.lastActive)) {
                 paused = s;
             }

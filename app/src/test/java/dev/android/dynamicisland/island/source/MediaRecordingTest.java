@@ -91,6 +91,7 @@ public class MediaRecordingTest {
         assertNull(source.itemForSession(recorder.getSessionToken()));
         assertTrue(source.isRecordingSession(recorder.getSessionToken()));
         assertNotNull(source.itemForSession(music.getSessionToken()));
+        assertEquals("com.music",source.glowSession().packageName);
     }
 
     @Test

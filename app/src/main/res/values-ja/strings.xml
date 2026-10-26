@@ -464,15 +464,21 @@
     <string name="pill_outline_always">常に表示</string>
     <string name="pill_outline_none">なし</string>
     <string name="glow_title">外側のグロー</string>
-    <string name="glow_summary">コンパクトなアイランドの外側に柔らかな光を表示します。</string>
+    <string name="glow_summary">初期設定では音楽セッションに合わせ、すべてのコンパクトなピルに光彩を表示します。</string>
     <string name="glow_strength">グローの強さ</string>
     <string name="glow_strength_format">グローの強さ · %d%%</string>
+    <string name="glow_visibility">光彩の表示条件</string>
+    <string name="glow_music_only">音楽セッションがあるときのみ</string>
+    <string name="glow_all_activities">すべてのアクティビティ</string>
+    <string name="glow_motion_strength">ダイナミック効果の強さ</string>
+    <string name="glow_motion_format">ダイナミック効果 · %d%%</string>
+    <string name="glow_motion_desc" formatted="false">0%：静止 · 50%：標準 · 100%：最大。プレビューは音楽への反応の例です。明るさは別に調整できます。</string>
     <string name="glow_album">音楽ではアルバムの色を使用</string>
-    <string name="glow_album_summary">音楽ではアルバムの色、それ以外では選択した色の方式を使います。</string>
+    <string name="glow_album_summary">すべてのコンパクトなピルに音楽の波形と同じ鮮やかなアルバム色を使用します。オフにすると選択した色を使います。</string>
     <string name="glow_colour">標準のグロー色</string>
     <string name="glow_champagne">シャンパン</string>
     <string name="glow_pearl">パール</string>
-    <string name="glow_note">テーマ色は外観 → 色の設定に従います。方式を変えても個別のグロー色は保持します。音楽のアルバム色が有効な場合はそちらを優先し、本体と輪郭は独立しています。</string>
+    <string name="glow_note">音楽セッションがある間、すべてのピルが色と音への反応を共有します。一時停止で淡くなり、セッション終了時は最後の色のまま滑らかに消えます。色の方式を切り替えてもテーマ色と個別の色は保持されます。</string>
     <string name="glow_low_mode">現在は低負荷モードによりグローが無効です。選択した設定は保持されます。</string>
     <string name="glow_colour_source">色の選択方法</string>
     <string name="glow_follow_theme">テーマの色に合わせる</string>

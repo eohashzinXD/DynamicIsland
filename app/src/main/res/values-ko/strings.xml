@@ -464,15 +464,21 @@
     <string name="pill_outline_always">항상</string>
     <string name="pill_outline_none">없음</string>
     <string name="glow_title">외곽 글로우</string>
-    <string name="glow_summary">작은 아일랜드의 가장자리 바깥에 은은한 빛을 표시합니다.</string>
+    <string name="glow_summary">기본적으로 음악 세션에 맞춰 모든 작은 알약 주위에 빛을 표시합니다.</string>
     <string name="glow_strength">글로우 강도</string>
     <string name="glow_strength_format">글로우 강도 · %d%%</string>
+    <string name="glow_visibility">글로우 표시 조건</string>
+    <string name="glow_music_only">음악 세션이 있을 때만</string>
+    <string name="glow_all_activities">모든 활동에 표시</string>
+    <string name="glow_motion_strength">다이내믹 효과 강도</string>
+    <string name="glow_motion_format">다이내믹 효과 · %d%%</string>
+    <string name="glow_motion_desc" formatted="false">0% 정적 · 50% 보통 · 100% 매우 강하게. 미리보기는 음악 반응의 예시이며 밝기는 별도로 조절합니다.</string>
     <string name="glow_album">음악은 앨범 색상 사용</string>
-    <string name="glow_album_summary">음악은 앨범 색상을 쓰고, 그 외에는 선택한 색상 방식을 따릅니다.</string>
+    <string name="glow_album_summary">모든 작은 알약에 음악 파형과 같은 선명한 앨범 색상을 사용합니다. 끄면 선택한 색상 방식을 따릅니다.</string>
     <string name="glow_colour">기본 글로우 색상</string>
     <string name="glow_champagne">샴페인</string>
     <string name="glow_pearl">진주색</string>
-    <string name="glow_note">테마색은 모양 → 색상 설정을 따릅니다. 방식을 바꿔도 개별 글로우 색상은 보존됩니다. 음악의 앨범 연동을 켜면 앨범 색상이 우선하며, 알약 배경과 테두리는 별도입니다.</string>
+    <string name="glow_note">음악 세션이 있으면 모든 작은 알약이 같은 색과 소리 반응을 공유합니다. 일시정지하면 희미해지고, 세션이 끝나면 마지막 앨범 색으로 서서히 사라집니다. 색상 방식을 바꿔도 테마·개별 색상 설정은 유지됩니다.</string>
     <string name="glow_low_mode">현재 저사양 모드가 글로우를 끕니다. 선택한 설정값은 보존됩니다.</string>
     <string name="glow_colour_source">색상 선택 방식</string>
     <string name="glow_follow_theme">테마색 따르기</string>
