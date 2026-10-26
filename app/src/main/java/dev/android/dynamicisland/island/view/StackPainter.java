@@ -234,9 +234,10 @@ final class StackPainter {
         opening = visualOpening(c, opening);
         paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
         canvas.drawRoundRect(r, corner, corner, paints.card);
+        int morphOutline = Colors.withAlpha(c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE, scene.pillOutlineOpacity());
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
-                ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE) // before 0.1.4: no outline until the card has nearly opened
-                : rimShader(r, 1.0f, rimSettled, c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE));
+                ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE)
+                : rimShader(r, 1.0f, rimSettled, morphOutline));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
         canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);

@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.drawable.Drawable;
@@ -158,6 +159,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final Footprint footprint;
     private final ShadeCards shadeCards;
     private final RectF pillRect = new RectF();
+    private final RectF samplingPill = new RectF();
+    private final RectF samplingBubble = new RectF();
+    private final int[] samplingLocation = new int[2];
 
     private final FramePacer framePacer = new FramePacer();
     private boolean renderingPaused;
@@ -277,6 +281,46 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     void computeCard(Card card, RectF out) {
         shapes.card(card, out);
+    }
+
+    /** Raw compositor luma below this window; null means unsupported/unavailable, never guessed. */
+    public void setPillBackgroundLuma(Float luma) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            post(() -> setPillBackgroundLuma(luma));
+            return;
+        }
+        float before = scene.pillOutlineOpacity();
+        scene.pillOutline.sample(luma);
+        if (before != scene.pillOutlineOpacity()) {
+            invalidate();
+            scheduleFrame();
+        }
+    }
+
+    /** A thin bottom-edge band avoids sampling the physical camera hole in the pill's centre. */
+    public boolean pillBackgroundSamplingRegion(Rect out) {
+        out.setEmpty();
+        if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE
+                || scene.mode != Mode.COMPACT || scene.shadePulled() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA) {
+            return false;
+        }
+        shapes.paintedMain(samplingPill);
+        if (samplingPill.width() < 2f || samplingPill.height() < 2f) return false;
+        float left = samplingPill.left;
+        float right = samplingPill.right;
+        if (springs.split.value() > 0.003f) {
+            shapes.bubble(samplingPill, samplingBubble);
+            left = Math.min(left, samplingBubble.left);
+            right = Math.max(right, samplingBubble.right);
+        }
+        getLocationOnScreen(samplingLocation);
+        float band = Math.max(1f, Math.min(metrics.dp(3f), samplingPill.height() * 0.12f));
+        out.set((int) Math.floor(left + samplingLocation[0]),
+                (int) Math.floor(samplingPill.bottom - band + samplingLocation[1]),
+                (int) Math.ceil(right + samplingLocation[0]),
+                (int) Math.ceil(samplingPill.bottom + samplingLocation[1]));
+        return out.intersect(samplingLocation[0], samplingLocation[1],
+                samplingLocation[0] + getWidth(), samplingLocation[1] + getHeight()) && !out.isEmpty();
     }
 
     // ---- configuration -------------------------------------------------------------------------------------------

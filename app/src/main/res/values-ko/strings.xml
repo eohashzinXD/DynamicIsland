@@ -231,7 +231,7 @@
     <string name="anim_sum">새로운 부드러운 모션 또는 기존 모션</string>
     <string name="anim_pick">아일랜드가 움직이는 방식을 선택해 보세요.</string>
     <string name="anim_new">기본</string>
-    <string name="anim_new_desc">열고, 닫고, 바뀔 때의 움직임이 하나로 이어지고, 검은 화면에서도 모든 모양이 보이도록 윤곽이 함께 움직여요.</string>
+    <string name="anim_new_desc">열고, 닫고, 바뀔 때의 움직임이 부드럽게 이어집니다.</string>
     <string name="anim_legacy">클래식</string>
     <string name="anim_legacy_desc">0.1.3 이전 버전의 움직임이에요.</string>
     <string name="anim_apply">적용</string>
@@ -458,4 +458,9 @@
     <string name="low_performance_details_title">줄어드는 효과 안내</string>
     <string name="low_performance_static_wave">정적인 파형 (저사양 모드)</string>
     <string name="low_performance_details">내부 요소의 블러는 부드러운 투명도 전환으로 대체합니다. 카드 배경 블러는 불투명한 검은 배경으로 바꿉니다. 음악 효과는 앨범 색상을 정적으로 표시하고 앨범 전환 효과를 멈춥니다. 파형은 정적으로 표시하며 오디오 분석을 중지합니다. 움직이는 아이콘은 완료된 모습으로 표시하되 배터리 잔량 등 실제 상태는 계속 반영합니다. 지속적인 움직임은 최대 30fps, 터치 반응과 확장·축소는 최대 60fps로 제한합니다.\n\n기존 개별 설정값은 보존하며 모드를 끄면 다시 적용합니다. 알림·통화·타이머·음악 조작은 유지됩니다. 기본값은 꺼짐입니다.</string>
+    <string name="pill_outline">알약 외곽선</string>
+    <string name="pill_outline_desc">자동은 알약과 실제 배경의 대비가 낮을 때만 외곽선을 표시합니다.</string>
+    <string name="pill_outline_auto">자동</string>
+    <string name="pill_outline_always">항상</string>
+    <string name="pill_outline_none">없음</string>
 </resources>

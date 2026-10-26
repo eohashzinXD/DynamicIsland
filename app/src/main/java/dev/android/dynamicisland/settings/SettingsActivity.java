@@ -256,9 +256,14 @@ public final class SettingsActivity extends Activity {
 
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
+        LinearLayout design = ui.card(page);
+        ui.linkRow(design, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
+        ui.linkRow(design, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
+        choice(design, R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
+                ModuleSettings.readPillOutlineMode(prefs),
+                selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
+        ui.note(page, getString(R.string.pill_outline_desc));
         LinearLayout look = ui.card(page);
-        ui.linkRow(look, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
-        ui.linkRow(look, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
         toggle(look, R.string.setting_card_header, R.string.setting_card_header_desc, ModuleSettings.KEY_CARD_HEADER, true);
         toggle(look, R.string.setting_color_icons, R.string.setting_color_icons_desc, ModuleSettings.KEY_COLOR_ICONS, false);
         choice(look, R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},

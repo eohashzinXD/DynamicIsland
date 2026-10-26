@@ -33,3 +33,22 @@ jobs:
 
       - name: Unit tests and render tests
         run: ./gradlew --no-daemon testReleaseUnitTest assembleRelease
+
+      - name: Verify framework stubs are not packaged
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" dex packages --defined-only app/build/outputs/apk/release/app-release-unsigned.apk > /tmp/defined-packages.txt
+          if rg -q 'android\.view\.CompositionSamplingListener' /tmp/defined-packages.txt; then
+            echo 'Compile-only framework stub must never be packaged into the APK'
+            exit 1
+          fi
+
+      - name: Outline contrast captures and test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-contrast-and-tests
+          path: |
+            app/build/render/pill-outline-contrast.png
+            app/build/reports/tests/testReleaseUnitTest/
+          if-no-files-found: ignore
+          retention-days: 7

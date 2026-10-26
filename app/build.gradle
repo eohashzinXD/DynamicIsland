@@ -44,7 +44,26 @@ android {
     }
 }
 
+// Hidden framework API signatures only; never add these sources to an Android source set.
+// Keep android.jar on the ordinary classpath: javac 17 rejects -bootclasspath with target 17.
+def compileCompositionSamplingStubs = tasks.register('compileCompositionSamplingStubs', JavaCompile) {
+    source rootProject.file('tools/framework-stubs/android/view/CompositionSamplingListener.java')
+    classpath = files(providers.provider { android.bootClasspath })
+    sourceCompatibility = android.compileOptions.sourceCompatibility.toString()
+    targetCompatibility = android.compileOptions.targetCompatibility.toString()
+    destinationDirectory.set(layout.buildDirectory.dir('generated/stubs/composition-sampling/classes'))
+    options.encoding = 'UTF-8'
+}
+
+def compositionSamplingStubsJar = tasks.register('compositionSamplingStubsJar', Jar) {
+    from(compileCompositionSamplingStubs.flatMap { it.destinationDirectory })
+    destinationDirectory.set(layout.buildDirectory.dir('generated/stubs/composition-sampling'))
+    archiveFileName.set('composition-sampling-stubs.jar')
+}
+
 dependencies {
+    compileOnly files(compositionSamplingStubsJar.flatMap { it.archiveFile })
+            .builtBy(compositionSamplingStubsJar)
     compileOnly files('libs/xposed-api-82.jar')
 
     testImplementation files('libs/xposed-api-82.jar')

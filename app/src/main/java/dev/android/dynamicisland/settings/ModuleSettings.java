@@ -37,6 +37,11 @@ public final class ModuleSettings {
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
     public static final String KEY_PILL_ANCHOR = "pill_anchor";
+    /** Outline policy: automatic contrast detection, always visible, or never drawn. */
+    public static final String KEY_PILL_OUTLINE = "pill_outline";
+    public static final int PILL_OUTLINE_AUTO = 0;
+    public static final int PILL_OUTLINE_ALWAYS = 1;
+    public static final int PILL_OUTLINE_NONE = 2;
     public static final String KEY_PILL_X_DP = "pill_x_dp";
     public static final String KEY_PILL_Y_DP = "pill_y_dp";
     /** Wall-clock time until which the position page is open; a slower way (the settings file) to ask for the sample. */
@@ -146,6 +151,7 @@ public final class ModuleSettings {
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
     private static volatile int pillAnchor = ANCHOR_AUTO;
+    private static volatile int pillOutlineMode = PILL_OUTLINE_AUTO;
     private static volatile int pillXDp;
     private static volatile int pillYDp;
     /** Told (on the reload thread) when the island's position settings changed. */
@@ -228,6 +234,22 @@ public final class ModuleSettings {
 
     private static int clampMaxWidth(int dp) {
         return dp < PILL_MAX_W_MIN_DP ? 0 : Math.min(PILL_MAX_W_MAX_DP, dp);
+    }
+
+    /** Outline policy, independent of animation style. Auto uses contrast with the actual background. */
+    public static int pillOutlineMode() {
+        ensureStarted();
+        return pillOutlineMode;
+    }
+
+    /** Used by the settings UI, preview, and both preference sources; invalid values mean Auto. */
+    static int readPillOutlineMode(SharedPreferences source) {
+        try {
+            int mode = source.getInt(KEY_PILL_OUTLINE, PILL_OUTLINE_AUTO);
+            return mode >= PILL_OUTLINE_AUTO && mode <= PILL_OUTLINE_NONE ? mode : PILL_OUTLINE_AUTO;
+        } catch (ClassCastException corrupt) {
+            return PILL_OUTLINE_AUTO;
+        }
     }
 
     /** Height of the pill in percent of the normal one, minus 0: -20..+40. */
@@ -417,6 +439,7 @@ public final class ModuleSettings {
             haptics = source.getBoolean(KEY_HAPTICS, true);
             lowPerformance = source.getBoolean(KEY_LOW_PERFORMANCE, false);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
+            pillOutlineMode = readPillOutlineMode(source);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             allNotifications = source.getBoolean(KEY_ALL_NOTIFICATIONS, false);
@@ -495,6 +518,7 @@ public final class ModuleSettings {
     public static void configurePreview(SharedPreferences settings) {
         previewProcess = true;
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
+        pillOutlineMode = readPillOutlineMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
         cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
@@ -516,7 +540,7 @@ public final class ModuleSettings {
     private static String switchSignature() {
         return "" + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
-                + appFilter.onlyListed() + appFilter.size();
+                + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
@@ -526,7 +550,8 @@ public final class ModuleSettings {
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
-                + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+                + " pillOutline=" + pillOutlineMode + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+        Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
         if (!now.equals(lastLogged)) {

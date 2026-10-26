@@ -11,6 +11,7 @@ final class Scene {
     static final float SHADE_PULLED_EPS = 0.001f;
 
     final Springs springs;
+    final PillOutlinePolicy pillOutline = new PillOutlinePolicy();
     Mode mode = Mode.HIDDEN;
     ContentHandoff contentHandoff;
     /** Shown items, most important first. */
@@ -40,6 +41,17 @@ final class Scene {
 
     Scene(Springs springs) {
         this.springs = springs;
+    }
+
+    int pillBodyColor(Layer layer) {
+        if (layer == null || mode != Mode.COMPACT) return 0xFF000000;
+        IslandItem item = layer.content.item;
+        return !item.hasTeams() || item.pillColor == 0 ? 0xFF000000 : item.pillColor;
+    }
+
+    float pillOutlineOpacity() {
+        boolean bubble = springs.split.value() > 0.003f;
+        return pillOutline.visible(ModuleSettings.pillOutlineMode(), pillBodyColor(mainIn), pillBodyColor(bubbleIn), bubble) ? 1f : 0f;
     }
 
     /** The shade is down far enough that the island has been sent away (it comes back only when the shade is nearly shut). */

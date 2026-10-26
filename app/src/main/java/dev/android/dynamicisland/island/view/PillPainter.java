@@ -9,7 +9,6 @@ import android.graphics.RectF;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.LiquidBridge;
 import dev.android.dynamicisland.island.graphics.Metaball;
-import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
@@ -97,7 +96,8 @@ final class PillPainter {
         // A returning compact body stays opaque; pillBlob only gates its content until the fold finishes.
         float bodyAlpha = scene.mode == Mode.COMPACT ? 1.0f : clamp01(sp.pillBlob.value());
         boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
-        if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA) {
+        if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA
+                && scene.pillOutlineOpacity() > IslandView.MIN_VISIBLE_ALPHA) {
             drawOutline(canvas, pill, r, outlinePill, bodyAlpha, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
         }
 
@@ -189,11 +189,7 @@ final class PillPainter {
 
     /** The pill takes its item's team colour while compact; otherwise (and while a card is out) it is black. */
     private int bodyColor(Layer layer) {
-        if (layer == null || scene.mode != Mode.COMPACT) {
-            return Colors.BLACK;
-        }
-        IslandItem it = layer.content.item;
-        return (!it.hasTeams() || it.pillColor == 0) ? Colors.BLACK : it.pillColor;
+        return scene.pillBodyColor(layer);
     }
 
     private void drawLayer(Canvas canvas, Layer layer, RectF shape, long t, float extraAlpha) {

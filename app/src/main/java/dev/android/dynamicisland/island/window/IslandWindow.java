@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.view.IslandHost;
 import dev.android.dynamicisland.island.view.IslandView;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 import java.lang.reflect.Field;
 
@@ -54,6 +55,9 @@ public final class IslandWindow {
     private final Region touchRegion = new Region();
     private final Region latestRegion = new Region();
     private final SurfaceFader surfaceFader = new SurfaceFader();
+    private final Rect pillSamplingRegion = new Rect();
+    private PillBackgroundSampler pillSampler;
+    private boolean pillSamplingRequested;
     /** Whether the root view has been added to the WindowManager. */
     private boolean added;
     private boolean watchingOutside;
@@ -139,6 +143,11 @@ public final class IslandWindow {
     }
 
     void detach() {
+        if (pillSampler != null) {
+            pillSampler.destroy();
+            pillSampler = null;
+            pillSamplingRequested = false;
+        }
         if (!added) {
             return;
         }
@@ -158,6 +167,10 @@ public final class IslandWindow {
         int visibility = shown ? View.VISIBLE : View.GONE;
         if (root.getVisibility() != visibility) {
             root.setVisibility(visibility);
+            if (!shown && pillSampler != null) {
+                pillSamplingRequested = false;
+                pillSampler.update(null, false);
+            }
         }
     }
 
@@ -284,10 +297,24 @@ public final class IslandWindow {
 
     /** Re-applies the surface fade before each frame: the surface can be recreated and lose it. */
     public boolean onPreDraw() {
+        updatePillBackgroundSampling();
         if (!surfaceFader.isNeutral()) {
             applySurfaceFade();
         }
         return true;
+    }
+
+    private void updatePillBackgroundSampling() {
+        boolean sample = ModuleSettings.pillOutlineMode() == ModuleSettings.PILL_OUTLINE_AUTO
+                && view.pillBackgroundSamplingRegion(pillSamplingRegion);
+        if (sample) {
+            if (pillSampler == null) pillSampler = new PillBackgroundSampler(view, view::setPillBackgroundLuma);
+            pillSamplingRequested = true;
+            pillSampler.update(pillSamplingRegion, true);
+        } else if (pillSampler != null && pillSamplingRequested) {
+            pillSamplingRequested = false;
+            pillSampler.update(null, false);
+        }
     }
 
     // ---- display info --------------------------------------------------------------------------
