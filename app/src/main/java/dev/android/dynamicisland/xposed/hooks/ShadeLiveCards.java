@@ -36,6 +36,12 @@ public final class ShadeLiveCards {
 
     static void install(ClassLoader cl) {
         try {
+            Class<?> rowClass = Refl.findClass(ROW_PACKAGE + "ExpandableNotificationRow", cl);
+            if (rowClass == null) return;
+            // Older builds without this Samsung hit test do not need the guard. When it
+            // exists, install the guard before allowing any stock content to be replaced.
+            if (Refl.method(rowClass, "isActionButtonLongClick", 2) != null
+                    && Refl.hookAll(rowClass, "isActionButtonLongClick", new ActionButtonHitTestHook()) == 0) return;
             if (Refl.hookAll(cl, CONTENT_BINDER + "$Companion", "access$apply", new ReapplyHook()) == 0) {
                 return;
             }
@@ -63,6 +69,26 @@ public final class ShadeLiveCards {
     /** True when the row's content view currently holds (or is just rebinding) one of our cards. */
     static boolean isCardRow(View row) {
         return CardRowState.owns(Refl.get(row, "mPrivateLayout"));
+    }
+
+    /** Covers both SwipeHelper's row long press and LiveCardView's forwarded long press. */
+    private static final class ActionButtonHitTestHook extends SafeHook {
+        private static final String SCOPE = "dynamicisland.actionButtonHitTest";
+
+        ActionButtonHitTestHook() { super("shade card long-press hit test"); }
+
+        @Override protected void before(XC_MethodHook.MethodHookParam p) {
+            Object layout = Refl.get(p.thisObject, "mPrivateLayout");
+            CardRowState state = CardRowState.installedIn(layout);
+            if (state == null || state.isRestored()) return;
+            ActionButtonHitTest scope = ActionButtonHitTest.begin(layout, state.card);
+            if (scope != null) p.setObjectExtra(SCOPE, scope);
+        }
+
+        @Override protected void after(XC_MethodHook.MethodHookParam p) {
+            Object scope = p.getObjectExtra(SCOPE);
+            if (scope instanceof ActionButtonHitTest) ((ActionButtonHitTest) scope).close();
+        }
     }
 
     /**
