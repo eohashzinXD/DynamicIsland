@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <b>中文</b> · <a href="README.ru.md">Русский</a> · <a href="#功能">功能</a> · <a href="#安装">安装</a>
+  <a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <b>中文</b> · <a href="README.ru.md">Русский</a> · <a href="README.tr.md">Türkçe</a> · <a href="#功能">功能</a> · <a href="#安装">安装</a>
 </p>
 
 ### 胶囊显示的一切,都变成卡片
@@ -33,7 +33,7 @@
   <img src="docs/banner.png" alt="药丸状态、实时卡片、音乐播放器以及多张卡片叠放的岛">
 </p>
 
-Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡片的药丸条。One UI 放在胶囊里的所有内容(通话、计时器、录屏、投屏、导航、音乐播放器)都会变成卡片,普通通知也一样:消息、验证码、下载,以及应用只以文字形式写出的外卖、打车和路线更新。它是运行在 System UI 内部的 LSPosed 模块,带有 One UI 风格的设置应用和规则管理器。灵感来自 [@cryyear 的 DynamicIsland](https://github.com/Spottq);这里是全新的实现。
+Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡片的药丸条。One UI 放在胶囊里的所有内容(通话、计时器、录屏、投屏、导航、音乐播放器)都会变成卡片,普通通知也一样:消息、验证码、下载,以及应用只以文字形式写出的外卖、打车和路线更新。它是运行在 System UI 内部的 LSPosed 模块,带有 One UI 风格的设置应用和规则管理器。
 
 ## 截图
 
@@ -42,7 +42,7 @@ Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡�
 </p>
 
 <p align="center">
-  <img src="docs/strip_app.png" alt="设置应用:设置、通知卡片、规则、单条规则、试一试通知">
+  <img src="docs/strip_app_zh.png" alt="设置应用：主页、通知、外观、行为和高级设置">
 </p>
 
 这些图片由应用自己的绘制代码在测试环境的模拟手机上绘制(见 `scripts/readme_images.py`);它们不是真机照片,应用图标也只是简单图形。
@@ -129,9 +129,12 @@ Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡�
 
 ### 设置应用
 
-- One UI 风格的中心页,带分组卡片和子页面:**显示与动效**、**通知卡片**、**系统事件**、**应用控制**、**规则** 和 **工具**(用 root 重启 System UI、诊断),支持英语、韩语、日语、简体中文、俄语和土耳其语，以及浅色和深色。更改在几秒内生效,无需重启。
-- **岛的位置和大小:** 可把岛放在摄像头孔上(默认)、居中,或放在状态栏的左侧或右侧,并可左右或上下微调。拖动滑块时,真实状态栏上的岛会随之移动。**摄像头孔** 可以自动识别、手动设置(大小和位置,在真实屏幕上以蓝色圆环显示)或关闭。药丸条中的文字会避开孔。药丸条的高度、最窄和最宽宽度也可以设置(还可以保持它的最宽宽度),并有同样的实时预览。
-- 四种设置:开关、点开后选择的值、指向子页面的链接和操作。关闭的开关会让依赖它的项目变暗。
+- 六个分组：**通知与活动**、**应用通知**、**外观**、**行为**、**高级与故障排查**、**应用信息**。支持英语、韩语、日语、简体中文、俄语和土耳其语，以及浅色和深色主题。大多数设置在几秒内生效，无需重启系统界面。
+- **位置与尺寸：** 实际状态栏实时预览，自动或自定义宽度，滑块、数字输入及逐步微调。位置、尺寸和相机校准分别重置。摄像头开孔校准位于高级设置。
+- **通知与应用：** 普通通知可关闭、仅横幅或包含静默通知。常驻服务通知默认不包含。应用过滤仅影响普通通知卡片；支持按名称或包名搜索、仅显示已选应用，以及保存和取消。
+- **外观与行为：** 默认或自定义强调色，可取消的 HSV/HEX 编辑器；事件图标默认大号，可选小号；充电电池图标默认隐藏。动画预览使用实际渲染器，选择后立即保存。波形可随音频变化或播放演示动画。
+- **时间与修复：** 活动自动展开默认关闭。启用后的显示时间（默认 4 秒）、手动展开卡片自动收起（6 秒）和暂停音乐保留（60 秒）分别设置。实验性通知修复用于兼容性问题，默认关闭。
+- **语言与状态：** 在应用信息中更改设置应用语言，卡片跟随设备语言。连接检查需要系统界面的新响应，不会将旧诊断报告当作当前连接。返回时恢复滚动位置。
 
 ### 可靠性
 
@@ -158,17 +161,16 @@ Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡�
 
 | 页面 | 内容 |
 |---|---|
-| 岛的位置和大小 | 岛放在哪里、偏移、高度、最窄和最宽宽度、摄像头孔(自动、手动或无) |
-| 显示与动效 | 卡片标题栏、音频波形、触感反馈、自动收起和暂停音乐的计时 |
-| 通知卡片 | 岛中的通知、进度卡片、验证码、语音聊天通话 |
-| 系统事件 | 充电、声音模式、蓝牙、设置更改、隐私指示 |
-| 应用控制 | 黑名单/白名单和应用列表 |
-| 规则 | 每条卡片规则的开关、每条规则的阶段、应用和措辞(可添加自己的)、显示通知文字会变成什么的测试器、导入/导出 |
-| 工具 | 重启 System UI、诊断 |
+| 通知与活动 | 普通通知模式、系统事件、自动分类、下载、通话及验证码 |
+| 应用通知 | 除所选外全部允许或仅允许所选；可搜索列表；仅影响普通通知卡片 |
+| 外观 | 强调色、位置与尺寸、卡片标题、图标尺寸、充电图标及通知面板音乐 |
+| 行为 | 默认或经典动画、振动、音频或演示波形、独立卡片显示时间 |
+| 高级与故障排查 | 规则模式与阶段、剪贴板导入导出、相机校准、实验性修复、诊断、重启系统界面 |
+| 应用信息 | 设置应用语言、版本、作者和致谢 |
 
 ## 无法使用时
 
-重启 System UI 后,在应用中打开 **工具 → 诊断**。它会列出 System UI 版本、启动阶段、未能挂接的 Hook、错误和上一次崩溃。用 **复制报告**,并连同 issue 一起发送。
+重启 System UI 后,在应用中打开 **高级与故障排查 → 诊断**。它会列出 System UI 版本、启动阶段、未能挂接的 Hook、错误和上一次崩溃。用 **复制报告**,并连同 issue 一起发送。
 
 ## 从源码构建
 
@@ -184,6 +186,8 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # 构建、对齐并签名 -> release/Dy
 
 ## 发布
 
+本 README 描述当前源码；等待发布的变更可能尚未包含在最新稳定版 APK 中。
+
 已签名的 APK 发布在 [Releases](../../releases) 页面;构建是自动化的(见 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md))。每个版本都用同一把密钥签名,因此新版本可以作为更新直接安装在旧版本之上。
 
 ## 隐私
@@ -194,14 +198,15 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # 构建、对齐并签名 -> release/Dy
 
 Dynamic Island 是独立的非官方项目,与三星无关,也未获三星认可。它会 Hook System UI 的私有类,这些类可能随任何更新而改变;它已在运行 One UI 8 和 9 的真机上使用过,而 One UI 7 和 Nothing OS 尚未在真机上确认(见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md))。使用风险自负。
 
-## 致谢
-
-- [LiveBridge](https://github.com/appsfolder/livebridge) — 本项目读取的规则文件格式(未包含任何 LiveBridge 文件)
-- @cryyear 的 DynamicIsland([github.com/Spottq](https://github.com/Spottq)),它启发了本项目;这里的代码是全新的实现
-- [Xposed API](https://api.xposed.info/)(Apache-2.0,`app/libs/xposed-api-82.jar`)和 [LSPosed](https://github.com/LSPosed/LSPosed)
-
 ## 许可证
 
 [MIT](LICENSE) © 2026 sampple-korea。
 
 ## 作者 [sampple-korea](https://github.com/sampple-korea)
+
+## 致谢
+
+- [LiveBridge](https://github.com/appsfolder/livebridge) — 本项目读取的规则文件格式(未包含任何 LiveBridge 文件)
+- [Xposed API](https://api.xposed.info/)(Apache-2.0,`app/libs/xposed-api-82.jar`)和 [LSPosed](https://github.com/LSPosed/LSPosed)
+* @cryyear 的 DynamicIsland — 本项目最初由修改该模块的 APK 开始，后来使用自己的代码库和架构重新实现。目前独立开发和维护。
+- Telegram 用户 [@UnkilBonki](https://t.me/UnkilBonki) — 错误修复、测试和帮助。

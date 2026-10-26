@@ -32,6 +32,8 @@ public class AppearanceScreenTest {
     }
     private SettingsActivity open() {
         SettingsActivity activity = Robolectric.buildActivity(SettingsActivity.class).setup().get();
+        SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
+        prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, true).apply();
         AppearanceScreen appearance = ReflectionHelpers.getField(activity, "appearance");
         activity.open(appearance::open);
         return activity;
@@ -39,7 +41,7 @@ public class AppearanceScreenTest {
     @Test public void presetsAndRestoreUpdateSavedStateWithoutChangingOtherOptions() {
         SettingsActivity activity = open();
         SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
-        assertFalse(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
+        assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
         find(activity.page(), activity.getString(R.string.accent_green)).performClick();
         assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
         assertEquals(0xFF34C759, prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, 0));

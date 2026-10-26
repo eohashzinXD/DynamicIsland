@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="README.tr.md">Türkçe</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
 </p>
 
 ### Everything the capsule shows, as cards
@@ -33,7 +33,7 @@ The pill sits where the stock Now Bar capsule was and opens into cards.
   <img src="docs/banner.png" alt="The island as a pill, as a live card, as a music player and with several cards stacked">
 </p>
 
-Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill that grows into cards. Everything One UI keeps in the capsule (calls, timers, screen recording, casting, navigation, a music player) becomes a card, and so do ordinary notifications: messages, verification codes, downloads and the delivery, ride and route updates that apps only write as text. It is an LSPosed module that runs inside System UI, with a One UI style settings app and a rule manager. Inspired by [@cryyear's DynamicIsland](https://github.com/Spottq); this is a new implementation.
+Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill that grows into cards. Everything One UI keeps in the capsule (calls, timers, screen recording, casting, navigation, a music player) becomes a card, and so do ordinary notifications: messages, verification codes, downloads and the delivery, ride and route updates that apps only write as text. It is an LSPosed module that runs inside System UI, with a One UI style settings app and a rule manager.
 
 ## Screenshots
 
@@ -42,7 +42,7 @@ Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill 
 </p>
 
 <p align="center">
-  <img src="docs/strip_app.png" alt="The settings app: settings, notification cards, rules, one rule, try a notification">
+  <img src="docs/strip_app.png" alt="Settings app: home, notifications, appearance, behavior and advanced settings">
 </p>
 
 These pictures are drawn by the app's own drawing code on a mock phone in the test environment (see `scripts/readme_images.py`); they are not photos of a device, and the app icons are made of plain shapes.
@@ -137,9 +137,12 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ### Settings app
 
-- A One UI style hub with grouped cards and sub pages: **Display and motion**, **Notification cards**, **System events**, **App control**, **Rules** and **Tools** (restart System UI with root, diagnostics), in English, Korean, Japanese, Chinese (Simplified), Russian and Turkish, light and dark. Changes apply within a few seconds without a reboot.
-- **Island position and size:** put the island on the camera hole (default), in the middle, or on the left or right of the status bar, and shift it sideways or up and down. The island on the real status bar moves while you drag the sliders. The **camera hole** can be found automatically, set by hand (size and place, shown as a blue ring on the real screen) or turned off. Text inside the pill keeps away from the hole. The pill's height, narrowest and widest width can be set too (and it can keep its widest width), with the same live preview.
-- Four kinds of settings: switches, values that open a choice, links to sub pages and actions. A switch that is off dims what depends on it.
+- Six groups: **Notifications & activities**, **App notifications**, **Appearance**, **Behavior**, **Advanced & troubleshooting** and **App info**. English, Korean, Japanese, Simplified Chinese, Russian and Turkish; light and dark themes. Most changes apply within a few seconds without restarting System UI.
+- **Position and size:** live status-bar preview, automatic or custom widths, sliders, numeric input and one-step adjustment. Position, size and camera calibration reset separately. Camera cutout calibration is under **Advanced & troubleshooting**.
+- **Clear choices:** ordinary notification cards can be off, banner-only or include silent notifications. Foreground-service notifications are optional and off by default. App filters affect ordinary notification cards only; search by name or package, view selected apps and save or cancel changes.
+- **Appearance and behavior:** default/custom accent colour with a cancellable HSV/HEX editor; large event icons by default, optional small icons; charging battery icon hidden by default. Animation uses an actual island-renderer preview and saves immediately. Waveform motion can react to audio or use a demo animation.
+- **Timing and recovery:** automatic activity opening is off by default. When enabled, its display time (default 4 seconds) is separate from manual-card auto-collapse (6 seconds) and paused-music retention (60 seconds). Experimental notification recovery is off by default and intended only for compatibility problems.
+- **Language and status:** settings language is selectable in App info; island cards follow the device language. The home connection check requires a new System UI response, not an old saved report. Back navigation restores scroll position.
 
 ### Reliability
 
@@ -166,17 +169,16 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 | Page | What it holds |
 |---|---|
-| Island position and size | Where the island sits, shift, height, narrowest and widest width, camera hole (automatic, by hand or none) |
-| Display and motion | Card header, audio waveform, haptics, auto-collapse and paused-music timers |
-| Notification cards | Notifications in the island, progress cards, verification codes, voice-chat calls |
-| System events | Charging, sound mode, Bluetooth, setting changes, privacy indicators |
-| App control | Blacklist / whitelist and the app list |
-| Rules | A switch per card rule, stages, apps and wording of each rule (add your own), a tester that shows what a notification text becomes, import / export |
-| Tools | Restart System UI, diagnostics |
+| Notifications & activities | Ordinary notification mode, system events, automatic classification, downloads, calls and verification codes |
+| App notifications | All apps except selected / selected apps only; searchable app list; ordinary cards only |
+| Appearance | Accent colour, position and size, card headers, icon size, charging battery icon and shade music |
+| Behavior | Default / Classic animation, haptics, audio / demo waveform and separate card timers |
+| Advanced & troubleshooting | Rule patterns and stages, clipboard import/export, camera calibration, experimental recovery, diagnostics and System UI restart |
+| App info | Settings language, version, author and credits |
 
 ## If it does not work
 
-Open **Tools → Diagnostics** in the app after restarting System UI. It lists the System UI version, the start-up stages, hooks that could not attach, errors and the previous crash. Use **Copy report** and send it with the issue.
+Open **Advanced & troubleshooting → Diagnostics** in the app after restarting System UI. It lists the System UI version, the start-up stages, hooks that could not attach, errors and the previous crash. Use **Copy report** and send it with the issue.
 
 ## Build from source
 
@@ -192,6 +194,8 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # builds, aligns and signs -> release/Dy
 
 ## Releases
 
+This README describes the current source tree; changes awaiting release may not be in the latest stable APK.
+
 Signed APKs are published on the [Releases](../../releases) page; the build is automated (see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)). Every release is signed with the same key, so a new version installs as an update over the old one.
 
 ## Privacy
@@ -202,14 +206,15 @@ The module runs inside System UI and reads the notifications System UI already h
 
 Dynamic Island is an independent, unofficial project and is not affiliated with or endorsed by Samsung. It hooks private System UI classes that may change with any update, and it has been used on real phones running One UI 8 and 9, while One UI 7 and Nothing OS are not confirmed on a device (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). Use it at your own risk.
 
-## Credits
-
-- [LiveBridge](https://github.com/appsfolder/livebridge) — the rule file format this project reads (no LiveBridge files are bundled)
-- @cryyear's DynamicIsland ([github.com/Spottq](https://github.com/Spottq)), which inspired this project; the code here is a new implementation
-- [Xposed API](https://api.xposed.info/) (Apache-2.0, `app/libs/xposed-api-82.jar`) and [LSPosed](https://github.com/LSPosed/LSPosed)
-
 ## License
 
 [MIT](LICENSE) © 2026 sampple-korea.
 
 ## Made by [sampple-korea](https://github.com/sampple-korea)
+
+## Credits
+
+- [LiveBridge](https://github.com/appsfolder/livebridge) — the rule file format this project reads (no LiveBridge files are bundled)
+- [Xposed API](https://api.xposed.info/) (Apache-2.0, `app/libs/xposed-api-82.jar`) and [LSPosed](https://github.com/LSPosed/LSPosed)
+* DynamicIsland by @cryyear — This project began as a modification of that module’s APK, but was later reimplemented with its own codebase and architecture. It is now developed and maintained independently.
+- [@UnkilBonki](https://t.me/UnkilBonki) on Telegram — bug fixes, testing and help.

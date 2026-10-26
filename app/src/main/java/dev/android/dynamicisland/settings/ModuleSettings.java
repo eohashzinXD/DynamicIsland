@@ -133,6 +133,7 @@ public final class ModuleSettings {
     private static volatile boolean allNotifications;
     private static volatile boolean foregroundNotifications;
     private static volatile boolean autoOpenCards;
+    private static volatile int autoOpenS = 4;
     private static volatile boolean experimentalRecovery;
     private static volatile boolean hideBatteryIcon = true;
     private static volatile boolean compactEventIcons;
@@ -172,6 +173,7 @@ public final class ModuleSettings {
     private static volatile AppFilter appFilter = AppFilter.OFF;
 
     private static boolean started;
+    private static boolean previewProcess;
     private static XSharedPreferences prefs;
     private static boolean loaded;
     /** True while the values come from {@link SettingsProvider} because the preference file was empty or unreadable. */
@@ -299,7 +301,7 @@ public final class ModuleSettings {
 
     /** Starts the background reload loop on first use; later calls do nothing. */
     public static synchronized void ensureStarted() {
-        if (started) {
+        if (started || previewProcess) {
             return;
         }
         started = true;
@@ -451,6 +453,7 @@ public final class ModuleSettings {
             }
             foregroundNotifications = source.getBoolean(KEY_FOREGROUND_NOTIFICATIONS, false);
             autoOpenCards = source.getBoolean(KEY_AUTO_OPEN_CARDS, false);
+            autoOpenS = Math.max(2, Math.min(30, source.getInt(KEY_AUTO_OPEN_S, 4)));
             experimentalRecovery = source.getBoolean(KEY_EXPERIMENTAL_RECOVERY, false);
             compactEventIcons = source.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
             hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
@@ -481,6 +484,19 @@ public final class ModuleSettings {
     }
 
     public static boolean foregroundNotifications() { return foregroundNotifications; }
+    public static final String KEY_AUTO_OPEN_S = "auto_open_s";
+    public static long autoOpenMs() { return autoOpenS * 1000L; }
+
+    /** Settings-process preview only; does not start the System UI preference reader. */
+    public static void configurePreview(SharedPreferences settings) {
+        previewProcess = true;
+        legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
+        cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
+        colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
+        accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
+        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
+    }
+
     public static boolean autoOpenCards() { return autoOpenCards; }
     public static boolean experimentalRecovery() { return experimentalRecovery; }
     public static boolean compactEventIcons() { return compactEventIcons; }
@@ -491,7 +507,7 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + foregroundNotifications + autoOpenCards + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }

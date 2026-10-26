@@ -30,11 +30,14 @@ public class SettingsRenderTest {
     static void renderAll(SettingsActivity activity, String prefix) throws Exception {
         render(activity, prefix + "hub");
         Object rules = field(activity, "rules");
-        for (String page : new String[] {"displayPage", "notificationsPage", "eventsPage", "appsPage", "diagnosticsPage"}) {
+        for (String page : new String[] {"displayPage", "notificationsPage", "eventsPage", "appsPage", "behaviorPage", "advancedPage", "aboutPage", "diagnosticsPage"}) {
             show(activity, activity, page, prefix + page);
         }
         show(activity, field(activity, "animation"), "open", prefix + "animationPage");
         show(activity, field(activity, "position"), "open", prefix + "positionPage");
+        show(activity, field(activity, "position"), "calibration", prefix + "calibrationPage");
+        show(activity, field(activity, "appearance"), "open", prefix + "coloursPage");
+        show(activity, rules, "advancedPage", prefix + "rulesAdvanced");
         show(activity, rules, "listPage", prefix + "rulesList");
         show(activity, field(rules, "wizard"), "page", prefix + "ruleWizard");
         show(activity, rules, "testPage", prefix + "rulesTest");
@@ -96,9 +99,18 @@ public class SettingsRenderTest {
         content.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int height = Math.max(content.getMeasuredHeight(), 2200);
         content.layout(0, 0, width, height);
+        dev.android.dynamicisland.island.view.IslandView preview = findIsland(content);
+        if (preview != null) {
+            dev.android.dynamicisland.island.model.IslandItem sample = org.robolectric.util.ReflectionHelpers.getField(preview.getParent(), "item");
+            preview.peek(sample, 5000);
+            for (int frame = 0; frame < 60; frame++) {
+                org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(16));
+                preview.doFrame(android.os.SystemClock.uptimeMillis() * 1_000_000L);
+            }
+        }
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
-        canvas.drawColor(0xfff3f3f6);
+        canvas.drawColor(new OneUi(activity).background);
         content.draw(canvas);
         File dir = new File("build/render");
         dir.mkdirs();
@@ -107,4 +119,13 @@ public class SettingsRenderTest {
         }
         assertTrue(content.getMeasuredHeight() > 0);
     }
+    private static dev.android.dynamicisland.island.view.IslandView findIsland(View view) {
+        if (view instanceof dev.android.dynamicisland.island.view.IslandView) return (dev.android.dynamicisland.island.view.IslandView) view;
+        if (view instanceof ViewGroup) for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+            dev.android.dynamicisland.island.view.IslandView found = findIsland(((ViewGroup) view).getChildAt(i));
+            if (found != null) return found;
+        }
+        return null;
+    }
+
 }

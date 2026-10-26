@@ -37,31 +37,38 @@ final class AppearanceScreen {
         activity.subPage(activity.getString(R.string.accent_page));
         LinearLayout mode = ui.card(page);
         boolean enabled = prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false);
-        ui.switchRow(mode, activity.getString(R.string.accent_enabled), activity.getString(R.string.accent_enabled_desc), enabled, on -> {
-            prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, on).apply();
-            activity.refresh();
-        });
-        ui.category(page, activity.getString(R.string.accent_presets));
-        LinearLayout choices = ui.card(page);
-        LinearLayout swatches = new LinearLayout(activity);
-        swatches.setGravity(Gravity.CENTER);
-        swatches.setPadding(ui.dp(8), ui.dp(14), ui.dp(8), ui.dp(14));
-        choices.addView(swatches);
-        int[] colours = {0xFF3E91FF, 0xFF34C759, 0xFFFF9F0A, 0xFFFF6482, 0xFFBF75FF, 0xFF48C9BB};
-        int[] names = {R.string.accent_blue, R.string.accent_green, R.string.accent_orange,
-                R.string.accent_pink, R.string.accent_purple, R.string.accent_teal};
-        for (int i = 0; i < colours.length; i++) {
-            int colour = colours[i];
-            TextView swatch = ui.text(selected() == colour ? "✓" : "", 22, Color.BLACK);
-            swatch.setGravity(Gravity.CENTER);
-            swatch.setContentDescription(activity.getString(names[i]));
-            swatch.setBackground(ui.round(colour, ui.dp(24)));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ui.dp(44), 1);
-            lp.setMargins(ui.dp(3), 0, ui.dp(3), 0);
-            swatches.addView(swatch, lp);
-            swatch.setOnClickListener(v -> save(colour));
+        activity.choice(mode, R.string.accent_enabled, new int[]{R.string.ui_default, R.string.ui_custom}, enabled ? 1 : 0,
+                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, selected == 1).apply());
+        if (enabled) {
+            ui.category(page, activity.getString(R.string.accent_presets));
+            LinearLayout choices = ui.card(page);
+            LinearLayout palette = new LinearLayout(activity);
+            palette.setOrientation(LinearLayout.VERTICAL);
+            choices.addView(palette);
+            LinearLayout swatches = null;
+
+            int[] colours = {0xFF3E91FF, 0xFF34C759, 0xFFFF9F0A, 0xFFFF6482, 0xFFBF75FF, 0xFF48C9BB};
+            int[] names = {R.string.accent_blue, R.string.accent_green, R.string.accent_orange,
+                    R.string.accent_pink, R.string.accent_purple, R.string.accent_teal};
+            for (int i = 0; i < colours.length; i++) {
+                if (i % 3 == 0) {
+                    swatches = new LinearLayout(activity);
+                    swatches.setGravity(Gravity.CENTER);
+                    swatches.setPadding(ui.dp(16), ui.dp(10), ui.dp(16), ui.dp(10));
+                    palette.addView(swatches, new LinearLayout.LayoutParams(-1, -2));
+                }
+                int colour = colours[i];
+                TextView swatch = ui.text(selected() == colour ? "✓" : "", 22, Color.BLACK);
+                swatch.setGravity(Gravity.CENTER);
+                swatch.setContentDescription(activity.getString(names[i]));
+                swatch.setBackground(ui.round(colour, ui.dp(24)));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ui.dp(48), 1);
+                lp.setMargins(ui.dp(3), 0, ui.dp(3), 0);
+                swatches.addView(swatch, lp);
+                swatch.setOnClickListener(v -> save(colour));
+            }
+            ui.valueRow(choices, activity.getString(R.string.accent_custom), hex(selected()), this::edit);
         }
-        ui.valueRow(choices, activity.getString(R.string.accent_custom), hex(selected()), this::edit);
         LinearLayout example = ui.card(page);
         example.addView(new Preview(enabled ? selected() : ModuleSettings.DEFAULT_ACCENT), new LinearLayout.LayoutParams(-1, ui.dp(164)));
         ui.note(page, activity.getString(R.string.accent_note));
@@ -74,7 +81,7 @@ final class AppearanceScreen {
     }
 
     private void save(int colour) {
-        prefs.edit().putInt(ModuleSettings.KEY_ACCENT_COLOR, colour).putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, true).apply();
+        prefs.edit().putInt(ModuleSettings.KEY_ACCENT_COLOR, colour).apply();
         activity.refresh();
     }
 

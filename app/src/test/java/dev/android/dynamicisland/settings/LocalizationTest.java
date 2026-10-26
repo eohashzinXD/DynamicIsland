@@ -61,5 +61,6 @@ public class LocalizationTest {
     }
     @Test @Config(qualifiers = "ja-rJP-w411dp-h891dp-xxhdpi") public void japaneseSettingsRender() throws Exception { render("settings_ja_"); }
     @Test @Config(qualifiers = "zh-rCN-w411dp-h891dp-xxhdpi") public void chineseSettingsRender() throws Exception { render("settings_zh_"); }
+    @Test @Config(qualifiers = "tr-rTR-w411dp-h891dp-xxhdpi") public void turkishSettingsRender() throws Exception { render("settings_tr_"); }
     @Test @Config(qualifiers = "ru-rRU-w411dp-h891dp-xxhdpi") public void russianSettingsRender() throws Exception { render("settings_ru_"); }
 }

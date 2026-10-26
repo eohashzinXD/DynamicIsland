@@ -44,6 +44,12 @@ import java.util.Map;
  * main-thread-safe state.
  */
 public final class IslandController implements IslandHost, IslandWindow.Listener {
+    private static IntentFilter previewFilter() {
+        IntentFilter filter = new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW);
+        filter.addAction(Diagnostics.ACTION_STATUS_PING);
+        return filter;
+    }
+
     /** Never re-run a deferred refresh sooner than one frame. */
     private static final long MIN_DEFERRED_REFRESH_MS = 16L;
 
@@ -147,10 +153,14 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                     if (!ModuleSettings.PACKAGE.equals(getSentFromPackage())) {
                         return; // only the module's own settings app may move the island
                     }
+                    if (Diagnostics.ACTION_STATUS_PING.equals(intent.getAction())) {
+                        Diagnostics.acknowledgeStatus(context, intent.getLongExtra("nonce", 0));
+                        return;
+                    }
                     ModuleSettings.applyPlacementPreview(intent);
                     requestRefresh();
                 }
-            }, new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW), Context.RECEIVER_EXPORTED);
+            }, previewFilter(), Context.RECEIVER_EXPORTED);
         } catch (Throwable t) {
             XLog.e("position preview receiver failed", t);
         }
@@ -486,7 +496,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
             IslandItem nextCard = autoOpenCards.next(shape.shown, ModuleSettings.autoOpenCards(), now);
-            if (nextCard != null && !view.isExpanded() && view.canPeek() && view.peek(nextCard, 4000)) autoOpenCards.opened(nextCard);
+            if (nextCard != null && !view.isExpanded() && view.canPeek() && view.peek(nextCard, ModuleSettings.autoOpenMs())) autoOpenCards.opened(nextCard);
             logItemChanges(shape);
             Diagnostics.fact("islands", shape.shown.size() + " shown, " + shape.bubbled.size() + " minimized");
             Diagnostics.publish(ctx);
