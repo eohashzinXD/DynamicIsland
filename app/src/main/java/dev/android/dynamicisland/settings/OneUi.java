@@ -231,7 +231,7 @@ final class OneUi {
     /** On / off setting; the summary explains it. {@code onChange} gets the new state. */
     Switch switchRow(LinearLayout group, CharSequence title, CharSequence summary, boolean checked, Consumer<Boolean> onChange) {
         LinearLayout box = box(group, title, summary, muted, null, false);
-        Switch sw = new Switch(ctx);
+        Switch sw = new GalaxySwitch(ctx);
         sw.setMinHeight(dp(48));
         sw.setMinWidth(dp(48));
         sw.setContentDescription(title);
@@ -267,7 +267,7 @@ final class OneUi {
         line.leftMargin = dp(4);
         line.rightMargin = dp(12);
         box.addView(divider, line);
-        Switch sw = new Switch(ctx);
+        Switch sw = new GalaxySwitch(ctx);
         sw.setMinHeight(dp(48));
         sw.setMinWidth(dp(48));
         sw.setContentDescription(title);
