@@ -278,6 +278,9 @@ public final class SettingsActivity extends Activity {
 
     private void behaviorPage() {
         subPage(getString(R.string.ui_behavior));
+        LinearLayout visibility = ui.card(page);
+        toggle(visibility, R.string.show_in_fullscreen, R.string.show_in_fullscreen_desc,
+                ModuleSettings.KEY_SHOW_IN_FULLSCREEN, false);
         boolean low = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false);
         LinearLayout performance = ui.card(page);
         Switch lowMode = toggle(performance, R.string.low_performance_mode, R.string.low_performance_desc, ModuleSettings.KEY_LOW_PERFORMANCE, false);

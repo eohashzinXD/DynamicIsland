@@ -478,4 +478,6 @@
     <string name="glow_follow_theme">跟随主题色</string>
     <string name="glow_individual">单独选择颜色</string>
     <string name="glow_theme_colour">主题色设置</string>
+    <string name="show_in_fullscreen">竖屏全屏时仍然显示</string>
+    <string name="show_in_fullscreen_desc">在相机等隐藏状态栏的应用中继续显示正在进行的活动。锁屏、息屏显示或没有活动内容时仍会隐藏。</string>
 </resources>

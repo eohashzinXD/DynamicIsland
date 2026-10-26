@@ -487,4 +487,6 @@
     <string name="glow_follow_theme">Follow theme colour</string>
     <string name="glow_individual">Choose separately</string>
     <string name="glow_theme_colour">Theme colour settings</string>
+    <string name="show_in_fullscreen">Show in portrait full screen</string>
+    <string name="show_in_fullscreen_desc">Keep active cards visible when apps such as Camera hide the status bar. The island still hides on the lock screen, Always On Display, or when there is no active content.</string>
 </resources>

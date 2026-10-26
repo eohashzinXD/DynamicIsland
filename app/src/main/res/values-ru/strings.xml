@@ -478,4 +478,6 @@
     <string name="glow_follow_theme">Цвет темы</string>
     <string name="glow_individual">Выбрать отдельно</string>
     <string name="glow_theme_colour">Настройки цвета темы</string>
+    <string name="show_in_fullscreen">Показывать в портретном полноэкранном режиме</string>
+    <string name="show_in_fullscreen_desc">Показывать текущие активности, когда камера или другое приложение скрывает строку состояния. На экране блокировки, Always On Display и при отсутствии активностей остров скрывается.</string>
 </resources>

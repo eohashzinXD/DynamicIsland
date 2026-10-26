@@ -478,4 +478,6 @@
     <string name="glow_follow_theme">테마색 따르기</string>
     <string name="glow_individual">개별 색상 선택</string>
     <string name="glow_theme_colour">테마 색상 설정</string>
+    <string name="show_in_fullscreen">세로 전체 화면에서도 표시</string>
+    <string name="show_in_fullscreen_desc">카메라처럼 상태 표시줄을 숨기는 앱에서도 진행 중인 활동을 표시합니다. 잠금 화면·AOD에서는 숨기며, 표시할 활동이 없을 때도 숨깁니다.</string>
 </resources>

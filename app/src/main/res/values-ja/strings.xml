@@ -478,4 +478,6 @@
     <string name="glow_follow_theme">テーマの色に合わせる</string>
     <string name="glow_individual">個別に色を選ぶ</string>
     <string name="glow_theme_colour">テーマ色の設定</string>
+    <string name="show_in_fullscreen">縦向きの全画面でも表示</string>
+    <string name="show_in_fullscreen_desc">カメラなどステータスバーを隠すアプリでも進行中のアクティビティを表示します。ロック画面、常時表示ディスプレイ、表示する内容がないときは非表示になります。</string>
 </resources>

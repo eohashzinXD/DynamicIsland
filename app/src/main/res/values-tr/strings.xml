@@ -478,4 +478,6 @@
     <string name="glow_follow_theme">Tema rengini kullan</string>
     <string name="glow_individual">Ayrı renk seç</string>
     <string name="glow_theme_colour">Tema rengi ayarları</string>
+    <string name="show_in_fullscreen">Dikey tam ekranda göster</string>
+    <string name="show_in_fullscreen_desc">Kamera gibi durum çubuğunu gizleyen uygulamalarda devam eden etkinlikleri gösterir. Kilit ekranında, Always On Display sırasında veya etkin içerik olmadığında ada gizlenir.</string>
 </resources>

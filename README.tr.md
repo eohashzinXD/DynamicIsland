@@ -59,6 +59,8 @@ Bu görseller uygulamanın gerçek çizim koduyla test ortamında oluşturulmuş
 - Arama, zamanlayıcı, ekran kaydı, navigasyon ve diğer canlı etkinlikler kaynak verilerine göre gösterilir.
 - Bildirim paneli açılırken ada kademeli gizlenir. Desteklenen cihazlarda yerel arka plan bulanıklığı kullanılır; diğerlerinde düz arka plan bulunur.
 
+**Davranış → Dikey tam ekranda göster** (varsayılan olarak kapalı) seçeneğiyle Kamera gibi durum çubuğunu gizleyen dikey uygulamalarda etkin içerik görünür kalabilir. Kilit ekranında, Always On Display sırasında veya etkin içerik olmadığında ada gizlenmeye devam eder.
+
 ### Canlı bildirimler
 
 Samsung devam eden etkinliklerinin başlığı, metni, görselleri, ilerlemesi ve eylemleri kartlara aktarılır. Uygulama logolarının ayrıntıları korunur. Kartın desteklediği eylemler asıl uygulamaya gönderilir. Destek, cihazdaki System UI sürümüne bağlıdır.

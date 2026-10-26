@@ -33,6 +33,8 @@ public final class ModuleSettings {
     public static final String KEY_HAPTICS = "haptics";
     /** Rendering overrides only; individual preferences are retained. */
     public static final String KEY_LOW_PERFORMANCE = "low_performance_mode";
+    /** Keep active content visible when a portrait app hides the status bar. */
+    public static final String KEY_SHOW_IN_FULLSCREEN = "show_in_fullscreen";
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
@@ -143,6 +145,7 @@ public final class ModuleSettings {
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
     private static volatile boolean lowPerformance;
+    private static volatile boolean showInFullscreen;
     private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
@@ -462,6 +465,8 @@ public final class ModuleSettings {
             int anchorBefore = pillAnchor;
             int xBefore = pillXDp;
             int yBefore = pillYDp;
+            boolean fullscreenBefore = showInFullscreen;
+            showInFullscreen = source.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
             boolean previewBefore = placementPreviewActive();
             previewWallUntil = source.getLong(KEY_PILL_PREVIEW_UNTIL, 0L);
             if (!placementPreviewActive()) {
@@ -479,6 +484,7 @@ public final class ModuleSettings {
             }
             Runnable placementListener = onPlacementChanged;
             if (placementListener != null && (anchorBefore != pillAnchor || xBefore != pillXDp || yBefore != pillYDp
+                    || fullscreenBefore != showInFullscreen
                     || previewBefore != placementPreviewActive()
                     || sizeBefore != pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000
                     || holeBefore != holeMode * 1_000_000 + holeDDp * 10_000 + holeXDp * 100 + holeYDp)) {
@@ -533,6 +539,7 @@ public final class ModuleSettings {
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
         pillOutlineMode = readPillOutlineMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
+        showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
         cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
@@ -556,6 +563,7 @@ public final class ModuleSettings {
     }
 
     public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
+    public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
 
     public static boolean autoOpenCards() { return autoOpenCards; }
     public static boolean experimentalRecovery() { return experimentalRecovery; }
@@ -579,7 +587,7 @@ public final class ModuleSettings {
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
-                + " pillOutline=" + pillOutlineMode + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+                + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
