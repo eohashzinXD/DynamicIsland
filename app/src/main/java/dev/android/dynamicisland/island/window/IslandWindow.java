@@ -90,6 +90,7 @@ public final class IslandWindow {
         params = createLayoutParams();
         TouchableRegionHook.install(root, touchRegion);
         root.getViewTreeObserver().addOnPreDrawListener(this::onPreDraw);
+        view.setPillSamplingStateChanged(this::updatePillBackgroundSampling);
     }
 
     private static Context createWindowContext(Context systemUiContext) {

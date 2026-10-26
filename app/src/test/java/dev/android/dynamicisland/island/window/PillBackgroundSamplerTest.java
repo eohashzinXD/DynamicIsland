@@ -37,7 +37,14 @@ import org.robolectric.util.ReflectionHelpers;
 public class PillBackgroundSamplerTest {
     private ActivityController<Activity> activity;
     private FrameLayout host;
-    private View view;
+    private SamplingView view;
+
+    /** Robolectric attaches decor without a real WM visibility transaction; model that state explicitly. */
+    private static final class SamplingView extends View {
+        int windowVisibility = VISIBLE;
+        SamplingView(android.content.Context context) { super(context); }
+        @Override public int getWindowVisibility() { return windowVisibility; }
+    }
     private Rect area;
     private Point displaySize;
     private FakeSurfaces surfaces;
@@ -48,7 +55,7 @@ public class PillBackgroundSamplerTest {
     @Before public void setUp() {
         activity = Robolectric.buildActivity(Activity.class).setup();
         host = new FrameLayout(activity.get());
-        view = new View(activity.get());
+        view = new SamplingView(activity.get());
         host.addView(view, new FrameLayout.LayoutParams(200, 80));
         activity.get().setContentView(host);
         activity.visible();
@@ -295,12 +302,61 @@ public class PillBackgroundSamplerTest {
         Rect changed = new Rect(area);
         changed.left++;
         sampler.update(changed, true);
-        assertEquals(1, factory.attempts);
-        assertEquals(2, backend.starts);
-        assertEquals(2, backend.stops);
-        assertEquals(changed, backend.bounds);
+        assertReleased(backend);
+        assertEquals(2, factory.attempts);
+        FakeBackend next = factory.backends.get(1);
+        assertEquals(1, next.starts);
+        assertEquals(changed, next.bounds);
         assertEquals("previous backend arguments must stay immutable", area, firstRegistration);
-        assertEquals(1, surfaces.copies.size());
+        assertEquals(2, surfaces.copies.size());
+    }
+
+    @Test public void changingBoundsRejectsQueuedOldSamplesAndResetsKnownBackground() throws Exception {
+        FakeBackend old = activate();
+        old.sample.accept(1f);
+        Thread worker = new Thread(() -> old.sample.accept(.1f));
+        worker.start();
+        worker.join();
+        Rect changed = new Rect(area);
+        changed.left++;
+        sampler.update(changed, true);
+        assertNull(samples.get(samples.size() - 1));
+        FakeBackend next = factory.backends.get(1);
+        next.sample.accept(.3f);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertEquals(Arrays.asList(null, 1f, null, .3f), samples);
+    }
+
+    @Test public void changingRootDiscardsPreviouslyKnownBackgroundUntilNewSampleArrives() {
+        FakeBackend old = activate();
+        old.sample.accept(1f);
+        surfaces.root = surfaces.newSurface();
+        sampler.update(area, true);
+        assertNull(samples.get(samples.size() - 1));
+        old.sample.accept(0f);
+        assertEquals(Arrays.asList(null, 1f, null), samples);
+    }
+
+    @Test public void windowVisibilityUpdateStopsWithoutDetachOrPredraw() {
+        FakeBackend backend = activate();
+        backend.sample.accept(1f);
+        view.windowVisibility = View.INVISIBLE;
+        // IslandWindow forwards its view visibility callback through this same update entry point.
+        sampler.update(area, true);
+        assertTrue(view.isAttachedToWindow());
+        assertReleased(backend);
+        assertEquals(Arrays.asList(null, 1f, null), samples);
+        backend.sample.accept(0f);
+        assertEquals(Arrays.asList(null, 1f, null), samples);
+    }
+
+    @Test public void windowInvisibleCallbacksCannotDeliverKnownBackground() {
+        FakeBackend backend = activate();
+        backend.sample.accept(1f);
+        view.windowVisibility = View.INVISIBLE;
+        backend.sample.accept(0f);
+        assertReleased(backend);
+        assertEquals(Arrays.asList(null, 1f, null), samples);
     }
 
     @Test public void inputRectIsCopiedBeforePostingToMainThread() throws Exception {

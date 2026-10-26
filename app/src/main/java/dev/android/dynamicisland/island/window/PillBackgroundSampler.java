@@ -105,7 +105,10 @@ public final class PillBackgroundSampler {
             }
             SurfaceControl root = surfaces.current(view);
             if (!surfaces.valid(root)) { release(); emit(null); return; }
-            if (backend != null && !surfaces.same(root, ownedStopLayer)) release();
+            if (backend != null && (!surfaces.same(root, ownedStopLayer) || !registeredBounds.equals(bounds))) {
+                release(); // New surface/region gets a distinct listener epoch: queued samples cannot leak across.
+                emit(null);
+            }
             if (backend == null) {
                 // Own a copy: ViewRoot may replace the native handle of its Java SurfaceControl.
                 ownedStopLayer = surfaces.copy(root);
@@ -137,7 +140,7 @@ public final class PillBackgroundSampler {
         if (destroyed || failed || !enabled || !registered || backend == null || epoch != generation) return;
         try {
             SurfaceControl root = surfaces.current(view);
-            if (!view.isAttachedToWindow() || !view.isShown() || !surfaces.valid(root)
+            if (!view.isAttachedToWindow() || !view.isShown() || view.getWindowVisibility() != View.VISIBLE || !surfaces.valid(root)
                     || !surfaces.valid(ownedStopLayer) || !surfaces.same(root, ownedStopLayer)) {
                 release();
                 emit(null);

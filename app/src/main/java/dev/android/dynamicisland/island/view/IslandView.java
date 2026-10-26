@@ -162,6 +162,15 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final RectF samplingPill = new RectF();
     private final RectF samplingBubble = new RectF();
     private final int[] samplingLocation = new int[2];
+    private Runnable pillSamplingStateChanged;
+
+    public void setPillSamplingStateChanged(Runnable listener) {
+        pillSamplingStateChanged = listener;
+    }
+
+    private void notifyPillSamplingVisibility() {
+        if (pillSamplingStateChanged != null) pillSamplingStateChanged.run();
+    }
 
     private final FramePacer framePacer = new FramePacer();
     private boolean renderingPaused;
@@ -788,11 +797,13 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override protected void onVisibilityChanged(View changedView, int visibility) {
         super.onVisibilityChanged(changedView, visibility);
         updateRenderingVisibility();
+        notifyPillSamplingVisibility();
     }
 
     @Override protected void onWindowVisibilityChanged(int visibility) {
         super.onWindowVisibilityChanged(visibility);
         updateRenderingVisibility();
+        notifyPillSamplingVisibility();
     }
 
     private void updateRenderingVisibility() {
