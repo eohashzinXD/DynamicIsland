@@ -59,6 +59,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** All callbacks and UI work run here. */
     private final Handler main = new Handler(Looper.getMainLooper());
     private final AudioLevels audio = new AudioLevels();
+    private final dev.android.dynamicisland.island.feedback.RecorderInput recordingInput;
     private final Haptics haptics;
 
     private final IslandSources sources;
@@ -75,6 +76,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     private IslandController(Context ctx, ClassLoader classLoader) {
         this.ctx = ctx;
+        recordingInput = new dev.android.dynamicisland.island.feedback.RecorderInput(ctx, () -> {
+            IslandView current = placementView();
+            if (current != null) current.onRecordingAudioFrame();
+        });
         sources = new IslandSources(ctx, classLoader, main, this::requestRefresh);
         haptics = new Haptics(ctx);
         placement = new IslandPlacement(ctx, main, classLoader, this, this, audio);
@@ -283,6 +288,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     public void setDozing(boolean value) {
+        if (value) recordingInput.setTarget(null);
         placement.setDozing(value);
     }
 
@@ -319,6 +325,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void onIslandFrame() {
         placement.onFrame();
         IslandView view = placement.view();
+        recordingInput.setTarget(view == null ? null : view.recordingInputTarget());
         int coverage = view == null ? 0 : view.shadeCardCoverageToken();
         if (coverage != shadeCardCoverage) {
             shadeCardCoverage = coverage;
@@ -449,6 +456,12 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     @Override
     public AudioLevels audio() {
         return audio;
+    }
+
+    private IslandView placementView() { return placement.view(); }
+
+    @Override public dev.android.dynamicisland.island.feedback.RecorderInput recordingAudio() {
+        return recordingInput;
     }
 
     // ---- IslandWindow.Listener -----------------------------------------------------------------

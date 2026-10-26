@@ -1,28 +1,37 @@
 package dev.android.dynamicisland.island.graphics;
 
 import android.content.Context;
-import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-/** Only battery events use the bundled pill vectors. All other pictograms keep their Lottie renderer. */
+/** Circular battery pictogram. Other island pictograms retain their existing renderer. */
 public final class BatteryIcon {
-    private static Resources resources;
-
     private BatteryIcon() { }
 
     public static Drawable load(Context host, int percent, boolean charging) {
-        int level = Math.max(0, Math.min(100, percent));
-        try {
-            if (resources == null) resources = host.createPackageContext("dev.android.dynamicisland", 0).getResources();
-            int id = resources.getIdentifier("ic_battery_pill_" + level, "drawable", "dev.android.dynamicisland");
-            if (id != 0) {
-                dev.android.dynamicisland.xposed.Diagnostics.fact("battery icon source", "module vector");
-                return resources.getDrawable(id, null).mutate();
-            }
-        } catch (Exception ignored) {
-            // A host unable to read module resources keeps the existing functional battery pictogram.
+        dev.android.dynamicisland.xposed.Diagnostics.fact("battery icon source", "circular gauge");
+        return new Ring(Math.max(0, Math.min(100, percent)), charging);
+    }
+
+    private static final class Ring extends Drawable {
+        private final BatteryGauge gauge = new BatteryGauge();
+        private final int level;
+        private final boolean charging;
+        private int alpha = 255;
+        Ring(int level, boolean charging) { this.level = level; this.charging = charging; }
+        @Override public void draw(Canvas canvas) {
+            Rect b = getBounds();
+            gauge.draw(canvas, b.exactCenterX(), b.exactCenterY(), Math.min(b.width(), b.height()), level,
+                    charging ? 0xFF30D158 : level <= 20 ? Colors.DESTRUCTIVE_RED : Colors.WHITE,
+                    alpha / 255f, false, charging);
         }
-        dev.android.dynamicisland.xposed.Diagnostics.fact("battery icon source", "lottie fallback");
-        return GlyphIcon.battery(level / 100f, charging);
+        @Override public void setAlpha(int value) { alpha = value; invalidateSelf(); }
+        @Override public void setColorFilter(ColorFilter filter) { gauge.setColorFilter(filter); invalidateSelf(); }
+        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+        @Override public int getIntrinsicWidth() { return 24; }
+        @Override public int getIntrinsicHeight() { return 24; }
     }
 }

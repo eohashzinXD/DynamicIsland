@@ -261,6 +261,8 @@ public final class SettingsActivity extends Activity {
         ui.linkRow(design, getString(R.string.glow_title), getString(R.string.glow_summary),
                 () -> open(() -> new AmbientGlowScreen(this, ui, prefs).open()));
         ui.linkRow(design, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
+        ui.linkRow(design, getString(R.string.card_roundness), getString(R.string.card_roundness_summary),
+                () -> open(() -> new CardShapeScreen(this, ui, prefs).open()));
         choice(design, R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
                 ModuleSettings.readPillOutlineMode(prefs),
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
@@ -366,6 +368,7 @@ public final class SettingsActivity extends Activity {
         ui.linkRow(advanced, getString(R.string.ui_rules_advanced), getString(R.string.ui_rules_advanced_summary), () -> open(rules::advancedPage));
         ui.linkRow(advanced, getString(R.string.ui_camera_calibration), getString(R.string.ui_camera_calibration_summary), () -> open(position::calibration));
         toggle(advanced, R.string.experimental_recovery, R.string.ui_recovery_short, ModuleSettings.KEY_EXPERIMENTAL_RECOVERY, false);
+        toggle(advanced, R.string.concurrent_recording_input, R.string.concurrent_recording_input_desc, ModuleSettings.KEY_CONCURRENT_RECORDING_INPUT, false);
         ui.details(page, getString(R.string.ui_recovery_details), getString(R.string.experimental_recovery_desc));
         ui.category(page, getString(R.string.hub_tools));
         LinearLayout tools = ui.card(page);

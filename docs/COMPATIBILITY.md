@@ -64,3 +64,15 @@ Android 16 System UI without any Samsung class (checked against a Nothing OS bui
 ## Name alternatives
 
 Any class, method or field name in a `Refl` call may be written `"new|old"`: the first that exists on the running build is used, and a name that was found only under an older alternative appears in the report as `older names used`. Put the newest System UI's name first.
+
+## Voice-recording waveform
+
+The optional `concurrent_recording_input` feature is experimental and off by default. It captures short PCM buffers through SystemUI's existing audio privileges with `VOICE_RECOGNITION` and `setPrivacySensitive(false)`, then retains only an in-memory level history. It neither stores audio nor changes the recorder app's routing, audio focus, manifest or LSPosed scope. Capture runs only for a positively identified, active Samsung Voice Recorder session visible in the overlay and belonging to the current Android user. Screen-off/mute, hidden or paused content, policy silencing and previously audible recordings becoming silenced stop capture. Device policy still controls whether concurrent input works; the guard is not a guarantee against all recording interference. Disable the option if it affects recording. Low-performance mode disables it. The maintainer confirmed concurrent input and improved motion on their phone.
+
+Input reads occur approximately every 40ms; visible non-silent history is interpolated on display frames using `elapsedRealtime` consistently. A stale-input timeout stops the frame loop. Waveform history spans roughly three seconds.
+
+## Live-notification long press (#16)
+
+The supplied Galaxy M34 One UI 8.5 logs contain repeated `ExpandableNotificationRow.isActionButtonLongClick` null dereferences on 0.1.12-dev10 and 0.1.13-dev1. The same method in the inspected One UI 9 APK unconditionally calls `mPrivateLayout.mExpandedChild.findViewById(...)` for ongoing activities. `CardRowState` deliberately removes that expanded child when installing its single replacement card.
+
+Before this synchronous hit test, installed replacement rows temporarily provide their visible card as the expanded-content reference; afterward the reference returns to null, including when the original method throws. Normal rows and an existing stock expanded child are untouched. Samsung's own ongoing-action, snooze and bubble hit tests and long-press menu logic still run. No view is attached twice. If the hit-test method exists but its guard cannot attach, shade-card replacement is not installed. The fix is included in 0.1.13 and covered by reproduction, cleanup, nesting and native-button tests; confirmation on the reporting device is still pending.

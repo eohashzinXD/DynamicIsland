@@ -286,7 +286,7 @@
     <string name="experimental_recovery">通知の互換性回復・実験機能</string>
     <string name="experimental_recovery_desc">通知やアクティビティが表示されない場合のみ有効にしてください。使用中のアプリやグループ要約の通知、標準バナーの処理をOne UI 8の代替方式に切り替え、検出範囲を広げます。使用中のアプリの通知を除外する設定より優先されます。初期設定はオフです。</string>
     <string name="hide_battery_icon">バッテリーアイコンを非表示</string>
-    <string name="hide_battery_icon_desc">充電・残量低下カードのタイトル・パーセント・バーは残します。初期設定ではオンです。</string>
+    <string name="hide_battery_icon_desc">小さな充電マークを非表示にし、パーセントと円形の残量ゲージは維持します。初期値はオンです。</string>
     <string name="accent_page">色</string>
     <string name="accent_page_sum">進捗バーとボタンの色をプレビュー</string>
     <string name="accent_enabled">カラーモード</string>
@@ -509,4 +509,11 @@
     <string name="island_charge_seconds">%1$d秒</string>
     <string name="setting_stock_charging_animation">Samsungのバッテリー充電エフェクトを表示</string>
     <string name="setting_stock_charging_animation_desc">充電開始時にステータスバーのバッテリーが拡大し、色が流れる効果を表示します。初期値はオフです。</string>
+    <string name="concurrent_recording_input">同時マイク波形（実験的）</string>
+    <string name="concurrent_recording_input_desc">録音アプリをLSPosedの対象に追加せず、Samsungボイスレコーダーの実際の音量を表示します。初期値はオフです。対応は端末によって異なります。録音に影響がある場合はオフにしてください。</string>
+    <string name="card_roundness">カードの角</string>
+    <string name="card_roundness_summary">元の形を維持するか、角の半径を調整します。</string>
+    <string name="card_roundness_custom">角の半径を調整</string>
+    <string name="card_roundness_desc">展開したカードの角を調整します。半径を大きくすると丸くなります。縮小表示とボタンの形は変わりません。</string>
+    <string name="card_corner_radius_format">角の半径: %1$d dp</string>
 </resources>

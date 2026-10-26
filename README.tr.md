@@ -38,6 +38,12 @@ Dynamic Island, Samsung durum çubuğundaki Now Bar kapsülünü kartlara açıl
 
 Bu görseller uygulamanın gerçek çizim koduyla test ortamında oluşturulmuştur; cihaz fotoğrafı değildir. Uygulama simgeleri basit şekillerle temsil edilir.
 
+## 0.1.13 yenilikleri
+
+Bu kararlı sürüm, 0.1.13 geliştirme sürümlerini birleştirir: müziğe tepki veren ortak parlama, sade ayarlar, isteğe bağlı şarj ve kulaklık kartları, ekran kaydı süresi ve sistem yazı tipi düzeltmeleri ile canlı bildirime uzun basma çökmesi düzeltmesi. Dairesel pil göstergeleri ve küçük kapsül bilgileri iyileştirildi. Kart köşe yarıçapı varsayılan olarak 28dp, isteğe bağlı olarak 0–48dp olur. Samsung Ses Kaydedici için deneysel dalga varsayılan olarak kapalıdır; cihaz desteğine göre gelişmiş ayarlardan açılabilir.
+
+[Sürüm notları](docs/release-notes/0.1.13.md) · [36 güncel kart örneği](docs/cards-overview-0.1.13.png) (isteğe bağlı özellikler dahil örnek veriler).
+
 ## Özellikler
 
 - **Canlı kartlar:** Samsung devam eden etkinlikleri, aramalar, müzik, zamanlayıcılar, kayıt, aktarım ve navigasyon.
@@ -158,6 +164,8 @@ JDK 17 veya üzeri ve Android SDK 36 gerekir.
 ## Gizlilik
 
 Bildirimler ve medya bilgileri cihazda işlenir. Telemetri ve sunucu bağlantısı yoktur. Ayarlar ve tanılama raporu cihazda kalır; rapor bildirim metnini içermez.
+
+İsteğe bağlı eşzamanlı mikrofon dalgası, kısa bellek tamponlarından ses düzeyini hesaplar. Varsayılan olarak kapalıdır; ses kaydedilmez veya aktarılmaz.
 
 ## Sorumluluk reddi
 

@@ -286,7 +286,7 @@
     <string name="experimental_recovery">Восстановление уведомлений · эксперимент</string>
     <string name="experimental_recovery_desc">Включайте только при пропуске уведомлений или событий. Использует альтернативную обработку One UI 8 для уведомлений открытого приложения, сводок групп и системных баннеров, расширяет обнаружение событий. Имеет приоритет над исключением уведомлений открытого приложения. По умолчанию выключено.</string>
     <string name="hide_battery_icon">Скрывать значок батареи</string>
-    <string name="hide_battery_icon_desc">На карточках зарядки и низкого заряда остаются заголовок, процент и шкала. По умолчанию включено.</string>
+    <string name="hide_battery_icon_desc">Скрывать маленький значок зарядки, сохраняя процент и круговую шкалу заряда. По умолчанию включено.</string>
     <string name="accent_page">Цвета</string>
     <string name="accent_page_sum">Предпросмотр цвета шкал и кнопок</string>
     <string name="accent_enabled">Цветовой режим</string>
@@ -509,4 +509,11 @@
     <string name="island_charge_seconds">%1$d с</string>
     <string name="setting_stock_charging_animation">Эффект зарядки батареи Samsung</string>
     <string name="setting_stock_charging_animation_desc">Цветная анимация с расширением значка батареи в строке состояния при начале зарядки. По умолчанию выключена.</string>
+    <string name="concurrent_recording_input">Параллельная запись для волны (эксперимент)</string>
+    <string name="concurrent_recording_input_desc">Показывает реальную громкость Samsung Диктофона без добавления его в область LSPosed. По умолчанию выключено. Поддержка зависит от устройства; выключите, если влияет на запись.</string>
+    <string name="card_roundness">Углы карточек</string>
+    <string name="card_roundness_summary">Сохраняйте исходные формы или настройте радиус углов.</string>
+    <string name="card_roundness_custom">Свой радиус углов</string>
+    <string name="card_roundness_desc">Настройка углов раскрытых карточек. Чем больше радиус, тем круглее углы. Форма компактной капсулы и кнопок не меняется.</string>
+    <string name="card_corner_radius_format">Радиус углов: %1$d dp</string>
 </resources>

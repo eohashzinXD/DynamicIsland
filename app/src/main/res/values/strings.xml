@@ -295,7 +295,7 @@
     <string name="experimental_recovery">Experimental notification recovery</string>
     <string name="experimental_recovery_desc">Enable only when notifications or activities are missing. Uses alternate One UI 8 notification handling, including notifications from the open app and group summaries, and broader activity detection. Overrides the open-app notification filter. Off by default.</string>
     <string name="hide_battery_icon">Hide battery pictogram</string>
-    <string name="hide_battery_icon_desc">Keep the percentage, title and progress bar on charging and low battery cards. On by default.</string>
+    <string name="hide_battery_icon_desc">Hide the small charging symbol while keeping the percentage and circular level gauge. On by default.</string>
     <string name="accent_page">Colours</string>
     <string name="accent_page_sum">Preview colours for progress bars and buttons</string>
     <string name="accent_enabled">Colour mode</string>
@@ -518,4 +518,11 @@
     <string name="island_charge_seconds">%1$d s</string>
     <string name="setting_stock_charging_animation">Show Samsung battery charging effect</string>
     <string name="setting_stock_charging_animation_desc">Show the coloured animation that expands the status bar battery when charging starts. Off by default.</string>
+    <string name="concurrent_recording_input">Concurrent microphone waveform (experimental)</string>
+    <string name="concurrent_recording_input_desc">Show real input levels for Samsung Voice Recorder without adding the recorder to LSPosed scope. Off by default. Turn off if recording is affected; support depends on your device.</string>
+    <string name="card_roundness">Card corners</string>
+    <string name="card_roundness_summary">Keep the original shapes, or adjust the corner radius.</string>
+    <string name="card_roundness_custom">Custom corner radius</string>
+    <string name="card_roundness_desc">Adjusts the corners of expanded cards. A larger radius makes them rounder. The compact pill and buttons keep their shapes.</string>
+    <string name="card_corner_radius_format">Corner radius: %1$d dp</string>
 </resources>

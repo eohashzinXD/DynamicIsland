@@ -90,6 +90,7 @@ final class OaCardBuilder {
         it.userId = Refl.getInt(data, "mUserId", 0);
         it.progressStyle = OaActivity.isProgressStyle(n);
         it.kind = kindOf(n, pkg);
+        it.voiceRecording = it.kind == IslandItem.Kind.RECORDING && "com.sec.android.app.voicenote".equals(pkg);
         it.transfer = n != null && (Notification.CATEGORY_PROGRESS.equals(n.category)
                 || (it.kind == IslandItem.Kind.LIVE && !it.progressStyle && extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0) > 0));
         bindPillIcon(it, data, n, pkg);
@@ -99,6 +100,7 @@ final class OaCardBuilder {
         it.pillColor = 0;
 
         OaViews.Chrono chrono = views.readChrono(data, n);
+        it.voiceRecordingPaused = it.voiceRecording && (chrono == null || !chrono.running);
         progress.bindBar(it, data, extras, pkg);
         bindTrailing(it, a, chrono, chipScore, (CharSequence) Refl.get(data, "mExpandedChipText"),
                 extras.getCharSequence("android.shortCriticalText"));
@@ -305,8 +307,14 @@ final class OaCardBuilder {
             if (action.actionIntent == null || action.title == null) {
                 continue;
             }
-            it.actions.add(new IslandItem.Action(action.title, icons.load(action.getIcon(), pkg),
-                    action.actionIntent, null, ActionWords.isDestructive(action.title)));
+            IslandItem.Action button = new IslandItem.Action(action.title, icons.load(action.getIcon(), pkg),
+                    action.actionIntent, null, ActionWords.isDestructive(action.title));
+            if (it.voiceRecording) {
+                String resource = icons.resourceName(action.getIcon(), pkg);
+                button.recordingControl = resource.endsWith("record_pause") ? 1
+                        : resource.endsWith("record_resume") ? 2 : resource.endsWith("record_stop") ? 3 : 0;
+            }
+            it.actions.add(button);
             if (it.actions.size() == MAX_BUTTONS) {
                 break;
             }

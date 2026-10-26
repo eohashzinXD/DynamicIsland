@@ -47,6 +47,12 @@ Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill 
 
 These pictures are drawn by the app's own drawing code on a mock phone in the test environment (see `scripts/readme_images.py`); they are not photos of a device, and the app icons are made of plain shapes.
 
+## New in 0.1.13
+
+This stable release collects the 0.1.13 development builds: shared music-reactive glow, simpler settings, optional charging/headset cards, recording-clock and system-font fixes, and the live-notification long-press crash fix. Cards now use circular battery gauges, clearer compact information and a shared 28dp corner radius, with an optional 0–48dp adjustment. The experimental Samsung Voice Recorder waveform is off by default; enable it under Advanced & troubleshooting when supported by your device.
+
+[Release notes](docs/release-notes/0.1.13.md) · [36 current card examples](docs/cards-overview-0.1.13.png) (illustrative data, including optional features).
+
 ## Features
 
 - **Live notifications as cards:** Every System UI ongoing activity gets a compact pill and an expanded card: header, chronometer, description, plain / segmented / indeterminate progress, icon or text buttons, custom chip views, work profile badge. Calls, cast, screen recording, timers and a music player (seek bar, art-tinted glow, waveform, output route) are included.
@@ -206,6 +212,8 @@ Signed APKs are published on the [Releases](../../releases) page; the build is a
 ## Privacy
 
 The module runs inside System UI and reads the notifications System UI already holds. It has no network permission and sends nothing anywhere. Settings and the diagnostics report stay on the device; the report holds no notification text.
+
+The optional concurrent microphone waveform uses short in-memory microphone buffers to compute levels. It is off by default; audio is neither stored nor transmitted.
 
 ## Disclaimer
 

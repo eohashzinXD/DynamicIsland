@@ -8,6 +8,7 @@ import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,13 @@ public abstract class CardBody {
 
     /** Draws the body with its top-left corner at ({@code x}, {@code y}); {@code elapsed} is ms since it appeared. */
     public abstract void draw(Canvas canvas, float x, float y, float alpha, long elapsed);
+
+    /** One shape policy for the card fill, blur surface and connecting bridge. */
+    public final float cornerRadius(float maximum, float height) {
+        if (!ModuleSettings.customCardRoundness()) return Math.min(height / 2f, maximum);
+        // Limit tall cards so the rounding cannot cut into their first and last rows.
+        return Math.min(height / 2f, owner.dp(ModuleSettings.cardCornerRadiusDp()));
+    }
 
     /**
      * Draws what fills the whole card behind the content (e.g. the music glow) into {@code frame}, the card's

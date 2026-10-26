@@ -24,6 +24,8 @@ final class IconPainter {
     private final Metrics m;
     private final Paints paints;
     private final Waveform waveform;
+    private final RecordingWaveform recordingWaveform;
+    private final dev.android.dynamicisland.island.graphics.BatteryGauge batteryGauge = new dev.android.dynamicisland.island.graphics.BatteryGauge();
     private final DigitClock clock;
     private final MediaFxCache mediaFx;
     /** Scratch objects owned by the view; the card bodies share them. */
@@ -31,10 +33,11 @@ final class IconPainter {
     private final Path barClip;
     private final Path imageClip = new Path();
 
-    IconPainter(Metrics m, Paints paints, Waveform waveform, DigitClock clock, MediaFxCache mediaFx, RectF scratch, Path barClip) {
+    IconPainter(Metrics m, Paints paints, Waveform waveform, RecordingWaveform recordingWaveform, DigitClock clock, MediaFxCache mediaFx, RectF scratch, Path barClip) {
         this.m = m;
         this.paints = paints;
         this.waveform = waveform;
+        this.recordingWaveform = recordingWaveform;
         this.clock = clock;
         this.mediaFx = mediaFx;
         this.scratch = scratch;
@@ -49,6 +52,15 @@ final class IconPainter {
 
     /** Leading icon of the compact pill: monochrome unless the icon is artwork. */
     void drawLeadingMono(Canvas c, IslandItem item, float left, float midY, float size, float alpha) {
+        if (item.eventLayout == IslandItem.EventLayout.BATTERY && item.batteryPercent >= 0) {
+            batteryGauge.draw(c, left + size / 2, midY, size, item.batteryPercent, item.fillAccent(), alpha,
+                    false, item.batteryCharging && !ModuleSettings.hideBatteryIcon());
+            return;
+        }
+        if (item.voiceRecording && ModuleSettings.concurrentRecordingInput()) {
+            recordingWaveform.draw(c, item, left, midY, size, size * .85f, alpha);
+            return;
+        }
         if (item.pulsingDot || item.icon == null) {
             drawLeading(c, item, left, midY, size, alpha);
             return;
@@ -166,7 +178,8 @@ final class IconPainter {
             case CHRONOMETER:
                 if (text != null) {
                     Paint.FontMetrics fm = paints.trail.getFontMetrics();
-                    paints.trail.setColor(Colors.withAlpha(item.kind == IslandItem.Kind.CALL ? item.accent : -1, alpha));
+                    paints.trail.setColor(Colors.withAlpha(item.voiceRecording && ModuleSettings.concurrentRecordingInput()
+                            ? 0xFFFF5B62 : item.kind == IslandItem.Kind.CALL ? item.accent : -1, alpha));
                     float baseline = midY - ((fm.ascent + fm.descent) / 2.0f);
                     float natural = DigitClock.width(paints.trail, text);
                     int save = c.save();

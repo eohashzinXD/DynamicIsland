@@ -146,6 +146,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final Shapes shapes;
     private final MediaFxCache mediaFx;
     private final Waveform waveform;
+    private final RecordingWaveform recordingWaveform;
     private final DigitClock clock;
     private final ButtonPress buttons = new ButtonPress();
     private final IconPainter icons;
@@ -202,8 +203,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         shapes = new Shapes(metrics, scene);
         mediaFx = new MediaFxCache(this);
         waveform = new Waveform(metrics);
+        recordingWaveform = new RecordingWaveform(this.host.recordingAudio());
         clock = new DigitClock(this);
-        icons = new IconPainter(metrics, paints, waveform, clock, mediaFx, tmpRect, barClip);
+        icons = new IconPainter(metrics, paints, waveform, recordingWaveform, clock, mediaFx, tmpRect, barClip);
         remote = new RemoteCards(this, shapes, scene);
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
@@ -633,6 +635,38 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
                 || needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
     }
 
+    public boolean hasRecordingWaveform(IslandItem item) {
+        return item != null && item.voiceRecording && ModuleSettings.concurrentRecordingInput();
+    }
+
+    public String recordingInputTarget() {
+        if (!ModuleSettings.concurrentRecordingInput() || renderingPaused || !isAttachedToWindow()
+                || !isShown() || getWindowVisibility() != VISIBLE || scene.visibleAlpha() < .2f
+                || scene.suppressed || scene.frozenByShade()) return null;
+        if (scene.mode == Mode.EXPANDED) {
+            for (Card card : scene.cards) {
+                if (!card.leaving && capturesRecording(card.item)) return card.item.key;
+            }
+        } else if (scene.mode == Mode.COMPACT) {
+            if (scene.mainIn != null && capturesRecording(scene.mainIn.content.item)) return scene.mainIn.content.item.key;
+            if (scene.bubbleIn != null && springs.split.value() > .05f && capturesRecording(scene.bubbleIn.content.item)) return scene.bubbleIn.content.item.key;
+        }
+        return null;
+    }
+
+    private boolean capturesRecording(IslandItem item) {
+        return item.voiceRecording && !item.voiceRecordingPaused
+                && item.userId == android.os.Process.myUid() / 100_000;
+    }
+
+    public void onRecordingAudioFrame() {
+        if (isAttachedToWindow() && !renderingPaused) scheduleFrame();
+    }
+
+    public void drawRecordingWaveform(Canvas canvas, IslandItem item, float left, float midY, float width, float height, float alpha) {
+        recordingWaveform.draw(canvas, item, left, midY, width, height, alpha);
+    }
+
     private boolean needsAudio(Layer layer) {
         if (layer == null) return false;
         IslandItem item = layer.content.item;
@@ -757,6 +791,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
+        }
+        // Microphone reads arrive at 25 Hz, independently of the display. Keep the
+        // visible history moving between reads instead of painting only on input.
+        String recordingKey = recordingInputTarget();
+        if (recordingKey != null && host.recordingAudio() != null) {
+            need |= host.recordingAudio().envelope.isAnimating(recordingKey, SystemClock.elapsedRealtime());
         }
         return need;
     }

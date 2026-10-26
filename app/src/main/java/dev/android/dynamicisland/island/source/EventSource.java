@@ -261,7 +261,8 @@ public final class EventSource {
         it.accent = on ? color : GREY;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = IslandText.get(ctx, on ? "island_on" : "island_off");
-        it.subtitle = IslandText.get(ctx, "island_setting_changed");
+        it.compactLabel = IslandText.get(ctx, labelKey);
+        it.subtitle = null;
         show(it, TOGGLE_MS);
     }
 
@@ -351,10 +352,12 @@ public final class EventSource {
         IslandItem it = base("event:charging");
         it.title = IslandText.get(ctx, "island_charging");
         String label = chargingLabel(plugged, battery);
-        // the percentage first; plain charging has the same words as the title, so they are said once, while fast
-        // and wireless charging add something
-        it.subtitle = label.equals(String.valueOf(it.title)) ? percent + "%" : percent + "% · " + label;
+        // The circular gauge owns the percentage; only a distinct charging type needs a subtitle.
         it.accent = GREEN;
+        it.eventLayout = IslandItem.EventLayout.BATTERY;
+        it.batteryPercent = percent;
+        it.batteryCharging = true;
+        it.subtitle = label.equals(String.valueOf(it.title)) ? null : label;
         it.icon = batteryIcon(percent, true);
         it.progress = percent / 100f;
         it.trailing = IslandItem.Trailing.TEXT;
@@ -365,8 +368,10 @@ public final class EventSource {
     private IslandItem lowBatteryItem(int percent) {
         IslandItem it = base("event:lowbattery");
         it.title = IslandText.get(ctx, "island_low_battery");
-        it.subtitle = IslandText.get(ctx, "island_battery_remaining", percent);
         it.accent = RED;
+        it.eventLayout = IslandItem.EventLayout.BATTERY;
+        it.batteryPercent = percent;
+        it.subtitle = null;
         it.icon = batteryIcon(percent, false);
         it.progress = percent / 100f;
         it.trailing = IslandItem.Trailing.TEXT;
@@ -481,16 +486,19 @@ public final class EventSource {
         }
         IslandItem it = base("event:bt:" + device.getAddress());
         it.title = name != null ? name : IslandText.get(ctx, "island_bluetooth_device");
-        it.subtitle = battery >= 0 ? IslandText.get(ctx, "island_connected_battery", battery) : IslandText.get(ctx, "island_connected");
+        it.subtitle = IslandText.get(ctx, "island_connected");
+        it.eventLayout = IslandItem.EventLayout.DEVICE;
+        it.batteryPercent = battery;
         it.accent = BLUE;
         it.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
         if (battery >= 0) {
             it.progress = battery / 100f;
             it.trailing = IslandItem.Trailing.TEXT;
             it.trailingText = battery + "%";
+            it.compactLabel = it.title;
         } else {
             it.trailing = IslandItem.Trailing.TEXT;
-            it.trailingText = IslandText.get(ctx, "island_connected");
+            it.trailingText = it.title;
         }
         return it;
     }
@@ -500,6 +508,7 @@ public final class EventSource {
     private IslandItem base(String key) {
         IslandItem it = new IslandItem(key);
         it.kind = IslandItem.Kind.EVENT;
+        it.eventLayout = IslandItem.EventLayout.STATUS;
         it.iconIsImage = false;
         it.pillColor = 0;
         return it;

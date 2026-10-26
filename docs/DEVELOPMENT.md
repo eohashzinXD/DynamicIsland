@@ -138,13 +138,14 @@ The module hooks private System UI classes by name, so each One UI update can br
 
 The stable release consolidates the 0.1.12 development series. Its local release candidate passes 355 Android unit/render tests, the six-language catalog check and two translation-tool tests. Device feedback confirmed the voice-recorder duplicate-player fix and the revised shade/expand/collapse motion. The final compact-focus timing adjustment is covered by regression tests; device coverage is not exhaustive. GPU display-list/effect lifecycle checks do not replace observing the final Gaussian appearance on a phone.
 
+## 0.1.13 validation
+
+This stable release consolidates the 0.1.13 development series and subsequent card, recording and compatibility fixes. The default suite contains 102 focused tests; the six language catalogs each contain 515 strings. The opt-in `AllCardsOverviewRenderTest` captures all nine card body implementations in 36 examples. Voice-waveform capture and smoother movement were tried on the maintainer's device; the concurrent microphone feature remains experimental and off by default. Issue #16 was traced to Samsung's unconditional expanded-child hit-test dereference, reproduced and fixed in a focused test; the reporting phone has not yet confirmed the fix. See the [release notes](release-notes/0.1.13.md) for evidence and installation details.
+
 ## Known limitations
 
 Open bugs are tracked as issues; the ones that are planned carry the `planned` label.
 
-- Long-pressing a live notification can crash SystemUI on some builds ([#16](https://github.com/sampple-korea/dynamicisland/issues/16)).
-- Screen-recording elapsed time can reset on One UI 9 ([#17](https://github.com/sampple-korea/dynamicisland/issues/17)).
-- Spotify can briefly trigger an island notification on its first launch/playback ([#18](https://github.com/sampple-korea/dynamicisland/issues/18)).
 - The status bar icons can come back a moment late after the shade is closed again; the cause is not known and has not been confirmed to be this module.
 - Tapping a shade card does not remove the notification.
 - After dragging the stack sideways, the tap position of `IslandView.onTap` can be off by the drag.

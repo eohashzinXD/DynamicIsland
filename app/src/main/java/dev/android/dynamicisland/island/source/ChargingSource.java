@@ -193,20 +193,23 @@ public final class ChargingSource {
         if (!isOffering()) return;
         IslandItem item = new IslandItem("charging:info");
         item.kind = IslandItem.Kind.EVENT; // Same priority as the charging popup and the reviewed version.
+        item.eventLayout = IslandItem.EventLayout.BATTERY;
+        item.batteryPercent = level;
+        item.batteryCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
         item.title = text(status == BatteryManager.BATTERY_STATUS_FULL ? "island_charge_full"
                 : status == BatteryManager.BATTERY_STATUS_CHARGING ? "island_charging" : "island_charge_connected");
-        if (level >= 0) item.title = item.title + " · " + percent(level);
         item.icon = ModuleSettings.hideBatteryIcon() || level < 0 ? null : BatteryIcon.load(ctx, level, true);
         item.accent = 0xFF30D158;
         item.trailing = IslandItem.Trailing.TEXT;
         double power = volts * currentMa / 1000;
         if (power > 300) power = Double.NaN;
         item.trailingText = Double.isFinite(power) ? number(power, 0) + "W" : level >= 0 ? percent(level) : null;
+        if (Double.isFinite(power) && level >= 0) item.compactLabel = item.trailingText;
         item.subtitle = text("island_charge_live", value(currentMa, "mA"), value(power, "W"), value(temperature, "°C"));
         if (statistics && session != null) {
             item.descriptionMaxLines = 8;
             session.advance(SystemClock.elapsedRealtime());
-            item.description = item.subtitle + "\n" + text("island_charge_screen_on", duration(session.onMs), gains(session.onPercent, session.onUah))
+            item.description = text("island_charge_screen_on", duration(session.onMs), gains(session.onPercent, session.onUah))
                     + "\n" + text("island_charge_screen_off", duration(session.offMs), gains(session.offPercent, session.offUah));
         }
         item.postTime = connectedAt;

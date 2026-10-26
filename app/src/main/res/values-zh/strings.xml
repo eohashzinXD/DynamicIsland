@@ -286,7 +286,7 @@
     <string name="experimental_recovery">通知兼容性恢复·实验功能</string>
     <string name="experimental_recovery_desc">仅在通知或活动缺失时启用。切换到 One UI 8 的替代通知处理方式，接收当前应用和分组摘要通知，调整系统横幅处理并扩大活动检测范围。优先于排除当前应用通知的设置。默认关闭。</string>
     <string name="hide_battery_icon">隐藏电池图标</string>
-    <string name="hide_battery_icon_desc">充电及低电量卡片仍保留标题、百分比和进度条。默认开启。</string>
+    <string name="hide_battery_icon_desc">隐藏小充电标记，保留百分比和圆形电量环。默认开启。</string>
     <string name="accent_page">颜色</string>
     <string name="accent_page_sum">预览进度条与按钮颜色</string>
     <string name="accent_enabled">颜色模式</string>
@@ -509,4 +509,11 @@
     <string name="island_charge_seconds">%1$d秒</string>
     <string name="setting_stock_charging_animation">显示三星电池充电特效</string>
     <string name="setting_stock_charging_animation_desc">充电开始时，状态栏电池会展开并显示流动色彩。默认关闭。</string>
+    <string name="concurrent_recording_input">并发麦克风波形（实验性）</string>
+    <string name="concurrent_recording_input_desc">无需将录音机加入LSPosed作用域，即可显示三星录音机的实际音量。默认关闭，支持情况因设备而异。若影响录音，请关闭。</string>
+    <string name="card_roundness">卡片圆角</string>
+    <string name="card_roundness_summary">保留原有形状，或自行调整圆角半径。</string>
+    <string name="card_roundness_custom">自定义圆角半径</string>
+    <string name="card_roundness_desc">调整展开卡片的圆角。半径越大，卡片越圆润。收起的胶囊和按钮形状保持不变。</string>
+    <string name="card_corner_radius_format">圆角半径：%1$d dp</string>
 </resources>

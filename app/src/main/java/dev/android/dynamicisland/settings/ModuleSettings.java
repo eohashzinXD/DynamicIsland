@@ -29,6 +29,8 @@ public final class ModuleSettings {
     public static final String KEY_SHADE_MEDIA = "shade_media_player";
     public static final String KEY_EVENT_CHARGING = "event_charging";
     public static final String KEY_STOCK_CHARGING_ANIMATION = "stock_charging_animation";
+    /** Experimental concurrent input; opt-in because vendor recording policies differ. */
+    public static final String KEY_CONCURRENT_RECORDING_INPUT = "concurrent_recording_input";
     public static final String KEY_CHARGING_INFO = "charging_info";
     public static final String KEY_CHARGING_STATS = "charging_statistics";
     public static final String KEY_EVENT_HEADSET = "event_headset";
@@ -79,6 +81,8 @@ public final class ModuleSettings {
     public static final String KEY_PILL_MIN_W_DP = "pill_min_w_dp";
     public static final String KEY_PILL_MAX_W_DP = "pill_max_w_dp";
     public static final String KEY_PILL_KEEP_WIDTH = "pill_keep_width";
+    public static final String KEY_CARD_CORNER_RADIUS_DP = "card_corner_radius_dp";
+    public static final String KEY_CUSTOM_CARD_ROUNDNESS = "custom_card_roundness";
     public static final int PILL_H_MIN_PCT = -20;
     public static final int PILL_H_MAX_PCT = 40;
     public static final int PILL_MIN_W_MAX_DP = 420;
@@ -151,6 +155,7 @@ public final class ModuleSettings {
     private static volatile boolean shadeMedia = true;
     private static volatile boolean eventCharging = true;
     private static volatile boolean stockChargingAnimation;
+    private static volatile boolean concurrentRecordingInput;
     private static volatile boolean chargingInfo;
     private static volatile boolean chargingStats;
     private static volatile boolean eventHeadset;
@@ -182,6 +187,8 @@ public final class ModuleSettings {
     private static volatile boolean smartRules = true;
     private static volatile int pillAnchor = ANCHOR_AUTO;
     private static volatile int pillOutlineMode = PILL_OUTLINE_AUTO;
+    private static volatile int cardCornerRadiusDp = 28;
+    private static volatile boolean customCardRoundness;
     private static volatile int pillXDp;
     private static volatile int pillYDp;
     /** Told (on the reload thread) when the island's position settings changed. */
@@ -594,16 +601,22 @@ public final class ModuleSettings {
     public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
     public static boolean chargingInfo() { ensureStarted(); return eventCharging && chargingInfo; }
     public static boolean stockChargingAnimation() { ensureStarted(); return stockChargingAnimation; }
+    public static boolean concurrentRecordingInput() { ensureStarted(); return concurrentRecordingInput && !lowPerformance; }
     public static boolean chargingStats() { return chargingInfo() && chargingStats; }
     public static boolean eventHeadset() { ensureStarted(); return eventHeadset; }
     public static int holeTextPaddingDp() { ensureStarted(); return holeTextPaddingDp; }
+    public static int cardCornerRadiusDp() { ensureStarted(); return cardCornerRadiusDp; }
+    public static boolean customCardRoundness() { ensureStarted(); return customCardRoundness; }
 
     private static int clampHoleTextPadding(int value) {
         return Math.max(0, Math.min(HOLE_TEXT_PADDING_MAX_DP, value));
     }
 
     private static void readOptionalDeviceSettings(SharedPreferences source) {
+        customCardRoundness = source.getBoolean(KEY_CUSTOM_CARD_ROUNDNESS, false);
+        cardCornerRadiusDp = Math.max(0, Math.min(48, source.getInt(KEY_CARD_CORNER_RADIUS_DP, 28)));
         stockChargingAnimation = source.getBoolean(KEY_STOCK_CHARGING_ANIMATION, false);
+        concurrentRecordingInput = source.getBoolean(KEY_CONCURRENT_RECORDING_INPUT, false);
         chargingInfo = source.getBoolean(KEY_CHARGING_INFO, false);
         chargingStats = source.getBoolean(KEY_CHARGING_STATS, false);
         eventHeadset = source.getBoolean(KEY_EVENT_HEADSET, false);
@@ -621,8 +634,8 @@ public final class ModuleSettings {
     private static String switchSignature() {
         return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
-                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation
-                + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
+                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
+                + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */

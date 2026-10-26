@@ -93,8 +93,11 @@ public final class HeadsetSource {
             long ttl = added ? 6_000 : 2_500;
             IslandItem item = new IslandItem("event:headset");
             item.kind = IslandItem.Kind.EVENT;
+            item.eventLayout = IslandItem.EventLayout.DEVICE;
             item.title = IslandText.get(ctx, added ? "island_headset_connected" : "island_headset_disconnected");
             item.subtitle = name.isBlank() ? IslandText.get(ctx, "island_wired_headset") : name;
+            item.trailing = IslandItem.Trailing.TEXT;
+            item.trailingText = item.subtitle;
             item.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
             item.accent = 0xFFFFFFFF;
             item.postTime = lastAnnouncement = Math.max(now, lastAnnouncement + 1);

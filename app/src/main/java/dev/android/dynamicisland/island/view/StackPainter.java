@@ -181,7 +181,7 @@ final class StackPainter {
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     float opening = visualOpening(c, shapes.expansion(c));
-                    blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha, blurFraction(c, opening));
+                    blur.place(c, slot, c.body.cornerRadius(m.cardRadius, slot.height()), alpha, blurFraction(c, opening));
                 }
             }
         }
@@ -226,7 +226,7 @@ final class StackPainter {
 
     /** Draws one card whose rectangle {@code r} was already computed. */
     void drawCard(Canvas canvas, Card c, RectF r, long t, float opening) {
-        float corner = Math.min(r.height() / 2.0f, m.cardRadius);
+        float corner = c.body.cornerRadius(m.cardRadius, r.height());
         float rimSettled = clamp01((opening - 0.82f) / 0.18f);
         // while it pours out of (or back into) the pill the card is the pill's black, but it wears a clearly
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
