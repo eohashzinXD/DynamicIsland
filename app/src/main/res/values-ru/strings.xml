@@ -507,4 +507,6 @@
     <string name="island_headset_disconnected">Наушники отключены</string>
     <string name="island_wired_headset">Проводные наушники</string>
     <string name="island_charge_seconds">%1$d с</string>
+    <string name="setting_stock_charging_animation">Эффект зарядки батареи Samsung</string>
+    <string name="setting_stock_charging_animation_desc">Цветная анимация с расширением значка батареи в строке состояния при начале зарядки. По умолчанию выключена.</string>
 </resources>

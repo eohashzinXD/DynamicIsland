@@ -516,4 +516,6 @@
     <string name="island_headset_disconnected">Headphones disconnected</string>
     <string name="island_wired_headset">Wired headphones</string>
     <string name="island_charge_seconds">%1$d s</string>
+    <string name="setting_stock_charging_animation">Show Samsung battery charging effect</string>
+    <string name="setting_stock_charging_animation_desc">Show the coloured animation that expands the status bar battery when charging starts. Off by default.</string>
 </resources>

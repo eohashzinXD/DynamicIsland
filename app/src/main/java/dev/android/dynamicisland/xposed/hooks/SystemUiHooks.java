@@ -81,6 +81,13 @@ public final class SystemUiHooks {
         runGroup("cast", () -> hookCast(cl));
         runGroup("flashlight", () -> hookFlashlight(cl));
         runGroup("signals", () -> hookSignals(cl));
+        runGroup("charging animation", () -> {
+            try {
+                ChargingAnimation.install(cl);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("charging presentation API changed", e);
+            }
+        });
         // Android 16 only: newer System UI builds (One UI 9 / SDK 37) ship the AOSP chip classes too,
         // but hooking them there is exactly what the original module avoided.
         // One UI 7 has no Samsung call controller either: it uses the same AOSP one

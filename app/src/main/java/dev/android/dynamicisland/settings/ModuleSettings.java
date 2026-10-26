@@ -28,6 +28,7 @@ public final class ModuleSettings {
     /** The island's music card in place of the stock music player of the notification shade. */
     public static final String KEY_SHADE_MEDIA = "shade_media_player";
     public static final String KEY_EVENT_CHARGING = "event_charging";
+    public static final String KEY_STOCK_CHARGING_ANIMATION = "stock_charging_animation";
     public static final String KEY_CHARGING_INFO = "charging_info";
     public static final String KEY_CHARGING_STATS = "charging_statistics";
     public static final String KEY_EVENT_HEADSET = "event_headset";
@@ -149,6 +150,7 @@ public final class ModuleSettings {
     private static volatile boolean colorIcons;
     private static volatile boolean shadeMedia = true;
     private static volatile boolean eventCharging = true;
+    private static volatile boolean stockChargingAnimation;
     private static volatile boolean chargingInfo;
     private static volatile boolean chargingStats;
     private static volatile boolean eventHeadset;
@@ -591,6 +593,7 @@ public final class ModuleSettings {
     public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
     public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
     public static boolean chargingInfo() { ensureStarted(); return eventCharging && chargingInfo; }
+    public static boolean stockChargingAnimation() { ensureStarted(); return stockChargingAnimation; }
     public static boolean chargingStats() { return chargingInfo() && chargingStats; }
     public static boolean eventHeadset() { ensureStarted(); return eventHeadset; }
     public static int holeTextPaddingDp() { ensureStarted(); return holeTextPaddingDp; }
@@ -600,6 +603,7 @@ public final class ModuleSettings {
     }
 
     private static void readOptionalDeviceSettings(SharedPreferences source) {
+        stockChargingAnimation = source.getBoolean(KEY_STOCK_CHARGING_ANIMATION, false);
         chargingInfo = source.getBoolean(KEY_CHARGING_INFO, false);
         chargingStats = source.getBoolean(KEY_CHARGING_STATS, false);
         eventHeadset = source.getBoolean(KEY_EVENT_HEADSET, false);
@@ -617,7 +621,7 @@ public final class ModuleSettings {
     private static String switchSignature() {
         return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
-                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset
+                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation
                 + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
@@ -630,7 +634,7 @@ public final class ModuleSettings {
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
                 + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
-        Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset);
+        Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset + " stockCharging=" + stockChargingAnimation);
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
         if (!now.equals(lastLogged)) {

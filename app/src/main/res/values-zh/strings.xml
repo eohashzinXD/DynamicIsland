@@ -507,4 +507,6 @@
     <string name="island_headset_disconnected">耳机已断开</string>
     <string name="island_wired_headset">有线耳机</string>
     <string name="island_charge_seconds">%1$d秒</string>
+    <string name="setting_stock_charging_animation">显示三星电池充电特效</string>
+    <string name="setting_stock_charging_animation_desc">充电开始时，状态栏电池会展开并显示流动色彩。默认关闭。</string>
 </resources>

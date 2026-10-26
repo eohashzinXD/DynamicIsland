@@ -86,6 +86,7 @@ Yerleşik kurallar teslimat, kargo, navigasyon, taksi, giyilebilir cihaz, pil, h
 
 - **Şarj:** hızlı veya kablosuz şarj ve güncel yüzde; pil simgesi varsayılan olarak gizlidir.
 - **İsteğe bağlı cihaz kartları:** **Bildirimler → Sistem olayları** bölümündeki ayrıntılı şarj kartı, şarj istatistikleri ve kablolu/USB kulaklık bildirimleri varsayılan olarak kapalıdır. Şarj kartı olay önceliğini korur ve etkinken kısa şarj açılır bildirimini değiştirir. İstatistikler şarj kartını gerektirir; her seçeneği kapatmak ilgili toplamayı durdurur. Güç pil tarafında tahmin edilir; ekran durumuna göre şarj değişimi gözlenen aralıklara dayalı bir tahmindir. **Gelişmiş ayarlar → Kamera kalibrasyonu** bölümünde 0–16dp ek metin boşluğu ayarlanabilir; 0 özgün aralığı korur.
+- **Samsung pil şarj efekti:** **Bildirimler → Sistem olayları → Samsung pil şarj efektini göster** varsayılan olarak kapalıdır. Durum çubuğundaki pilin genişleyerek renk değiştirdiği efekt gizlenir; normal pil simgesi, yüzde, şarj göstergesi, ses ve ada bildirimleri korunur. Varsa incelenen One UI 9 Compose yolu ve BatteryEvent zamanlayıcı yolu işlenir; desteklenmeyen sürümler özgün davranışını korur.
 - **Pil ve bağlantılar:** düşük pil, ses modu ve Bluetooth ses cihazının bağlantısı; varsa cihazın pil bilgisi.
 - **Gizlilik:** kamera ve mikrofon kullanımını gösterir. Konum göstergesi ayrıca açılır ve varsayılan olarak kapalıdır. Ana anahtar bu göstergelerin tümünü kontrol eder.
 - **Hızlı ayarlar:** Rahatsız Etmeyin, uçak modu, güç tasarrufu, erişim noktası ve otomatik döndürme değişiklikleri.

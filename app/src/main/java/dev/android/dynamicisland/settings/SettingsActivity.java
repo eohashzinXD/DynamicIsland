@@ -346,6 +346,7 @@ public final class SettingsActivity extends Activity {
         OneUi.listen(charging, on -> chargingDependencies.run());
         OneUi.listen(chargingInfo, on -> chargingDependencies.run());
         chargingDependencies.run();
+        toggle(device, R.string.setting_stock_charging_animation, R.string.setting_stock_charging_animation_desc, ModuleSettings.KEY_STOCK_CHARGING_ANIMATION, false);
         ui.details(page, getString(R.string.ui_details), getString(R.string.charging_statistics_note));
         toggle(device, R.string.setting_event_ringer, R.string.setting_event_ringer_desc, ModuleSettings.KEY_EVENT_RINGER, true);
         toggle(device, R.string.setting_event_bluetooth, R.string.setting_event_bluetooth_desc, ModuleSettings.KEY_EVENT_BLUETOOTH, true);

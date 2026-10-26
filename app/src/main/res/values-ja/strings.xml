@@ -507,4 +507,6 @@
     <string name="island_headset_disconnected">イヤホン取り外し</string>
     <string name="island_wired_headset">有線イヤホン</string>
     <string name="island_charge_seconds">%1$d秒</string>
+    <string name="setting_stock_charging_animation">Samsungのバッテリー充電エフェクトを表示</string>
+    <string name="setting_stock_charging_animation_desc">充電開始時にステータスバーのバッテリーが拡大し、色が流れる効果を表示します。初期値はオフです。</string>
 </resources>

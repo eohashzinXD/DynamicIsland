@@ -27,6 +27,15 @@ The module hooks Samsung's System UI by name, so each One UI version has to be c
 
 Names are matched by name only (any class), so a hit from the script is a hint, not a proof; view ids are not in the dex and are checked with `aapt2 dump resources`, as the script prints.
 
+## Status bar battery charging effect
+
+Checked against the supplied Android 17 System UI v17 (37) APK and the video in issue #15. The effect is the status bar battery expanding into a coloured charging chip. It is separate from `power.feature.charginganimation`, which controls charging overlays/Now Bar presentations. The battery effect is handled at its own presentation entry points below.
+
+- **Compose (One UI 9):** `SamsungHomeStatusBarInteractor$shouldHideStatusBarForChargingVI$2` produces `Pair(current, previous)` for a presentation-only `runningFold`. Both its `Function3.invoke` bridge and `invokeSuspend(Object)` body are hooked, so the bridge is covered even if ART inlines the small body. When **Show Samsung battery charging effect** is off (the default), its result is `Pair(false, false)`. The downstream filter accepts only false-to-true transitions, so it never starts the charging VI or hides the normal status icons/battery. `ChargingVIKt.ChargingVI` reads the resulting `HomeStatusBarViewModelImpl.shouldHideStatusBarForChargingVI` flow. Upstream `isBatteryCharging` and the battery repository remain unchanged. The hook runs on the produced result rather than a potentially inlined constructor.
+- **View-based scheduler:** `SystemStatusAnimationSchedulerImpl.onStatusEvent(StatusEvent)` rejects only `BatteryEvent` while the option is off, before it changes the scheduler, creates a chip or hides icons. Other events, including camera/microphone privacy events, continue normally.
+
+The option is independent of island charging alerts. Charging sounds, warnings, the ordinary battery percentage/charging indicator and other power UI are not intercepted. Changes affect subsequent charging transitions after preferences reload; reconnect the charger to test a new transition. Unsupported builds retain their original behaviour. Diagnostics report `stock charging animation` with attached Compose/event hook counts; both targets exist in the supplied APK. The maintainer confirmed that the corrected test APK suppresses the battery effect on their phone. Other devices and firmware still need device testing, including wired/wireless charging and normal battery/status/privacy icon visibility.
+
 ## One UI 7 specifics
 
 What differs from One UI 8 and how the module handles it (found by comparing the symbols with `scripts/check_systemui.py`):
