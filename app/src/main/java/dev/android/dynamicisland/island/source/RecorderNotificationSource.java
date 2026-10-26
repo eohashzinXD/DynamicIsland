@@ -110,7 +110,9 @@ public final class RecorderNotificationSource {
             long token = lifecycle == null ? 0L : lifecycle.generation;
             long startToken = lifecycle == null ? 0L : lifecycle.start;
             boolean sameLifecycle = token > 0L && token == lifecycleToken;
-            boolean bridge = sameLifecycle || (elapsed - lastSeen <= 2000L && systemClock && clock.matchesSystemBase(n.when));
+            boolean sameStart = startToken > 0L && startToken == lifecycleStartToken;
+            boolean bridge = sameLifecycle || sameStart
+                    || (elapsed - lastSeen <= 2000L && systemClock && clock.matchesSystemBase(n.when));
             boolean continuing = session.equals(activeRecorderSession) && (present || bridge);
             if (startToken > 0L && lifecycleStartToken > 0L && startToken != lifecycleStartToken) {
                 continuing = false;

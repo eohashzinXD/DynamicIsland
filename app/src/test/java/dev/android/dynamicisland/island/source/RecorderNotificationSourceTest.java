@@ -2,6 +2,7 @@ package dev.android.dynamicisland.island.source;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 
 import android.app.Application;
 import android.app.Notification;
@@ -91,12 +92,55 @@ public class RecorderNotificationSourceTest {
     }
 
     @Test
-    public void systemChronometerStillUsesItsProvidedBase() {
-        RecorderNotificationSource source = source();
-        source.update(Collections.singletonList(note("com.android.systemui", "screen_record", true)));
-        List<IslandItem> out = new ArrayList<>();
-        source.collect(out);
-        assertEquals(1000L, out.get(0).chronoBase);
+    public void lateSystemChronometerRecoversEarlierStartWithoutMovingItForwardAgain() {
+        long[] time={10000,20000};
+        RecorderNotificationSource source=source(time);
+        source.update(List.of(recording(1332,10000,0,false)));
+        assertEquals(20000,card(source).chronoElapsedBase);
+        time[0]=11000;time[1]=21000;
+        source.update(List.of(recording(1332,11000,5000,true)));
+        assertEquals(15000,card(source).chronoElapsedBase);
+        time[0]=14000;time[1]=24000;
+        source.update(List.of(recording(1332,14000,11000,true)));
+        assertEquals(15000,card(source).chronoElapsedBase);
+    }
+
+    @Test public void rollingAndSettledNotificationTimesCannotRestartAnActiveRecording() {
+        long[] time={1000000,100000};
+        RecorderNotificationSource source=source(time);
+        source.update(List.of(recording(1332,time[0],time[0],true)));
+        String key=card(source).key;
+        // A fresh timestamp then left stable for 1.5 seconds used to turn 11.5 seconds into 1.5.
+        for(long age:new long[]{10000,11500,13000,16000}){
+            time[0]=1000000+age;time[1]=100000+age;
+            long notificationTime=age<=11500?1010000:1013000;
+            source.update(List.of(recording(1333,time[0],notificationTime,true)));
+            IslandItem item=card(source);
+            assertEquals(key,item.key);assertEquals(100000,item.chronoElapsedBase);
+            assertEquals(age,time[1]-item.chronoElapsedBase);
+        }
+        time[0]+=60000; // changing the wall clock must not affect the elapsed recording duration
+        source.update(List.of(recording(1333,time[0],time[0],true)));
+        assertEquals(100000,card(source).chronoElapsedBase);
+    }
+
+    @Test public void sameObservedStartSurvivesAGapButAConfirmedNewStartResetsTheTimer() {
+        long[] time={1000000,100000};
+        java.util.concurrent.atomic.AtomicReference<CastSource.RecorderLifecycle> lifecycle=
+                new java.util.concurrent.atomic.AtomicReference<>(new CastSource.RecorderLifecycle("recorder",1,1));
+        RecorderNotificationSource source=source(time);source.setLifecycleSession(pkg->lifecycle.get());
+        source.update(List.of(recording(1332,time[0],time[0],true)));
+        String key=card(source).key;
+        time[0]+=10000;time[1]+=10000;
+        source.update(Collections.emptyList());
+        // A model read gap changes continuity, but not the positively observed recording start.
+        lifecycle.set(new CastSource.RecorderLifecycle("recorder",2,1));
+        source.update(List.of(recording(1333,time[0],time[0],true)));
+        assertEquals(key,card(source).key);assertEquals(100000,card(source).chronoElapsedBase);
+        time[0]+=2000;time[1]+=2000;
+        lifecycle.set(new CastSource.RecorderLifecycle("recorder",3,2));
+        source.update(List.of(recording(1334,time[0],time[0],true)));
+        assertNotEquals(key,card(source).key);assertEquals(time[1],card(source).chronoElapsedBase);
     }
 
     private StatusBarNotification recording(int id, long post, long when, boolean systemClock) {
