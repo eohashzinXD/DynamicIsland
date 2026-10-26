@@ -1,12 +1,13 @@
 package dev.android.dynamicisland.island.graphics;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertNotNull;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -38,9 +39,7 @@ public class LottieFilmTest {
                 float t = FRACTIONS[i] * (p.durationMillis() - 1f);
                 p.draw(c, new RectF(i * cell, 0, (i + 1) * cell, cell), t, 0xFFFFFFFF);
             }
-            try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-                strip.compress(Bitmap.CompressFormat.PNG, 100, out);
-            }
+            RenderCapture.write(strip, new File(dir, name + ".png"));
         }
     }
 }

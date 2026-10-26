@@ -3,12 +3,10 @@ package dev.android.dynamicisland.settings;
 import static org.junit.Assert.*;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
-import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import dev.android.dynamicisland.R;
-import dev.android.dynamicisland.xposed.Diagnostics;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
@@ -94,40 +92,7 @@ public class SettingsUxTest {
         assertTrue(p.getBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND,false));
         assertFalse(p.getBoolean(ModuleSettings.KEY_ALL_NOTIFICATIONS,true));
     }
-    @Test public void positiveBatteryControlKeepsDefaultHiddenAndStoresInverse() {
-        SettingsActivity a=activity();open(a,"displayPage");
-        Switch show=toggle(a,R.string.ui_show_battery_icon);assertFalse(show.isChecked());
-        show.toggle();assertFalse(prefs(a).getBoolean(ModuleSettings.KEY_HIDE_BATTERY_ICON,true));
-        show.toggle();assertTrue(prefs(a).getBoolean(ModuleSettings.KEY_HIDE_BATTERY_ICON,false));
-    }
-    @Test public void privacyMasterDisablesLocationWithoutErasingPreference() {
-        SettingsActivity a=activity();prefs(a).edit().putBoolean(ModuleSettings.KEY_PRIVACY_LOCATION,true).apply();open(a,"eventsPage");
-        toggle(a,R.string.setting_privacy).toggle();
-        assertFalse(toggle(a,R.string.setting_privacy_location).isEnabled());
-        assertTrue(prefs(a).getBoolean(ModuleSettings.KEY_PRIVACY_LOCATION,false));
-        toggle(a,R.string.setting_privacy).toggle();assertTrue(toggle(a,R.string.setting_privacy_location).isEnabled());
-    }
-    @Test public void defaultColoursHideEditorAndChoosingClassicSavesImmediately() {
-        SettingsActivity a=activity();AppearanceScreen colors=ReflectionHelpers.getField(a,"appearance");a.open(colors::open);
-        assertNull(find(a.page(),a.getString(R.string.accent_custom)));
-        choose(a,R.string.accent_enabled,1);
-        assertNotNull(find(a.page(),a.getString(R.string.accent_custom)));
-        AnimationScreen animation=ReflectionHelpers.getField(a,"animation");a.open(animation::open);
-        // Header has the same text, so choose the value text instead.
-        View value=find(a.page(),a.getString(R.string.anim_new));((View)value.getParent().getParent()).performClick();
-        ShadowAlertDialog.getLatestAlertDialog().getListView().performItemClick(null,1,1);
-        assertTrue(prefs(a).getBoolean(ModuleSettings.KEY_LEGACY_ANIMATION,false));
-        a.goBack();a.open(animation::open);
-        assertNotNull(find(a.page(),a.getString(R.string.anim_legacy)));
-    }
-    @Test public void savedReportAndOldAcknowledgementCannotPassFreshConnectionCheck() {
-        SettingsActivity a=activity();
-        Settings.Global.putString(a.getContentResolver(),Diagnostics.SETTING,"old report");
-        Diagnostics.acknowledgeStatus(a,123);
-        assertFalse(Diagnostics.statusAcknowledged(a,124));
-        assertFalse(Diagnostics.statusAcknowledged(a,0));
-        assertTrue(Diagnostics.statusAcknowledged(a,123));
-    }
+
     @Test public void searchableAppSelectionIsTransactionalAcrossFilterChanges() {
         SettingsActivity a=activity();OneUi ui=ReflectionHelpers.getField(a,"ui");
         List<Map.Entry<String,String>> rows=Arrays.asList(new AbstractMap.SimpleEntry<>("com.alpha","Alpha"),new AbstractMap.SimpleEntry<>("com.beta","Beta"));

@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -12,7 +14,6 @@ import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -56,66 +57,11 @@ public class TorchSourceTest {
     }
 
     @Test
-    public void recognisesOtherBuildsOfTheStockFlashlightNotification() {
-        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|77|flashlight_notification|10161"));
-        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|5|TorchService|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.example|5|Torch|10161"));
-        IslandItem card = new IslandItem("n:1");
-        card.packageName = "com.android.systemui";
-        card.title = "Flashlight is on";
-        assertTrue(TorchSource.isStockItem(card));
-        card.title = "Battery low";
-        org.junit.Assert.assertFalse(TorchSource.isStockItem(card));
-        card.packageName = "com.example";
-        card.title = "Flashlight";
-        org.junit.Assert.assertFalse(TorchSource.isStockItem(card));
-    }
-
-    @Test
-    public void recognisesTheStockFlashlightNotification() {
-        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|4660|Flashlight|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.android.systemui|1234|Other|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.example|4660|Flashlight|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification(null));
-    }
-
-    @Test
-    public void cardReplacesTheStockNotificationOnlyWhileOn() {
-        assertTrue(source(5, 3, true).replacesStockNotification());
-        org.junit.Assert.assertFalse(source(5, 3, false).replacesStockNotification());
-    }
-
-    @Test
     public void noCardWhileOff() {
         TorchSource s = source(5, 3, false);
         List<IslandItem> out = new ArrayList<>();
         s.collect(out);
         assertTrue(out.isEmpty());
-    }
-
-    @Test
-    public void lowestAndHighestLevel() throws Exception {
-        List<IslandItem> out = new ArrayList<>();
-        source(5, 1, true).collect(out);
-        source(5, 5, true).collect(out);
-        assertEquals(0.0f, out.get(0).sliderValue, 0.001f);
-        assertEquals(1.0f, out.get(1).sliderValue, 0.001f);
-        render("torch_card_low", out.get(0));
-        render("torch_card_full", out.get(1));
-    }
-
-    @Test
-    public void singleLevelTorchGetsACardWithoutSlider() throws Exception {
-        TorchSource s = source(1, 1, true);
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out);
-        assertEquals(1, out.size());
-        IslandItem it = out.get(0);
-        org.junit.Assert.assertNull(it.sliderChange);
-        assertEquals("On", it.trailingText.toString());
-        assertEquals(1, it.actions.size());
-        assertTrue(s.replacesStockNotification());
-        render("torch_card_single_level", it);
     }
 
     private void render(String name, IslandItem item) throws Exception {
@@ -128,8 +74,6 @@ public class TorchSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 }

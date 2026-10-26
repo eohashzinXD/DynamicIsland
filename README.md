@@ -190,6 +190,7 @@ Requires JDK 17+ and the Android SDK (compile SDK 36).
 ./gradlew assembleRelease     # unsigned APK in app/build/outputs/apk/release
 KEYSTORE_PASSWORD=... scripts/sign.sh   # builds, aligns and signs -> release/DynamicIsland-<version>.apk
 ./gradlew testReleaseUnitTest # unit tests and headless render tests
+./gradlew testReleaseUnitTest -Prender # optional PNG captures for visual review
 ```
 
 `scripts/sign.sh` takes the keystore password from `KEYSTORE_PASSWORD` and creates a self-signed key in `release-keys/` on first run (git-ignored). Keep it: updates must be signed with the same key. See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the source layout, hook notes, rules format and test setup.

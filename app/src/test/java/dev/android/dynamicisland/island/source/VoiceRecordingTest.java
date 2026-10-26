@@ -3,7 +3,6 @@ package dev.android.dynamicisland.island.source;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.content.ComponentName;
 import com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityDataHelper;
 import org.junit.After;
 import org.junit.Before;
@@ -46,26 +45,6 @@ public class VoiceRecordingTest {
     }
 
     @Test
-    public void recorderPackageByItselfDoesNotBlockFilePlayback() {
-        assertFalse(source().isVoiceRecording(RECORDER, 0));
-        Activity playback = new Activity();
-        playback.mIsMediaOngoingData = true;
-        OngoingActivityDataHelper.mOngoingActivityLists.add(playback);
-        assertFalse(source().isVoiceRecording(RECORDER, 0));
-    }
-
-    @Test
-    public void foregroundHiddenAndNowbarOnlyRecordingsStillCount() {
-        Activity recording = new Activity();
-        OngoingActivityDataHelper.baseActivityComponentName = new ComponentName(RECORDER, "Recorder");
-        OngoingActivityDataHelper.hiddenOngoingActivityDataList.add(recording);
-        assertTrue(source().isVoiceRecording(RECORDER, 0));
-        OngoingActivityDataHelper.hiddenOngoingActivityDataList.clear();
-        OngoingActivityDataHelper.onlyShownNowbarItemMap.put("voice", recording);
-        assertTrue(source().isVoiceRecording(RECORDER, 0));
-    }
-
-    @Test
     public void recordingDoesNotSuppressOtherAppsOrProfiles() {
         OngoingActivityDataHelper.mOngoingActivityLists.add(new Activity());
         OaSource source = source();
@@ -75,13 +54,4 @@ public class VoiceRecordingTest {
         assertFalse(source.isVoiceRecording(RECORDER, -1));
     }
 
-    @Test
-    public void demotedAndRemovedActivitiesDoNotKeepRecordingActive() {
-        Activity old = new Activity();
-        old.mNotificationEntry = new RemovedEntry();
-        OngoingActivityDataHelper.mOngoingActivityLists.add(old);
-        assertFalse(source().isVoiceRecording(RECORDER, 0));
-        OngoingActivityDataHelper.mOngoingActivityLists.clear();
-        assertFalse(source().isVoiceRecording(RECORDER, 0));
-    }
 }

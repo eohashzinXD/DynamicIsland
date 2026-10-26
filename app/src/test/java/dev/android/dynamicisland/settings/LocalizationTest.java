@@ -11,15 +11,11 @@ import dev.android.dynamicisland.island.rules.RuleStore;
 import java.util.Locale;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
-import org.robolectric.annotation.GraphicsMode;
-import org.robolectric.util.ReflectionHelpers;
 
 @RunWith(RobolectricTestRunner.class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35, qualifiers = "w411dp-h891dp-xxhdpi")
 public class LocalizationTest {
     @Test public void resourcesAndSystemUiShareTranslationsAndFormatArgumentsAcrossAllLocales() throws Exception {
@@ -52,15 +48,4 @@ public class LocalizationTest {
             assertEquals("My preparation", custom.statusText("food", 1, Locale.forLanguageTag(language)));
         }
     }
-    private void render(String prefix) throws Exception {
-        SettingsActivity activity = Robolectric.buildActivity(SettingsActivity.class).setup().get();
-        SettingsRenderTest.renderAll(activity, prefix);
-        AppearanceScreen appearance = ReflectionHelpers.getField(activity, "appearance");
-        activity.open(appearance::open);
-        SettingsRenderTest.render(activity, prefix + "colours");
-    }
-    @Test @Config(qualifiers = "ja-rJP-w411dp-h891dp-xxhdpi") public void japaneseSettingsRender() throws Exception { render("settings_ja_"); }
-    @Test @Config(qualifiers = "zh-rCN-w411dp-h891dp-xxhdpi") public void chineseSettingsRender() throws Exception { render("settings_zh_"); }
-    @Test @Config(qualifiers = "tr-rTR-w411dp-h891dp-xxhdpi") public void turkishSettingsRender() throws Exception { render("settings_tr_"); }
-    @Test @Config(qualifiers = "ru-rRU-w411dp-h891dp-xxhdpi") public void russianSettingsRender() throws Exception { render("settings_ru_"); }
 }

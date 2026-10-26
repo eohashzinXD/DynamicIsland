@@ -31,7 +31,7 @@ jobs:
           python3 scripts/translations.py check
           python3 -m unittest discover -s scripts/tests
 
-      - name: Unit tests and render tests
+      - name: Regression tests and APK build
         run: ./gradlew --no-daemon testReleaseUnitTest assembleRelease
 
       - name: Verify framework stubs are not packaged
@@ -47,13 +47,11 @@ jobs:
             exit 1
           fi
 
-      - name: Outline contrast captures and test reports
+      - name: Test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: outline-contrast-and-tests
-          path: |
-            app/build/render/pill-outline-contrast.png
-            app/build/reports/tests/testReleaseUnitTest/
+          name: test-reports
+          path: app/build/reports/tests/testReleaseUnitTest/
           if-no-files-found: ignore
           retention-days: 7

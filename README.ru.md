@@ -182,6 +182,7 @@ Dynamic Island заменяет капсулу Now Bar от Samsung в стро�
 ./gradlew assembleRelease     # неподписанный APK в app/build/outputs/apk/release
 KEYSTORE_PASSWORD=... scripts/sign.sh   # собирает, выравнивает и подписывает -> release/DynamicIsland-<version>.apk
 ./gradlew testReleaseUnitTest # модульные тесты и безголовые тесты отрисовки
+./gradlew testReleaseUnitTest -Prender # по желанию: PNG для визуальной проверки
 ```
 
 `scripts/sign.sh` берёт пароль хранилища ключей из `KEYSTORE_PASSWORD` и при первом запуске создаёт самоподписанный ключ в `release-keys/` (в git не попадает). Сохраните его: обновления нужно подписывать тем же ключом. Структура исходников, заметки о хуках, формат правил и настройка тестов — в [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).

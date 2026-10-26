@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.*;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -10,7 +12,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -76,9 +77,7 @@ public class PillOutlineContrastRenderTest {
             }
             File output = new File("build/render/pill-outline-contrast.png");
             output.getParentFile().mkdirs();
-            try (FileOutputStream stream = new FileOutputStream(output)) {
-                sheet.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            }
+            RenderCapture.write(sheet, output);
         } finally {
             prefs.edit().clear().apply();
             ModuleSettings.configurePreview(prefs);

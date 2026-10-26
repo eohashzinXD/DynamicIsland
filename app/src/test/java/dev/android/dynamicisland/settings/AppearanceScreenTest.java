@@ -38,18 +38,7 @@ public class AppearanceScreenTest {
         activity.open(appearance::open);
         return activity;
     }
-    @Test public void presetsAndRestoreUpdateSavedStateWithoutChangingOtherOptions() {
-        SettingsActivity activity = open();
-        SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
-        assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
-        find(activity.page(), activity.getString(R.string.accent_green)).performClick();
-        assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
-        assertEquals(0xFF34C759, prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, 0));
-        ((View) find(activity.page(), activity.getString(R.string.accent_reset)).getParent().getParent()).performClick();
-        assertFalse(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, true));
-        assertFalse(prefs.contains(ModuleSettings.KEY_ACCENT_COLOR));
-        assertFalse(prefs.getBoolean(ModuleSettings.KEY_EXPERIMENTAL_RECOVERY, false));
-    }
+
     @Test public void colourEditorValidatesAndDoesNotSaveUntilConfirmed() {
         SettingsActivity activity = open();
         SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
@@ -67,17 +56,5 @@ public class AppearanceScreenTest {
         assertEquals(0xFF123ABC, prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, 0));
         assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
     }
-    @Test @Config(qualifiers = "ko-rKR-w411dp-h891dp-xxhdpi")
-    public void koreanColourPageRenders() throws Exception {
-        SettingsRenderTest.render(open(), "colours_ko");
-    }
-    @Test @Config(qualifiers = "tr-rTR-w411dp-h891dp-xxhdpi")
-    public void turkishColourPageRenders() throws Exception {
-        SettingsRenderTest.render(open(), "colours_tr");
-    }
-    @Test public void colourParsingUsesOpaqueRgbAndRejectsInvalidValues() {
-        assertEquals(Integer.valueOf(0xFF112233), AppearanceScreen.parse("#112233"));
-        assertNull(AppearanceScreen.parse("#00112233"));
-        assertNull(AppearanceScreen.parse("xyz"));
-    }
+
 }

@@ -3,9 +3,10 @@ package dev.android.dynamicisland.settings;
 import static org.junit.Assert.*;
 import android.content.SharedPreferences;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ScrollView;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -17,7 +18,7 @@ import org.robolectric.util.ReflectionHelpers;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35, qualifiers = "ko-rKR-w360dp-h800dp-xxhdpi")
 public class SettingsUxRenderTest {
-    @Test public void customOptionsAndSeparateCalibrationRender() throws Exception {
+    @Category(RenderCapture.class) @Test public void customOptionsAndSeparateCalibrationRender() throws Exception {
         SettingsActivity a=Robolectric.buildActivity(SettingsActivity.class).setup().get();
         SharedPreferences p=ReflectionHelpers.getField(a,"prefs");
         p.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM,true).putBoolean(ModuleSettings.KEY_AUTO_OPEN_CARDS,true)
@@ -30,7 +31,7 @@ public class SettingsUxRenderTest {
         a.open(position::calibration);SettingsRenderTest.render(a,"settings_ko_manualCalibration");
         a.open(()->ReflectionHelpers.callInstanceMethod(a,"behaviorPage"));SettingsRenderTest.render(a,"settings_ko_autoTiming");
     }
-    @Test @Config(qualifiers = "ko-rKR-w360dp-h800dp-night-xxhdpi")
+    @Category(RenderCapture.class) @Test @Config(qualifiers = "ko-rKR-w360dp-h800dp-night-xxhdpi")
     public void darkSettingsRender() throws Exception {
         SettingsActivity a=Robolectric.buildActivity(SettingsActivity.class).setup().get();
         SettingsRenderTest.render(a,"settings_ko_darkHub");

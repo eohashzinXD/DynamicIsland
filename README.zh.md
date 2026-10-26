@@ -182,6 +182,7 @@ Dynamic Island 把状态栏中三星的 Now Bar 胶囊替换为可以长成卡�
 ./gradlew assembleRelease     # 未签名的 APK 位于 app/build/outputs/apk/release
 KEYSTORE_PASSWORD=... scripts/sign.sh   # 构建、对齐并签名 -> release/DynamicIsland-<version>.apk
 ./gradlew testReleaseUnitTest # 单元测试和无头渲染测试
+./gradlew testReleaseUnitTest -Prender # 可选：生成供人工检查的PNG
 ```
 
 `scripts/sign.sh` 从 `KEYSTORE_PASSWORD` 读取密钥库密码,首次运行时会在 `release-keys/` 中创建自签名密钥(已被 git 忽略)。请妥善保管:更新必须用同一把密钥签名。源码结构、Hook 说明、规则格式和测试设置见 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)。

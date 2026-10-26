@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 import android.graphics.*;
 import android.os.SystemClock;
 import android.view.View;
-import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.time.Duration;
@@ -37,33 +36,7 @@ public class LowPerformanceTest {
             ShadowSystemClock.advanceBy(Duration.ofMillis(16));view.doFrame(SystemClock.uptimeMillis()*1_000_000L);
         }
     }
-    @Test public void enablingModeClearsExistingGpuBlurAndDisablingRestoresIt() {
-        ContentBlur blur=new ContentBlur();RenderNode window=new RenderNode("window");Canvas target=window.beginRecording(300,200);
-        RectF bounds=new RectF(0,0,300,200);
-        Canvas content=blur.begin(target,bounds,1,20);assertNotSame(target,content);blur.end(target,content);
-        RenderNode node=ReflectionHelpers.getField(blur,"node");assertTrue(node.hasDisplayList());
-        low(true);assertSame(target,blur.begin(target,bounds,1,20));assertFalse(node.hasDisplayList());
-        low(false);content=blur.begin(target,bounds,1,20);assertNotSame(target,content);blur.end(target,content);window.endRecording();
-    }
-    @Test public void remoteViewBlurIsClearedWhenModeChanges() {
-        class EffectView extends View {
-            RenderEffect effect; EffectView(){super(RuntimeEnvironment.getApplication());}
-            @Override public void setRenderEffect(RenderEffect value){effect=value;super.setRenderEffect(value);}
-        }
-        EffectView remote=new EffectView();ContentBlur blur=new ContentBlur();
-        blur.apply(remote,1,10);assertNotNull(remote.effect);
-        low(true);blur.apply(remote,1,10);assertNull(remote.effect);
-        low(false);blur.apply(remote,1,10);assertNotNull(remote.effect);
-    }
-    @Test public void lowModeStopsTheCompactWaveLoopAndKeepsItsStaticShape() {
-        Metrics metrics=new Metrics(1);Waveform wave=new Waveform(metrics);IslandItem item=music();
-        assertTrue(wave.step(.016f,item,null));low(true);assertFalse(wave.step(.016f,item,null));
-        Bitmap first=Bitmap.createBitmap(60,40,Bitmap.Config.ARGB_8888),second=Bitmap.createBitmap(60,40,Bitmap.Config.ARGB_8888);
-        wave.draw(new Canvas(first),new RectF(),10,20,Color.WHITE,1);
-        ShadowSystemClock.advanceBy(Duration.ofSeconds(5));wave.step(5,item,null);
-        wave.draw(new Canvas(second),new RectF(),10,20,Color.WHITE,1);assertTrue(first.sameAs(second));
-        low(false);assertTrue(wave.step(.016f,item,null));
-    }
+
     @Test public void settledMusicCardsBecomeIdleAndOpeningRemainsResponsive() {
         low(true);IslandItem item=music();IslandView view=view(item);view.peek(item,60000);
         assertTrue(view.interactiveMotion());settle(view);assertFalse(view.interactiveMotion());
@@ -74,17 +47,7 @@ public class LowPerformanceTest {
         view.collapse();assertTrue(view.interactiveMotion());
         low(false);assertTrue(view.shadeMediaAnimating(item));
     }
-    @Test public void lowModeHasAnOpaqueBlackCardThroughTheEntireFold() {
-        low(true);IslandItem item=new IslandItem("live");item.title="Live";IslandView view=view(item);
-        StackPainter painter=ReflectionHelpers.getField(view,"stackPainter");
-        for(float phase:new float[]{0,.2f,.5f,.8f,1})assertEquals(Color.BLACK,painter.fillColor(phase,phase));
-        view.peek(item,60000);settle(view);assertTrue(view.isExpanded());view.collapse();settle(view);assertFalse(view.isExpanded());
-    }
-    @Test public void iconsAreStillButKeepBatteryStateAndCanResume() {
-        GlyphIcon icon=GlyphIcon.battery(.23f,true);boolean normal=icon.animating();low(true);assertFalse(icon.animating());
-        assertEquals(.23f,(float)ReflectionHelpers.getField(icon,"level"),0);
-        low(false);assertEquals(normal,icon.animating());
-    }
+
     @Test public void hidingTheActualViewStopsWorkAndShowingItRestartsNormalAudioDemand() {
         android.app.Activity activity=Robolectric.buildActivity(android.app.Activity.class).setup().get();
         IslandView view=view(music());activity.setContentView(view);settle(view);

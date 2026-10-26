@@ -188,6 +188,7 @@ JDK 17 이상과 Android SDK(compile SDK 36)가 필요합니다.
 ./gradlew assembleRelease     # 서명되지 않은 APK: app/build/outputs/apk/release
 KEYSTORE_PASSWORD=... scripts/sign.sh   # 빌드, 정렬, 서명 -> release/DynamicIsland-<버전>.apk
 ./gradlew testReleaseUnitTest # 단위 테스트와 렌더 테스트
+./gradlew testReleaseUnitTest -Prender # 선택 사항: 화면 검토용 PNG 생성
 ```
 
 `scripts/sign.sh`는 키스토어 비밀번호를 환경 변수 `KEYSTORE_PASSWORD`로 받고, 처음 실행할 때 `release-keys/`에 자체 서명 키를 만듭니다(git에는 올라가지 않음). 업데이트는 같은 키로 서명해야 하므로 이 키를 잘 보관하세요. 소스 구조, 후크, 규칙 형식, 테스트 설정은 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)를 참고하세요.

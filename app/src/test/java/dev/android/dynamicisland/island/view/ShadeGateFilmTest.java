@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
@@ -10,7 +12,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.SystemClock;
 import dev.android.dynamicisland.island.model.IslandItem;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -132,9 +133,7 @@ public class ShadeGateFilmTest {
         }
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, "shade_gate_sheet.png"))) {
-            sheet.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(sheet, new File(dir, "shade_gate_sheet.png"));
         assertTrue("gone while the shade is down", minAlpha < 0.01f);
         assertTrue("back when the shade has closed", maxAlphaWhenOpen > 0.99f);
     }

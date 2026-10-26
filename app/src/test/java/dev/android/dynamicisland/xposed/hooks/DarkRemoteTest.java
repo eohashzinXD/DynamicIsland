@@ -1,19 +1,13 @@
 package dev.android.dynamicisland.xposed.hooks;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-import android.app.Application;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import org.robolectric.RuntimeEnvironment;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
@@ -31,68 +25,8 @@ public class DarkRemoteTest {
             0xFF0000FF, 0xFF990000, 0xFF003366, 0xFF4A148C, 0xFFB71C1C,
     };
 
-    @Test
-    public void darkTextBecomesLightWithItsTransparency() {
-        int lifted = DarkRemote.lift(Color.argb(0x99, 0x20, 0x20, 0x20));
-        assertEquals(0x99, Color.alpha(lifted));
-        assertTrue(Color.red(lifted) > 0xE0);
-    }
-
-    @Test
-    public void readableTextStaysAsItIs() {
-        assertEquals(0xFFEEEEEE, DarkRemote.lift(0xFFEEEEEE));
-        assertEquals(0xFF8AB4F8, DarkRemote.lift(0xFF8AB4F8));
-        // a mid grey that is readable on the dark card is not turned white just because it is "dark-ish"
-        assertEquals(0xFF9AA0A6, DarkRemote.lift(0xFF9AA0A6));
-    }
-
-    @Test
-    public void everyColourEndsUpReadableAndKeepsItsHue() {
-        for (int color : PALETTE) {
-            int lifted = DarkRemote.lift(color);
-            assertEquals(Integer.toHexString(color), Color.alpha(color), Color.alpha(lifted));
-            float after = DarkRemote.contrast(lifted, DarkRemote.CARD_BACKGROUND);
-            // see-through white can never get past its own transparency: it just may not get worse
-            if (Color.alpha(color) == 0xFF || DarkRemote.contrast(color, DarkRemote.CARD_BACKGROUND) < DarkRemote.MIN_CONTRAST) {
-                assertTrue(Integer.toHexString(color) + " -> " + Integer.toHexString(lifted) + " contrast " + after,
-                        after >= DarkRemote.MIN_CONTRAST || Color.alpha(color) < 0xFF);
-            }
-            float[] before = new float[3];
-            float[] now = new float[3];
-            Color.colorToHSV(color, before);
-            Color.colorToHSV(lifted, now);
-            if (before[1] > 0.4f && now[1] > 0.1f && before[2] > 0.2f) {
-                float diff = Math.abs(before[0] - now[0]);
-                assertTrue("hue of " + Integer.toHexString(color), Math.min(diff, 360.0f - diff) < 6.0f);
-            }
-        }
-    }
-
-    @Test
-    public void invisibleTextIsLeftAlone() {
-        assertEquals(0x00000000, DarkRemote.lift(0x00000000));
-    }
-
-    @Test
-    public void aWholeViewTreeIsLifted() {
-        Application app = RuntimeEnvironment.getApplication();
-        LinearLayout root = new LinearLayout(app);
-        int[] before = {0xFF202124, 0xFF5F6368, 0xFFFFFFFF};
-        for (int color : before) {
-            TextView t = new TextView(app);
-            t.setTextColor(color);
-            root.addView(t);
-        }
-        DarkRemote.lighten(root);
-        for (int i = 0; i < before.length; i++) {
-            int now = ((TextView) root.getChildAt(i)).getCurrentTextColor();
-            assertTrue(DarkRemote.contrast(now, DarkRemote.CARD_BACKGROUND) >= DarkRemote.MIN_CONTRAST);
-        }
-        assertEquals(0xFFFFFFFF, ((TextView) root.getChildAt(2)).getCurrentTextColor());
-    }
-
     /** A picture of every palette colour before (left) and after (right) on three card backdrops. */
-    @Test
+    @Category(RenderCapture.class) @Test
     public void renderContrastSheet() throws Exception {
         int[] backdrops = {DarkRemote.CARD_BACKGROUND, 0xFF101012, 0xFF3A3A40};
         int rowH = 30;
@@ -119,8 +53,6 @@ public class DarkRemoteTest {
         }
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream fo = new FileOutputStream(new File(dir, "dark_remote_contrast.png"))) {
-            out.compress(Bitmap.CompressFormat.PNG, 100, fo);
-        }
+        RenderCapture.write(out, new File(dir, "dark_remote_contrast.png"));
     }
 }

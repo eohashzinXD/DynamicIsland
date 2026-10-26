@@ -58,7 +58,7 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # -> release/DynamicIsland-<versionName>
 
 ## README pictures
 
-`ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`) and the settings render tests write the settings pages (`app/build/render`) when `./gradlew testReleaseUnitTest` runs; `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/` and the strip `docs/banner.png` / `docs/banner_ko.png` at the top of the README. `docs/icon.png` is the app icon rendered from the launcher layers, and `docs/social.png` (1280 x 640, from `scripts/social.html`) is the social preview to upload in the repository settings, and `docs/hero.png` / `docs/hero_ko.png` are the title pictures, made from `scripts/hero.html` / `scripts/hero_ko.html` (open in a browser at 1800 x 600 and save a screenshot; the Korean one uses the Pretendard font, SIL OFL). Run both again after a change of the look and commit the pictures.
+Run `./gradlew testReleaseUnitTest -Prender --tests '*settings.Settings*Test' --tests '*ScreenshotsTest'` to generate README pictures. `ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`), while the settings captures write all six locales to `app/build/render`. Then `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/` and the strip `docs/banner.png` / `docs/banner_ko.png` at the top of the README. For settings alone, omit `--tests '*ScreenshotsTest'` and pass `--settings-only` to the Python script. `docs/icon.png` is the app icon rendered from the launcher layers, and `docs/social.png` (1280 x 640, from `scripts/social.html`) is the social preview to upload in the repository settings, and `docs/hero.png` / `docs/hero_ko.png` are the title pictures, made from `scripts/hero.html` / `scripts/hero_ko.html` (open in a browser at 1800 x 600 and save a screenshot; the Korean one uses the Pretendard font, SIL OFL). Refresh and commit the pictures after a change of the look.
 
 ## README translations
 
@@ -84,7 +84,16 @@ To release: raise `versionCode` / `versionName` in `app/build.gradle` and `Crash
 ./gradlew testReleaseUnitTest
 ```
 
-The unit tests include headless Robolectric renders of cards and settings pages, written as PNGs to `app/build/render/`. With network access the Robolectric jar is downloaded; offline, pass the folder that holds `android-all-instrumented-15-robolectric-13954326-i7.jar` with `-ProbolectricDir=<folder>`.
+The default suite runs behavior, lifecycle, pixel and layout regressions. It checks every settings page once and compares the Android resources with the System UI catalog in all six languages. It does not export PNGs or repeat the entire settings layout for every language.
+
+```bash
+./gradlew testReleaseUnitTest -Prender        # also run visual captures and export PNGs
+./gradlew testReleaseUnitTest -Prender --tests '*SettingsCaptureTest' --tests '*SettingsRenderTest'
+```
+
+Capture-only tests use the JUnit `RenderCapture` category and are excluded from regular CI. These images are review aids, without automatic screenshot baselines. Use `RenderCapture.write` for optional image exports. The default suite is intentionally small: startup, representative card processing, settings persistence, localization and basic drawing/lifecycle checks. Repetitive per-variant, frame-rate and low-level helper tests have been removed. Add focused tests when they offer useful coverage beyond these checks; avoid retaining one-off design proposals or repeating every previously fixed bug scenario.
+
+With network access the Robolectric jar is downloaded; offline, pass the folder that holds `android-all-instrumented-15-robolectric-13954326-i7.jar` with `-ProbolectricDir=<folder>`.
 
 ## Testing status
 
@@ -122,4 +131,4 @@ Open bugs are tracked as issues; the ones that are planned carry the `planned` l
 
 ## Icons
 
-The island's pictograms (`GlyphIcon`) play Lottie animations. The animations live in `tools/lottie/json`; `tools/lottie/embed.py` packs them into `LottieData.java`, because a System UI process cannot read this module's resources. `LottiePlayer` is a small player that handles what these files use (shape and pre-composition layers, mattes, trim, merge and round-corner modifiers, bezier-eased keyframes) and paints every shape in the colour the island asks for. `tools/lottie/mk.py` draws the icons that are not from the ColorOS pack; run `python3 tools/lottie/mk.py <dir>` and copy the result into `json/` to change them. `LottieFilmTest` writes a strip of frames per icon to `app/build/render/lottie`. The canvas drawings in `GlyphIcon` remain as the fallback if an animation fails to parse.
+The island's pictograms (`GlyphIcon`) play Lottie animations. The animations live in `tools/lottie/json`; `tools/lottie/embed.py` packs them into `LottieData.java`, because a System UI process cannot read this module's resources. `LottiePlayer` is a small player that handles what these files use (shape and pre-composition layers, mattes, trim, merge and round-corner modifiers, bezier-eased keyframes) and paints every shape in the colour the island asks for. `tools/lottie/mk.py` draws the icons that are not from the ColorOS pack; run `python3 tools/lottie/mk.py <dir>` and copy the result into `json/` to change them. `LottieFilmTest` writes a strip of frames per icon to `app/build/render/lottie` with `-Prender`. The canvas drawings in `GlyphIcon` remain as the fallback if an animation fails to parse.

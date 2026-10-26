@@ -10,17 +10,18 @@ import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.List;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.*;
 import org.robolectric.annotation.*;
 import org.robolectric.shadows.ShadowSystemClock;
-import org.robolectric.util.ReflectionHelpers;
 
 /** Captures the production IslandView at one stable layout, using extracted colours from the sample album covers. */
+@Category(RenderCapture.class)
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk=35,qualifiers="w411dp-h891dp-xxhdpi")
@@ -51,7 +52,7 @@ public class AmbientGlowRenderTest {
                 Bitmap capture=Bitmap.createBitmap(W*2,H*2,Bitmap.Config.ARGB_8888);Canvas canvas=new Canvas(capture);canvas.scale(2,2);canvas.drawColor(background);
                 statusBar(canvas,name.equals("light"));view.draw(canvas);
                 File out=new File("build/render/ambient-glow/"+name+".png");out.getParentFile().mkdirs();
-                try(FileOutputStream stream=new FileOutputStream(out)){capture.compress(Bitmap.CompressFormat.PNG,100,stream);}
+                RenderCapture.write(capture, out);
                 assertTrue(out.length()>0);
             }
         } finally {prefs.edit().clear().apply();ModuleSettings.configurePreview(prefs);}

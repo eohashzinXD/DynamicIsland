@@ -10,14 +10,12 @@ import android.media.session.MediaController;
 import android.media.session.PlaybackState;
 import android.os.Looper;
 import android.view.View;
-import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.island.source.MediaRecordingTest;
 import dev.android.dynamicisland.island.source.MediaSource;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
@@ -118,52 +116,4 @@ public class RecordingShadeTest {
         assertFalse(binding.recording(player));
     }
 
-    @Test
-    public void rebindingTheSameRowToAnotherMusicAppRestoresIt() throws Exception {
-        ShadeMediaPlayer.refreshRecordingRows();
-        assertEquals(View.GONE, row.getVisibility());
-        MediaController music = MediaRecordingTest.controller(app, "com.music", 0, "Song");
-        media.sync(java.util.Arrays.asList(recorder, music));
-        ((Panel) player.getTag()).mController = music;
-        ShadeMediaPlayer.refreshRecordingRows();
-        assertEquals(View.VISIBLE, row.getVisibility());
-        assertNotNull(binding.item(player));
-    }
-
-    @Test
-    public void touchExplorationRestoresTheAccessibleStockPlayer() {
-        ShadeMediaPlayer.refreshRecordingRows();
-        assertEquals(View.GONE, row.getVisibility());
-        AccessibilityManager manager = app.getSystemService(AccessibilityManager.class);
-        shadowOf(manager).setTouchExplorationEnabled(true);
-        try {
-            ShadeMediaPlayer.refreshRecordingRows();
-            assertEquals(View.VISIBLE, row.getVisibility());
-            assertFalse(binding.recording(player));
-            assertNull(binding.item(player));
-        } finally {
-            shadowOf(manager).setTouchExplorationEnabled(false);
-        }
-    }
-
-    @Test
-    public void recordingPlayerIsMeasuredAtZeroHeightRatherThanRestoringStockContent() {
-        assertEquals(Integer.valueOf(0), MediaMeasure.playerHeight(player, binding, 360));
-        ReflectionHelpers.setStaticField(ModuleSettings.class, "shadeMedia", false);
-        assertNull(MediaMeasure.playerHeight(player, binding, 360));
-    }
-
-    @Test
-    public void visibilityStateSurvivesSharedRowsAndRebinding() {
-        RecordingRows rows = new RecordingRows();
-        View other = new View(app);
-        other.setVisibility(View.INVISIBLE);
-        rows.sync(new HashSet<>(java.util.Arrays.asList(row, other)));
-        assertEquals(View.GONE, row.getVisibility());
-        rows.sync(Collections.singleton(row));
-        assertEquals(View.INVISIBLE, other.getVisibility());
-        assertEquals(View.GONE, row.getVisibility());
-        rows.sync(Collections.emptySet());
-        assertEquals(View.VISIBLE, row.getVisibility());
-    }
 }

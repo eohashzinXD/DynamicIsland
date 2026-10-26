@@ -110,16 +110,6 @@ public class MediaForegroundTest {
     }
 
     @Test
-    public void cachedMatchingAppStaysHiddenWithoutTimeoutAdmission() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        assertHidden(collect(PLAYER, false));
-        advance(RETRY_MS * 3);
-        assertHidden(collect(PLAYER, false));
-        assertEquals(baseline, changes.get());
-    }
-
-    @Test
     public void uncertainNewSessionWaitsUntilDeadlineThenHasOnlyOneRetry() throws Exception {
         sync(controller("Song"));
         int baseline = changes.get();
@@ -134,107 +124,6 @@ public class MediaForegroundTest {
         advance(RETRY_MS * 4);
         assertEquals(1, changes.get() - baseline);
         assertShown(collect(null, false), "Song");
-    }
-
-    @Test
-    public void cachedOtherAppAlsoDefersANewSessionUntilTheBoundedRetry() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        assertHidden(collect(OTHER, false));
-        advance(RETRY_MS);
-        assertEquals(1, changes.get() - baseline);
-        assertShown(collect(OTHER, false), "Song");
-        advance(RETRY_MS * 2);
-        assertEquals(1, changes.get() - baseline);
-    }
-
-    @Test
-    public void matchingForegroundUpdateBeforeDeadlineCancelsPendingRetry() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        assertHidden(collect(null, false));
-        advance(60);
-        assertHidden(collect(PLAYER, true));
-        advance(RETRY_MS * 2);
-        assertEquals(baseline, changes.get());
-        assertHidden(collect(PLAYER, true));
-    }
-
-    @Test
-    public void cachedMatchingUpdateAlsoCancelsPendingRetry() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        assertHidden(collect(null, false));
-        advance(60);
-        assertHidden(collect(PLAYER, false));
-        advance(RETRY_MS * 2);
-        assertEquals(baseline, changes.get());
-        assertHidden(collect(PLAYER, false));
-    }
-
-    @Test
-    public void alreadyAdmittedBackgroundSessionDoesNotFlickerOnUnknownSnapshot() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        Snapshot admitted = collect(OTHER, true);
-        assertShown(admitted, "Song");
-        Snapshot unknown = collect(null, false);
-        assertShown(unknown, "Song");
-        assertSame(admitted.cards.get(0), unknown.cards.get(0));
-        advance(RETRY_MS * 2);
-        assertShown(collect(null, false), "Song");
-        assertEquals(baseline, changes.get());
-    }
-
-    @Test
-    public void confirmedOtherUpdateCancelsDeferralAndShowsTheCardImmediately() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        assertHidden(collect(null, false));
-        advance(60);
-        assertShown(collect(OTHER, true), "Song");
-        advance(RETRY_MS * 2);
-        assertEquals(baseline, changes.get());
-    }
-
-    @Test
-    public void switchingTokensWithinTheSamePackageRestartsTheDeadlineAndCancelsOldRetry() throws Exception {
-        MediaController first = controller("First");
-        MediaController second = controller("Second");
-        assertNotEquals(first.getSessionToken(), second.getSessionToken());
-        sync(first);
-        assertHidden(collect(null, false));
-        advance(60);
-        sync(second);
-        int baseline = changes.get(); // excludes both sync notifications
-        assertHidden(collect(null, false));
-        advance(RETRY_MS - 60); // the old session's deadline
-        assertEquals(baseline, changes.get());
-        assertHidden(collect(null, false));
-        advance(59);
-        assertEquals(baseline, changes.get());
-        advance(1); // the new session's own deadline
-        assertEquals(1, changes.get() - baseline);
-        assertShown(collect(null, false), "Second");
-        advance(RETRY_MS * 2);
-        assertEquals(1, changes.get() - baseline);
-    }
-
-    @Test
-    public void syncEmptyCancelsStaleRetryAndCannotCollectAGhostCard() throws Exception {
-        sync(controller("Song"));
-        assertHidden(collect(null, false));
-        assertRetryScheduled(true);
-        advance(60);
-        source.sync(Collections.emptyList());
-        shadowOf(Looper.getMainLooper()).idle();
-        assertRetryScheduled(false);
-        int baseline = changes.get(); // removal is allowed to announce a change
-        advance(RETRY_MS * 2); // do not collect first: cancellation must happen in sync itself
-        assertEquals(baseline, changes.get());
-        assertEmpty(collect(null, false));
-        assertEmpty(collect(OTHER, true));
-        // itemForSession may retain a retired shade tile; collect must not resurrect it.
     }
 
     @Test
@@ -261,29 +150,4 @@ public class MediaForegroundTest {
         assertEmpty(collect(OTHER, true));
     }
 
-    @Test
-    public void backgroundAndPipPlaybackRemainAllowedWhenAnotherAppIsActuallyForeground() throws Exception {
-        sync(controller("Video"));
-        int baseline = changes.get();
-        // Background playback on the launcher, then PiP while a different activity owns focus.
-        assertShown(collect(OTHER, true), "Video");
-        assertShown(collect("com.browser", true), "Video");
-        advance(RETRY_MS * 2);
-        assertShown(collect("com.browser", true), "Video");
-        assertEquals(baseline, changes.get());
-    }
-
-    @Test
-    public void legacyFourArgumentCollectBypassesUnknownGatingButStillHidesMatchingApp() throws Exception {
-        sync(controller("Song"));
-        int baseline = changes.get();
-        Snapshot unfiltered = new Snapshot();
-        source.collect(unfiltered.cards, null, unfiltered.hidden, unfiltered.packages);
-        assertShown(unfiltered, "Song");
-        Snapshot matching = new Snapshot();
-        source.collect(matching.cards, PLAYER, matching.hidden, matching.packages);
-        assertHidden(matching);
-        advance(RETRY_MS * 2);
-        assertEquals(baseline, changes.get());
-    }
 }

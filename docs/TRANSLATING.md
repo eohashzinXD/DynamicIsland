@@ -44,4 +44,4 @@ The check reports missing, empty, unknown and duplicate keys and incompatible fo
 
 [`gradle/localization.gradle`](../gradle/localization.gradle) reads registered Android resource files and generates UTF-8 JVM catalogs and stage-label JSON. Settings use normal Android resource selection; the module inside SystemUI reads the generated catalogs through its own classloader. New language files therefore do not require resource-context reflection inside SystemUI.
 
-The localization tests compare Android strings with the generated catalogs, exercise format arguments and English fallback, protect custom rule labels, and render settings pages in the new locales. Build screenshots are under `app/build/render/` and are review aids, not real-device screenshots.
+The localization tests compare Android strings with the generated catalogs, exercise format arguments and English fallback, and protect custom rule labels. To review settings in all six languages, run `./gradlew testReleaseUnitTest -Prender --tests '*SettingsCaptureTest' --tests '*SettingsRenderTest'`. Build screenshots are under `app/build/render/` and are review aids, not real-device screenshots.

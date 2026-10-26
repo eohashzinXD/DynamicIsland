@@ -141,6 +141,8 @@ JDK 17 veya üzeri ve Android SDK 36 gerekir.
 
 ```bash
 ./gradlew assembleRelease
+./gradlew testReleaseUnitTest # davranış ve başsız çizim testleri
+./gradlew testReleaseUnitTest -Prender # isteğe bağlı: görsel inceleme için PNG üretir
 ```
 
 İmzasız APK `app/build/outputs/apk/release/` dizinindedir. Dağıtmadan önce kendi Android imzalama anahtarınızla imzalayın. Özel anahtarları depoya eklemeyin.

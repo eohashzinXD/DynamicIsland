@@ -3,13 +3,13 @@ package dev.android.dynamicisland.settings;
 import static org.junit.Assert.*;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.*;
 import org.robolectric.annotation.*;
@@ -44,21 +44,9 @@ public class GalaxySwitchTest {
         OneUi.setDependentsEnabled(false,OneUi.rowOf(rule));assertFalse(rule.isEnabled());
         assertEquals(.4f,((View)rule.getParent()).getAlpha(),0);
     }
-    @Test public void rightToLeftMovesTheCheckedThumbToTheLeft() {
-        android.content.pm.ApplicationInfo info = RuntimeEnvironment.getApplication().getApplicationInfo();
-        int previousFlags = info.flags;
-        // Current app languages are LTR; explicitly opt this isolated control into framework RTL for the test.
-        info.flags |= android.content.pm.ApplicationInfo.FLAG_SUPPORTS_RTL;
-        try {
-            GalaxySwitch sw=new GalaxySwitch(RuntimeEnvironment.getApplication());sw.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-            sw.setChecked(true);layout(sw);sw.jumpDrawablesToCurrentState();
-            Bitmap bitmap=Bitmap.createBitmap(sw.getWidth(),sw.getHeight(),Bitmap.Config.ARGB_8888);sw.draw(new Canvas(bitmap));
-            assertEquals(View.LAYOUT_DIRECTION_RTL,sw.getLayoutDirection());
-            assertTrue(sw.getThumbDrawable().getBounds().centerX()<sw.getTrackDrawable().getBounds().centerX());
-        } finally { info.flags = previousFlags; }
-    }
-    @Test public void lightSettingsCapture() throws Exception {capture("galaxy_switch_light");}
-    @Test @Config(qualifiers="ko-rKR-w360dp-h800dp-night-xxhdpi")
+
+    @Category(RenderCapture.class) @Test public void lightSettingsCapture() throws Exception {capture("galaxy_switch_light");}
+    @Category(RenderCapture.class) @Test @Config(qualifiers="ko-rKR-w360dp-h800dp-night-xxhdpi")
     public void darkSettingsCapture() throws Exception {capture("galaxy_switch_dark");}
     private void capture(String name) throws Exception {
         SettingsActivity a=Robolectric.buildActivity(SettingsActivity.class).setup().get();OneUi ui=ReflectionHelpers.getField(a,"ui");

@@ -29,9 +29,13 @@ android {
                     systemProperty 'robolectric.offline', 'true'
                     systemProperty 'robolectric.dependency.dir', project.property('robolectricDir')
                 }
-                // -Pfilm writes every frame of MotionFilmTest to app/build/film
-                if (project.hasProperty('film')) {
-                    systemProperty 'film', 'true'
+                // Visual review captures are opt-in; pixel/layout regressions still run normally.
+                if (project.hasProperty('render')) {
+                    systemProperty 'render', 'true'
+                } else {
+                    useJUnit {
+                        excludeCategories 'dev.android.dynamicisland.testutil.RenderCapture'
+                    }
                 }
             }
             returnDefaultValues = true

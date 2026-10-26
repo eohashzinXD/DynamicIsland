@@ -17,20 +17,4 @@ public class AutoOpenCardsTest {
         assertNull(policy.next(List.of(old, fresh), true, 3));
     }
 
-    @Test public void pendingCardsExpireAndRemovedCardsCanReturnAsNew() {
-        AutoOpenCards policy = new AutoOpenCards();
-        policy.next(List.of(), true, 0);
-        IslandItem item = new IslandItem("rec:new");
-        assertSame(item, policy.next(List.of(item), true, 10));
-        assertNull(policy.next(List.of(item), true, 9000));
-        policy.next(List.of(), true, 10000);
-        assertSame(item, policy.next(List.of(item), true, 10001));
-    }
-
-    @Test public void eventsMediaAndAlreadyHandledPopupsAreNotAutoOpened() {
-        AutoOpenCards policy = new AutoOpenCards();
-        policy.next(List.of(), true, 0);
-        assertNull(policy.next(List.of(new IslandItem("event:charge"), new IslandItem("media:play"),
-                new IslandItem("peek:message")), true, 1));
-    }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the README pictures in docs/screenshots from the test renders.
 
-Run `./gradlew testReleaseUnitTest` first: ScreenshotsTest writes the island on a mock phone to app/build/screenshots and
+Run `./gradlew testReleaseUnitTest -Prender` first: ScreenshotsTest writes the island on a mock phone to app/build/screenshots and
 SettingsRender*Test the settings pages to app/build/render. This script crops them to the top of the phone, fades the cut
 edge out, and puts the settings pages into the same phone frame. Needs Pillow.
 """

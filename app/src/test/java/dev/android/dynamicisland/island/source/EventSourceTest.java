@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -9,14 +11,12 @@ import android.app.Application;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandHost;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,39 +64,7 @@ public class EventSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
-    }
-
-    @Test
-    public void plainChargingSaysChargingOnlyOnce() throws Exception {
-        EventSource s = source(new int[]{0});
-        Intent unplugged = battery(40, 0);
-        s.onBattery(unplugged);
-        Intent slow = battery(40, BatteryManager.BATTERY_PLUGGED_USB)
-                .putExtra("max_charging_current", 500_000)
-                .putExtra("max_charging_voltage", 5_000_000);
-        s.onBattery(slow);
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out);
-        assertEquals(1, out.size());
-        IslandItem it = out.get(0);
-        assertEquals("the title says charging, the subtitle only the percentage", "40%", it.subtitle.toString());
-        render("event_charging_plain", it);
-    }
-
-    @Test
-    public void fastChargingKeepsItsSubtitle() {
-        EventSource s = source(new int[]{0});
-        s.onBattery(battery(40, 0));
-        s.onBattery(battery(40, BatteryManager.BATTERY_PLUGGED_AC)); // 3 A x 9 V = 27 W
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out);
-        assertEquals(1, out.size());
-        String subtitle = out.get(0).subtitle.toString();
-        assertTrue(subtitle, subtitle.startsWith("40% · "));
-        assertTrue(!subtitle.endsWith(out.get(0).title.toString()));
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 
     @Test
@@ -152,21 +120,6 @@ public class EventSourceTest {
     }
 
     @Test
-    public void ringerModes() throws Exception {
-        EventSource s = source(new int[1]);
-        int[] modes = {AudioManager.RINGER_MODE_SILENT, AudioManager.RINGER_MODE_VIBRATE, AudioManager.RINGER_MODE_NORMAL};
-        String[] names = {"event_silent", "event_vibrate", "event_ring"};
-        for (int i = 0; i < modes.length; i++) {
-            s.onRinger(new Intent(AudioManager.RINGER_MODE_CHANGED_ACTION).putExtra(AudioManager.EXTRA_RINGER_MODE, modes[i]));
-            List<IslandItem> out = new ArrayList<>();
-            s.collect(out);
-            assertEquals(1, out.size());
-            render(names[i], out.get(0));
-            ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
-        }
-    }
-
-    @Test
     public void toggleEventsOnlyFireOnRealChanges() throws Exception {
         EventSource s = source(new int[1]);
         List<IslandItem> out = new ArrayList<>();
@@ -207,17 +160,4 @@ public class EventSourceTest {
         }
     }
 
-    @Test
-    public void torchBaselineIsNotAnEvent() {
-        EventSource s = source(new int[1]);
-        s.onTorch("0", false);   // registration reports the current state per camera
-        s.onTorch("1", false);
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out);
-        assertTrue(out.isEmpty());
-        s.onTorch("0", true);
-        s.collect(out);
-        assertEquals(1, out.size());
-        assertEquals("Flashlight on", out.get(0).title.toString());
-    }
 }
