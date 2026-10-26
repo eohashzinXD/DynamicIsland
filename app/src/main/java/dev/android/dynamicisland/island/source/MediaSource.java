@@ -40,6 +40,18 @@ public final class MediaSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    private final MediaForegroundGate foregroundGate = new MediaForegroundGate();
+    private MediaSession.Token foregroundRetryToken;
+    private final Runnable foregroundRetry = new Runnable() {
+        @Override
+        public void run() {
+            MediaSession.Token expected = foregroundRetryToken;
+            foregroundRetryToken = null;
+            if (expected != null && foregroundGate.owns(expected) && sessions.containsKey(expected)) {
+                onChange.run(); // gather again with fresh task information, never replay an old card
+            }
+        }
+    };
     /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
     private final Runnable tick = new Runnable() {
         @Override
@@ -127,6 +139,10 @@ public final class MediaSource {
         retiredRecordings.keySet().removeAll(next.keySet());
         sessions.clear();
         sessions.putAll(next);
+        if (!sessions.containsKey(foregroundGate.token())) {
+            cancelForegroundRetry();
+            foregroundGate.clear();
+        }
         forgetGonePlayers();
         onChange.run();
     }
@@ -141,27 +157,45 @@ public final class MediaSource {
         assets.retainActionIconsOf(live);
     }
 
-    /** Adds the card of the session worth showing, or notes it in {@code hiddenByForeground} when its app is on screen. */
+    /** Existing callers already supply their foreground decision; null means no filtering. */
     public void collect(List<IslandItem> out, String foreground, Set<String> hiddenByForeground, Collection<String> packages) {
+        collect(out, foreground, true, hiddenByForeground, packages);
+    }
+
+    /** A cached/unknown foreground is rechecked before a newly selected session is admitted. */
+    public void collect(List<IslandItem> out, String foreground, boolean confirmedForeground,
+            Set<String> hiddenByForeground, Collection<String> packages) {
+        cancelForegroundRetry();
         long now = SystemClock.uptimeMillis();
         Session shown = pickSession(now);
         if (shown == null) {
+            foregroundGate.clear();
             return;
         }
         if (!shown.isPlaying()) {
-            // come back when the paused card is due to leave
             long remaining = ModuleSettings.pausedTimeoutMs() - (now - shown.lastActive);
             main.removeCallbacks(tick);
             main.postDelayed(tick, Math.max(50L, remaining + 50));
         }
         String pkg = shown.controller.getPackageName();
+        MediaSession.Token token = shown.controller.getSessionToken();
         packages.add(pkg);
         IslandItem card = shown.card();
-        if (pkg.equals(foreground)) {
+        if (foregroundGate.shouldHide(token, pkg, foreground, confirmedForeground, now)) {
             hiddenByForeground.add(card.key);
+            long deadline = foregroundGate.retryAt();
+            if (deadline > now) {
+                foregroundRetryToken = token;
+                main.postDelayed(foregroundRetry, deadline - now);
+            }
         } else {
             out.add(card);
         }
+    }
+
+    private void cancelForegroundRetry() {
+        main.removeCallbacks(foregroundRetry);
+        foregroundRetryToken = null;
     }
 
     /** The most recently active playing session; failing that the most recent one paused within the timeout. */
@@ -402,6 +436,10 @@ public final class MediaSource {
         @Override
         public void onSessionDestroyed() {
             if (sessions.remove(controller.getSessionToken()) != null) {
+                if (foregroundGate.owns(controller.getSessionToken())) {
+                    cancelForegroundRetry();
+                    foregroundGate.clear();
+                }
                 retire();
             }
             release();

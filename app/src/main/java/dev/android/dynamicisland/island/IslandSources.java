@@ -45,6 +45,7 @@ final class IslandSources {
     private final Handler main;
     private final Runnable onChange;
     final OaSource oa;
+    private final ForegroundApp foregroundApp;
     final MediaSource media;
     final CastSource cast;
     final EventSource events;
@@ -62,6 +63,7 @@ final class IslandSources {
         this.main = main;
         this.onChange = onChange;
         oa = new OaSource(ctx, classLoader);
+        foregroundApp = new ForegroundApp(ctx, oa::foregroundPackage);
         media = new MediaSource(ctx, main, onChange);
         media.setRecordingFilter(oa::isVoiceRecording);
         cast = new CastSource(ctx);
@@ -96,7 +98,7 @@ final class IslandSources {
         oa.onChanged = onChange;
     }
 
-    /** Package in the foreground as the live-notification source sees it, or null. */
+    /** Cheap vendor-cache query for ordinary banner scans; gather resolves the actual task once per pass. */
     String foregroundPackage() {
         return oa.foregroundPackage();
     }
@@ -104,18 +106,17 @@ final class IslandSources {
     Gathered gather() {
         Gathered out = new Gathered();
         List<IslandItem> items = out.items;
-        String fg = null;
+        ForegroundApp.State state = foregroundApp.read();
+        final String foreground = state.packageName;
         try {
-            oa.collect(items, out.hiddenByForeground, out.packages);
-            fg = oa.foregroundPackage();
+            oa.collect(items, out.hiddenByForeground, out.packages, foreground);
         } catch (Throwable t) {
             XLog.once("collect live notifications", t);
         }
         if (!ModuleSettings.progressNotifications()) {
             items.removeIf(item -> item.transfer);
         }
-        final String foreground = fg;
-        guarded("media", () -> media.collect(items, foreground, out.hiddenByForeground, out.packages));
+        guarded("media", () -> media.collect(items, foreground, state.confirmed, out.hiddenByForeground, out.packages));
         guarded("cast", () -> cast.collect(items));
         guarded("recorder notification", () -> recorder.collect(items));
         guarded("events", () -> events.collect(items));

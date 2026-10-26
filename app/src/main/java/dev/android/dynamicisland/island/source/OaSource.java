@@ -78,10 +78,14 @@ public final class OaSource {
      * added to {@code packages}; keys of cards whose app is on screen go to {@code hiddenByForeground}.
      */
     public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages) {
+        collect(out, hiddenByForeground, packages, foregroundPackage());
+    }
+
+    /** Shares the same foreground snapshot as the media and ordinary-notification sources. */
+    public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages, String foreground) {
         if (!reader.available()) {
             return;
         }
-        String foreground = foregroundPackage();
         Set<String> pip = reader.pipPackages();
         int order = 0;
         for (Object data : reader.activities()) {
