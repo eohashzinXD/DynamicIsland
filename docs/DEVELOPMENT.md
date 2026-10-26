@@ -27,6 +27,19 @@ settings/          preferences, the settings activity (One UI style hub) and the
 
 `island/detect` has no Android service or view dependencies.
 
+### System typography
+
+`Fonts` resolves Samsung's device-provided `sec` family for canvas text. `Typeface.DEFAULT`
+can remain Roboto even when native One UI views use `sec`; no font files are bundled.
+Android falls back to its default family when `sec` is unavailable. Samsung flip-font
+selection still takes priority, preserving its regular/bold behaviour.
+
+The refresh key includes the resolved family, flip-font mode and native regular/bold
+handles. A live font change remeasures compact content and open card geometry without
+changing which popup cards are open. Diagnostics reports the selected source as
+`island font`. See Samsung's [Typeface family and flip-font handling](https://github.com/488315/samsung_framework/blob/30cd25b68f67be792ab78fb46fb9f63af0964522/framework/sources/android/graphics/Typeface.java#L536)
+and the native [media capsule font family](https://github.com/488315/samsung_framework/blob/30cd25b68f67be792ab78fb46fb9f63af0964522/SystemUI-Jadx/resources/res/layout/sec_media_capsule.xml).
+
 ## Runtime behaviour
 
 - The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread every few seconds (`ModuleSettings`); every getter falls back to its default when the file is unreadable.

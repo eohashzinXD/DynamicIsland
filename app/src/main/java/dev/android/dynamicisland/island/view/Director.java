@@ -197,6 +197,21 @@ final class Director {
         scene.bubbleIn = Layer.shown(new BubbleContent(view, scene.secondary));
     }
 
+    /** Remeasure with the new font while preserving which cards are open and their animation state. */
+    void refreshFontLayouts() {
+        if (scene.mode == Mode.COMPACT && scene.primary != null) refreshMain();
+        if (scene.secondary != null && scene.bubbleIn != null) refreshBubble();
+        if (scene.mode == Mode.EXPANDED) {
+            List<IslandItem> opened = new ArrayList<>();
+            for (Card card : scene.cards) if (!card.leaving) opened.add(card.item);
+            if (!opened.isEmpty()) {
+                layoutCards(opened);
+                host.onWindowHeightNeeded(expandedWindowHeight());
+            }
+        }
+        view.scheduleFrame();
+    }
+
     private void updateBubble(IslandItem oldSecondary, IslandItem secondary) {
         long t = IslandView.now();
         if (secondary == null) {

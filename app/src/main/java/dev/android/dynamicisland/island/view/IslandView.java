@@ -26,7 +26,6 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.SliderBody;
-import dev.android.dynamicisland.island.view.card.RemoteBody;
 import dev.android.dynamicisland.island.view.media.MediaFx;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
@@ -896,16 +895,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             return;
         }
         shadeCards.forget();
-        // text in the open cards was laid out with the old font: lay it out again
-        for (Card c : scene.cards) {
-            if (c.body instanceof RemoteBody) {
-                continue; // an app's own view: it measures its text itself
-            }
-            try {
-                c.body = bodies.create(c.item, c.body.w, false);
-            } catch (Throwable t) {
-                XLog.once("IslandView.relayoutFonts", t);
-            }
+        try {
+            director.refreshFontLayouts();
+        } catch (Throwable t) {
+            XLog.once("IslandView.relayoutFonts", t);
         }
     }
 
