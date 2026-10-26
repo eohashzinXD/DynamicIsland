@@ -284,7 +284,7 @@
     <string name="auto_open_cards_desc">新しいアクティビティを一時表示します。更新では再表示しません。</string>
     <string name="group_recovery">トラブルシューティング</string>
     <string name="experimental_recovery">通知の互換性回復・実験機能</string>
-    <string name="experimental_recovery_desc">進捗・ライブ活動・画面録画・共有・キャストが表示されない場合だけお試しください。検出範囲を広げるため、重複や誤分類が発生する場合があります。初期設定ではオフです。</string>
+    <string name="experimental_recovery_desc">通知やアクティビティが表示されない場合のみ有効にしてください。使用中のアプリやグループ要約の通知、標準バナーの処理をOne UI 8の代替方式に切り替え、検出範囲を広げます。使用中のアプリの通知を除外する設定より優先されます。初期設定はオフです。</string>
     <string name="hide_battery_icon">バッテリーアイコンを非表示</string>
     <string name="hide_battery_icon_desc">充電・残量低下カードのタイトル・パーセント・バーは残します。初期設定ではオンです。</string>
     <string name="accent_page">色</string>

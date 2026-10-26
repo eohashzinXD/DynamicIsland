@@ -293,7 +293,7 @@
     <string name="auto_open_cards_desc">Briefly show new activity cards. Updates do not reopen them.</string>
     <string name="group_recovery">Troubleshooting</string>
     <string name="experimental_recovery">Experimental notification recovery</string>
-    <string name="experimental_recovery_desc">Enable only when progress, live activity, screen recording, sharing or casting is missing. Tries broader detection; may produce duplicate or misclassified cards. Off by default.</string>
+    <string name="experimental_recovery_desc">Enable only when notifications or activities are missing. Uses alternate One UI 8 notification handling, including notifications from the open app and group summaries, and broader activity detection. Overrides the open-app notification filter. Off by default.</string>
     <string name="hide_battery_icon">Hide battery pictogram</string>
     <string name="hide_battery_icon_desc">Keep the percentage, title and progress bar on charging and low battery cards. On by default.</string>
     <string name="accent_page">Colours</string>

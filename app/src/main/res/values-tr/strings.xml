@@ -284,7 +284,7 @@
     <string name="auto_open_cards_desc">Yeni etkinlikleri kısa süre gösterir. Güncellemeler tekrar açmaz.</string>
     <string name="group_recovery">Sorun giderme</string>
     <string name="experimental_recovery">Deneysel bildirim kurtarma</string>
-    <string name="experimental_recovery_desc">İlerleme, canlı etkinlik, ekran kaydı, paylaşım veya yayın görünmüyorsa açın. Daha geniş algılama yinelenen veya yanlış kartlar oluşturabilir. Varsayılan olarak kapalıdır.</string>
+    <string name="experimental_recovery_desc">Yalnızca bildirimler veya etkinlikler eksikse açın. Açık uygulama ve grup özeti bildirimleri ile sistem başlıkları için alternatif One UI 8 işleyişini kullanır, etkinlik algılamasını genişletir. Açık uygulama bildirimlerini dışlama ayarını geçersiz kılar. Varsayılan olarak kapalıdır.</string>
     <string name="hide_battery_icon">Pil simgesini gizle</string>
     <string name="hide_battery_icon_desc">Şarj ve düşük pil kartlarında yüzde, başlık ve ilerleme çubuğu kalır. Varsayılan olarak açıktır.</string>
     <string name="accent_page">Renkler</string>

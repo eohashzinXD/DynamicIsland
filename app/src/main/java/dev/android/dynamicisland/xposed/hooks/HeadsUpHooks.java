@@ -3,6 +3,7 @@ package dev.android.dynamicisland.xposed.hooks;
 import android.service.notification.StatusBarNotification;
 import de.robv.android.xposed.XC_MethodHook;
 import dev.android.dynamicisland.island.IslandController;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.SafeHook;
 import dev.android.dynamicisland.xposed.XLog;
@@ -40,6 +41,7 @@ public final class HeadsUpHooks {
     }
 
     public static String dismissStock(String key) {
+        if (ModuleSettings.experimentalRecovery()) return dismissStockCompat(key);
         Object heads = manager;
         if (heads == null || key == null || !owned(key)) return "not currently owned by the island";
         try {
@@ -58,6 +60,99 @@ public final class HeadsUpHooks {
             XLog.once("HeadsUpHooks.dismissStock", t);
             return "failed: " + t.getClass().getSimpleName();
         }
+    }
+
+    // Alternate One UI 8 notification handling, selected only by the existing recovery option.
+    private static String dismissStockCompat(String key) {
+        Object heads = manager;
+        if (heads == null || key == null) {
+            return "no heads-up manager seen yet";
+        }
+        String arity;
+        if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
+            arity = "3";
+        } else if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
+            arity = "2";
+        } else {
+            return "no removeNotification with 2 or 3 parameters";
+        }
+        try {
+            remove(heads, arity, key);
+            if (!stillUpCompat(heads, key)) {
+                return "removeNotification(key, reason, immediately) called, and it went";
+            }
+            // It said it removed it and did not: try again now, and once more shortly after, because the
+            // entry may only be registered a moment after the banner is shown.
+            remove(heads, arity, key);
+            if (!stillUpCompat(heads, key)) {
+                return "removed on the second call";
+            }
+            retryCompatLater(heads, arity, key, 150L);
+            retryCompatLater(heads, arity, key, 500L);
+            return "still up after two calls; retrying";
+        } catch (Throwable t) {
+            XLog.once("HeadsUpHooks.dismissStock", t);
+            return "failed: " + t.getClass().getSimpleName();
+        }
+    }
+
+    private static void remove(Object heads, String arity, String key) {
+        if ("3".equals(arity)) {
+            Refl.call(heads, "removeNotification", key, "dynamic island", Boolean.TRUE);
+        } else {
+            Refl.call(heads, "removeNotification", key, Boolean.TRUE);
+        }
+    }
+
+    /** One more attempt after {@code delayMs}, on the main thread. */
+    private static void retryCompatLater(Object heads, String arity, String key, long delayMs) {
+        try {
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (!ModuleSettings.experimentalRecovery()) return;
+                try {
+                    if (stillUpCompat(heads, key)) {
+                        remove(heads, arity, key);
+                        if (stillUpCompat(heads, key)) {
+                            XLog.event("stock banner still up after retry: " + key);
+                        }
+                    }
+                } catch (Throwable t) {
+                    XLog.once("HeadsUpHooks.dismissStock retry", t);
+                }
+            }, delayMs);
+        } catch (Throwable ignored) {
+            // no main looper here: the two immediate attempts stand
+        }
+    }
+
+    /** True while the heads-up manager still holds this notification, by whichever accessor it has. */
+    private static boolean stillUpCompat(Object heads, String key) {
+        try {
+            Object entry = Refl.call(heads, "getHeadsUpEntry", key);
+            if (entry != null) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+            // no such accessor on this build: fall through to the lists
+        }
+        for (String name : new String[]{"getHeadsUpEntryList", "getAllEntries"}) {
+            try {
+                Object list = Refl.call(heads, name);
+                if (list instanceof Iterable) {
+                    for (Object entry : (Iterable<?>) list) {
+                        Object sbn = entry == null ? null : Refl.get(entry, "mSbn");
+                        if (sbn instanceof android.service.notification.StatusBarNotification
+                                && key.equals(((android.service.notification.StatusBarNotification) sbn).getKey())) {
+                            return true;
+                        }
+                    }
+                    return false; // the list exists and does not hold it
+                }
+            } catch (Throwable ignored) {
+                // try the next accessor
+            }
+        }
+        return false; // no way to tell: do not claim it is stuck
     }
 
     private static boolean remove(Object heads, String key) throws ReflectiveOperationException {

@@ -284,7 +284,7 @@
     <string name="auto_open_cards_desc">새 활동 카드를 잠시 엽니다. 내용 갱신으로 다시 열리지 않습니다.</string>
     <string name="group_recovery">문제 해결</string>
     <string name="experimental_recovery">알림 호환성 복구 · 실험</string>
-    <string name="experimental_recovery_desc">진행 상황·라이브 활동·화면 녹화·공유·캐스트가 나타나지 않을 때만 켜 보세요. 감지 범위를 넓혀 중복되거나 잘못 분류될 수 있어요. 기본값은 꺼짐이에요.</string>
+    <string name="experimental_recovery_desc">알림이나 활동이 누락될 때만 켜세요. 사용 중인 앱·묶음 요약 알림 수신과 기본 배너 처리를 One UI 8 대체 방식으로 전환하고 활동 감지 범위를 넓힙니다. 사용 중인 앱 알림 제외 설정보다 우선하며 기본값은 꺼짐입니다.</string>
     <string name="hide_battery_icon">배터리 아이콘 숨기기</string>
     <string name="hide_battery_icon_desc">충전·배터리 부족 카드의 아이콘만 숨기고 제목·퍼센트·진행 막대는 표시해요. 기본값은 켜짐이에요.</string>
     <string name="accent_page">색상</string>

@@ -94,7 +94,8 @@ final class HeadsUpTakeover {
                 return true; // already on the island: the banner is asked about again on updates
             }
             if (view.isSuppressedNow() || !PeekSource.eligible(sbn)
-                    || foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)) {
+                    || (!ModuleSettings.experimentalRecovery()
+                    && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 reject("banner of " + sbn.getPackageName() + ": " + (view.isSuppressedNow() ? "island hidden" : !PeekSource.eligible(sbn) ? "not an ordinary notification" : "its app is open"));
                 return false;
             }
@@ -143,7 +144,8 @@ final class HeadsUpTakeover {
                 continue;
             }
             if (alreadyHadCard(sbn) || !PeekSource.eligible(sbn) || !ModuleSettings.appAllowed(sbn.getPackageName())
-                    || foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)) {
+                    || (!ModuleSettings.experimentalRecovery()
+                    && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 continue;
             }
             if (newest == null || sbn.getPostTime() >= newest.getPostTime()) {
@@ -154,8 +156,8 @@ final class HeadsUpTakeover {
             return;
         }
         IslandView view = placement.view();
-        if (!view.canPeek()) {
-            reject("all notifications: the island is hidden or open");
+        if (ModuleSettings.experimentalRecovery() ? view.isSuppressedNow() : !view.canPeek()) {
+            reject("all notifications: the island is unavailable");
             return;
         }
         IslandItem item = sources.peeks.build(newest);

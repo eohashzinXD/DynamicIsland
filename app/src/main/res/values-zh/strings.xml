@@ -284,7 +284,7 @@
     <string name="auto_open_cards_desc">短暂展开新活动卡片，内容更新不会再次展开。</string>
     <string name="group_recovery">故障排除</string>
     <string name="experimental_recovery">通知兼容性恢复·实验功能</string>
-    <string name="experimental_recovery_desc">仅在进度、实时活动、录屏、共享或投屏缺失时启用。扩大检测范围可能产生重复卡片或分类错误。默认关闭。</string>
+    <string name="experimental_recovery_desc">仅在通知或活动缺失时启用。切换到 One UI 8 的替代通知处理方式，接收当前应用和分组摘要通知，调整系统横幅处理并扩大活动检测范围。优先于排除当前应用通知的设置。默认关闭。</string>
     <string name="hide_battery_icon">隐藏电池图标</string>
     <string name="hide_battery_icon_desc">充电及低电量卡片仍保留标题、百分比和进度条。默认开启。</string>
     <string name="accent_page">颜色</string>

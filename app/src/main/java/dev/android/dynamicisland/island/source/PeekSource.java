@@ -98,7 +98,14 @@ public final class PeekSource {
         if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0) {
             return false;
         }
-        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0 && !hasReadableContent(n)) return false;
+        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
+            if (ModuleSettings.experimentalRecovery()) {
+                // Match the alternate One UI 8 build's summary eligibility in recovery mode.
+                CharSequence title = n.extras.getCharSequence(Notification.EXTRA_TITLE);
+                CharSequence text = n.extras.getCharSequence(Notification.EXTRA_TEXT);
+                if ((title == null || title.length() == 0) && (text == null || text.length() == 0)) return false;
+            } else if (!hasReadableContent(n)) return false;
+        }
         String category = n.category;
         if (Notification.CATEGORY_CALL.equals(category) || Notification.CATEGORY_ALARM.equals(category)
                 || Notification.CATEGORY_NAVIGATION.equals(category) || Notification.CATEGORY_TRANSPORT.equals(category)
