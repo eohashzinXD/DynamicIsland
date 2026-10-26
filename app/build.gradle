@@ -10,8 +10,8 @@ android {
         applicationId 'dev.android.dynamicisland'
         minSdk 35
         targetSdk 36
-        versionCode 84
-        versionName '0.1.12'
+        versionCode 85
+        versionName '0.1.13-dev1'
     }
 
     buildTypes {
