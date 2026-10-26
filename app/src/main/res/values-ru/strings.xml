@@ -401,7 +401,7 @@
     <string name="ui_appearance">Оформление</string>
     <string name="ui_appearance_summary">Положение, размер, цвета и значки</string>
     <string name="ui_behavior">Поведение</string>
-    <string name="ui_behavior_summary">Анимация, вибрация и время показа</string>
+    <string name="ui_behavior_summary">Анимация, нагрузка, вибрация и время показа</string>
     <string name="ui_advanced">Дополнительно и устранение неполадок</string>
     <string name="ui_advanced_summary">Редактор правил, калибровка камеры, диагностика</string>
     <string name="ui_about">О приложении</string>
@@ -453,4 +453,9 @@
     <string name="ui_animation_sample">Предпросмотр раскрытия и сворачивания</string>
     <string name="rule_name_assistant">Ассистент</string>
     <string name="ui_no_apps_found">Нет подходящих приложений</string>
+    <string name="low_performance_mode">Режим низкой нагрузки</string>
+    <string name="low_performance_desc">Уменьшает размытие и анимацию для снижения нагрузки.</string>
+    <string name="low_performance_details_title">Какие эффекты упрощаются</string>
+    <string name="low_performance_static_wave">Статичная волна (низкая нагрузка)</string>
+    <string name="low_performance_details">Размытие содержимого заменяется плавным переходом прозрачности, а размытие фона карточки — непрозрачным чёрным фоном. Музыка использует статичный оттенок обложки и неподвижное изображение. Волна становится статичной, анализ звука останавливается. Значки показывают конечный кадр анимации; заряд батареи и другие реальные состояния обновляются. Постоянная анимация ограничена 30 кадрами/с, отклик на касания и раскрытие/сворачивание — 60 кадрами/с.\n\nЛичные настройки сохраняются и снова применяются при выключении режима. Уведомления, звонки, таймеры и управление музыкой работают. По умолчанию режим выключен.</string>
 </resources>

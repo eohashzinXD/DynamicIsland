@@ -90,6 +90,7 @@ Yerleşik kurallar teslimat, kargo, navigasyon, taksi, giyilebilir cihaz, pil, h
 
 ### Ayarlar uygulaması
 
+- **Düşük performans modu (varsayılan olarak kapalı):** içerik bulanıklığını yumuşak geçişle, arka plan bulanıklığını opak siyah kartla değiştirir. Albüm renkleri, kapak, dalga ve simgeler sabittir; ses analizi durur, gerçek pil durumu güncellenir. Sürekli hareket en fazla 30 fps, dokunma ve genişleme/daralma en fazla 60 fps olur. Kişisel ayarlar korunur ve mod kapanınca geri uygulanır. Bildirimler, aramalar, zamanlayıcılar ve müzik denetimleri çalışmayı sürdürür.
 - Altı grup: **Bildirimler ve etkinlikler**, **Uygulama bildirimleri**, **Görünüm**, **Davranış**, **Gelişmiş ayarlar ve sorun giderme**, **Uygulama bilgisi**. Çoğu değişiklik System UI yeniden başlatılmadan birkaç saniyede uygulanır.
 - **Konum ve boyut:** gerçek durum çubuğunda önizleme; otomatik veya özel genişlik, kaydırıcı, sayısal giriş ve tek adımlı ayar. Konum, boyut ve kamera kalibrasyonu ayrı sıfırlanır. Kamera deliği kalibrasyonu gelişmiş ayarlardadır.
 - **Uygulama seçimi:** ad veya paket arama, yalnızca seçilenleri gösterme, kaydetme ve iptal. Tüm uygulamalara seçilenler dışında izin verin ya da yalnızca seçilenlere izin verin.

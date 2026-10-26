@@ -31,6 +31,11 @@ final class Springs {
 
     private final Spring[] all = {width, height, visibility, suppress, press, pulse, offsetX, split, pillBlob, stackDx, stackDy, outlineFade, shadeGate};
 
+    boolean animating() {
+        for (Spring s : all) if (!s.isAtRest()) return true;
+        return false;
+    }
+
     /** Advances every spring by {@code dt}; true while any of them still moves. */
     boolean step(float dt) {
         boolean moving = false;

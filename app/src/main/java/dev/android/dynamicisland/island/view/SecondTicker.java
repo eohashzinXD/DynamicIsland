@@ -47,10 +47,7 @@ final class SecondTicker {
     void onTick() {
         try {
             posted = false;
-            if (scene.frozenByShade()) {
-                schedule();
-                return;
-            }
+            if (!needed() || scene.frozenByShade()) return;
             stack.placeBlurs();
             remeasureChronometer();
             view.invalidate();
@@ -75,7 +72,7 @@ final class SecondTicker {
     }
 
     private boolean needed() {
-        if (scene.mode == Mode.HIDDEN || !view.isAttachedToWindow()) {
+        if (scene.mode == Mode.HIDDEN || view.isFullyHidden() || !view.isAttachedToWindow() || !view.isShown() || view.getWindowVisibility() != android.view.View.VISIBLE) {
             return false;
         }
         if (scene.mainIn != null && scene.mainIn.content.item.trailing == IslandItem.Trailing.CHRONOMETER) {

@@ -141,6 +141,7 @@ final class StackPainter {
 
     /** The card's fill: the pill's black while it pours out, turning into the card colour (and glass) as it opens. */
     int fillColor(float opening, float blurFraction) {
+        if (ModuleSettings.lowPerformance()) return Colors.BLACK;
         boolean glass = scene.blur != null && scene.blur.available();
         float material = Easing.easeInOut(clamp01((opening - CARD_MATERIAL_FROM) / (1.0f - CARD_MATERIAL_FROM)));
         int fill = Colors.blend(Colors.BLACK, glass ? Colors.CARD_GLASS : Colors.CARD_SOLID, material);

@@ -401,7 +401,7 @@
     <string name="ui_appearance">Görünüm</string>
     <string name="ui_appearance_summary">Konum, boyut, renkler ve simgeler</string>
     <string name="ui_behavior">Davranış</string>
-    <string name="ui_behavior_summary">Animasyon, titreşim ve kart süreleri</string>
+    <string name="ui_behavior_summary">Animasyon, performans, titreşim ve kart süreleri</string>
     <string name="ui_advanced">Gelişmiş ayarlar ve sorun giderme</string>
     <string name="ui_advanced_summary">Kural düzenleyici, kamera kalibrasyonu ve tanılama</string>
     <string name="ui_about">Uygulama bilgisi</string>
@@ -453,4 +453,9 @@
     <string name="ui_animation_sample">Genişleme ve daralma önizlemesi</string>
     <string name="rule_name_assistant">Asistan</string>
     <string name="ui_no_apps_found">Eşleşen uygulama yok</string>
+    <string name="low_performance_mode">Düşük performans modu</string>
+    <string name="low_performance_desc">Bulanıklığı ve hareketli efektleri azaltarak çizim yükünü hafifletir.</string>
+    <string name="low_performance_details_title">Bu modda azaltılan efektler</string>
+    <string name="low_performance_static_wave">Sabit dalga (düşük performans modu)</string>
+    <string name="low_performance_details">İçerik bulanıklığı yumuşak bir geçişle, kart arka plan bulanıklığı opak siyah dolguyla değiştirilir. Müzik efektleri sabit albüm rengi ve hareketsiz kapak kullanır. Dalga sabitlenir ve ses analizi durur. Hareketli simgeler son karelerini gösterir; pil seviyesi gibi gerçek durumlar güncellenir. Sürekli hareket en fazla 30 fps, dokunma geri bildirimi ve genişleme/daralma en fazla 60 fps olur.\n\nKişisel ayarlarınız korunur ve mod kapatıldığında yeniden uygulanır. Bildirimler, aramalar, zamanlayıcılar ve müzik denetimleri çalışmayı sürdürür. Bu seçenek varsayılan olarak kapalıdır.</string>
 </resources>

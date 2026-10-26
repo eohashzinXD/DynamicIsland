@@ -31,6 +31,8 @@ public final class ModuleSettings {
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
     public static final String KEY_HAPTICS = "haptics";
+    /** Rendering overrides only; individual preferences are retained. */
+    public static final String KEY_LOW_PERFORMANCE = "low_performance_mode";
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
@@ -128,6 +130,7 @@ public final class ModuleSettings {
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
+    private static volatile boolean lowPerformance;
     private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
@@ -412,6 +415,7 @@ public final class ModuleSettings {
             eventRinger = source.getBoolean(KEY_EVENT_RINGER, true);
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
             haptics = source.getBoolean(KEY_HAPTICS, true);
+            lowPerformance = source.getBoolean(KEY_LOW_PERFORMANCE, false);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
@@ -491,11 +495,14 @@ public final class ModuleSettings {
     public static void configurePreview(SharedPreferences settings) {
         previewProcess = true;
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
+        lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
         cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
         accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
     }
+
+    public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
 
     public static boolean autoOpenCards() { return autoOpenCards; }
     public static boolean experimentalRecovery() { return experimentalRecovery; }
@@ -507,14 +514,14 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges(SharedPreferences source) {
-        String now = "haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
+        String now = "lowPerformance=" + lowPerformance + " haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
                 + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth

@@ -271,12 +271,23 @@ public final class SettingsActivity extends Activity {
 
     private void behaviorPage() {
         subPage(getString(R.string.ui_behavior));
+        boolean low = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        LinearLayout performance = ui.card(page);
+        Switch lowMode = toggle(performance, R.string.low_performance_mode, R.string.low_performance_desc, ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        OneUi.listen(lowMode, on -> refresh());
+        ui.linkRow(performance, getString(R.string.low_performance_details_title), getString(R.string.ui_details), () ->
+                new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
+                        .setPositiveButton(android.R.string.ok, null).show());
         LinearLayout motion = ui.card(page);
         ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
         toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
-        choice(motion, R.string.ui_wave_motion, new int[]{R.string.ui_wave_audio, R.string.ui_wave_demo},
-                flag(ModuleSettings.KEY_VISUALIZER, true) ? 0 : 1,
-                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_VISUALIZER, selected == 0).apply());
+        if (low) {
+            ui.actionRow(motion, getString(R.string.ui_wave_motion), getString(R.string.low_performance_static_wave), null);
+        } else {
+            choice(motion, R.string.ui_wave_motion, new int[]{R.string.ui_wave_audio, R.string.ui_wave_demo},
+                    flag(ModuleSettings.KEY_VISUALIZER, true) ? 0 : 1,
+                    selected -> prefs.edit().putBoolean(ModuleSettings.KEY_VISUALIZER, selected == 0).apply());
+        }
         ui.category(page, getString(R.string.ui_card_timing));
         LinearLayout timing = ui.card(page);
         Switch auto = toggle(timing, R.string.auto_open_cards, R.string.auto_open_cards_desc, ModuleSettings.KEY_AUTO_OPEN_CARDS, false);

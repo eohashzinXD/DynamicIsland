@@ -410,7 +410,7 @@
     <string name="ui_appearance">Appearance</string>
     <string name="ui_appearance_summary">Position, size, colours and icons</string>
     <string name="ui_behavior">Behavior</string>
-    <string name="ui_behavior_summary">Animation, haptics and card timing</string>
+    <string name="ui_behavior_summary">Animation, performance, haptics and card timing</string>
     <string name="ui_advanced">Advanced &amp; troubleshooting</string>
     <string name="ui_advanced_summary">Rule editor, camera calibration and diagnostics</string>
     <string name="ui_about">App info</string>
@@ -462,4 +462,9 @@
     <string name="ui_animation_sample">Expand and collapse preview</string>
     <string name="rule_name_assistant">Assistant</string>
     <string name="ui_no_apps_found">No matching apps</string>
+    <string name="low_performance_mode">Low-performance mode</string>
+    <string name="low_performance_desc">Reduce blur and animated effects to lighten rendering work.</string>
+    <string name="low_performance_details_title">Effects reduced in this mode</string>
+    <string name="low_performance_static_wave">Static waveform (low-performance mode)</string>
+    <string name="low_performance_details">Content blur is replaced by a crossfade. Card background blur becomes a solid black fill. Music effects use a static album-colour tint and still artwork. Waveforms become static and audio analysis stops. Animated icons use their settled frame while real state, including battery charge, stays current. Continuous animation is limited to 30 fps; touch feedback and expansion/collapse can use up to 60 fps.\n\nYour individual settings are kept and apply again when this mode is off. Notifications, calls, timers and music controls keep working. This option is off by default.</string>
 </resources>

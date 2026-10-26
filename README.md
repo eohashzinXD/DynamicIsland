@@ -137,6 +137,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ### Settings app
 
+- **Low-performance mode (off by default):** replaces content blur with a crossfade and background blur with an opaque black card; keeps static album colours and artwork, static waveforms without audio analysis, and settled icon frames with current battery state. Continuous motion is capped at 30 fps, touch feedback and expansion/collapse at 60 fps. Individual settings are preserved and restored when the mode is turned off; notifications, calls, timers and music controls keep working.
 - Six groups: **Notifications & activities**, **App notifications**, **Appearance**, **Behavior**, **Advanced & troubleshooting** and **App info**. English, Korean, Japanese, Simplified Chinese, Russian and Turkish; light and dark themes. Most changes apply within a few seconds without restarting System UI.
 - **Position and size:** live status-bar preview, automatic or custom widths, sliders, numeric input and one-step adjustment. Position, size and camera calibration reset separately. Camera cutout calibration is under **Advanced & troubleshooting**.
 - **Clear choices:** ordinary notification cards can be off, banner-only or include silent notifications. Foreground-service notifications are optional and off by default. App filters affect ordinary notification cards only; search by name or package, view selected apps and save or cancel changes.

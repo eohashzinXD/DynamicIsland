@@ -11,6 +11,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
  * Small pictograms for the transient event islands (battery, ringer, headphones). They are
@@ -67,6 +68,7 @@ public final class GlyphIcon extends Drawable {
 
     /** True while the animation still moves, so the island keeps its frame loop running. */
     public boolean animating() {
+        if (ModuleSettings.lowPerformance()) return false;
         LottiePlayer p = player(kind);
         if (p == null || frozen) {
             return false;
@@ -105,7 +107,7 @@ public final class GlyphIcon extends Drawable {
     }
 
     private float elapsedMillis(LottiePlayer p) {
-        if (frozen) {
+        if (frozen || ModuleSettings.lowPerformance()) {
             return p.durationMillis();
         }
         long now = SystemClock.uptimeMillis();

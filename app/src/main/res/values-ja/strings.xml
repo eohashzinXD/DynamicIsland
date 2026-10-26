@@ -401,7 +401,7 @@
     <string name="ui_appearance">外観</string>
     <string name="ui_appearance_summary">位置、サイズ、色、アイコン</string>
     <string name="ui_behavior">動作</string>
-    <string name="ui_behavior_summary">アニメーション、振動、カードの表示時間</string>
+    <string name="ui_behavior_summary">アニメーション、負荷、振動、カードの表示時間</string>
     <string name="ui_advanced">詳細設定とトラブル対処</string>
     <string name="ui_advanced_summary">ルール編集、カメラ補正、診断</string>
     <string name="ui_about">アプリ情報</string>
@@ -453,4 +453,9 @@
     <string name="ui_animation_sample">展開・折りたたみのプレビュー</string>
     <string name="rule_name_assistant">アシスタント</string>
     <string name="ui_no_apps_found">一致するアプリがありません</string>
+    <string name="low_performance_mode">低負荷モード</string>
+    <string name="low_performance_desc">ぼかしや動く効果を減らし、描画の負荷を軽くします。</string>
+    <string name="low_performance_details_title">このモードで減らす効果</string>
+    <string name="low_performance_static_wave">静止した波形（低負荷モード）</string>
+    <string name="low_performance_details">内容のぼかしをクロスフェードに、カードの背景ぼかしを不透明な黒に置き換えます。音楽の効果はアルバム色の静止した色合いと静止画になります。波形は静止し、音声解析は停止します。アイコンはアニメーション終了時の姿で表示し、バッテリー残量など実際の状態は更新します。継続する動きは最大 30fps、タッチと展開・折りたたみは最大 60fps に制限します。\n\n個別設定は保持され、このモードをオフにすると再適用されます。通知、通話、タイマー、音楽操作は利用できます。標準ではオフです。</string>
 </resources>

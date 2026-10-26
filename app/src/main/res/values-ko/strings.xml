@@ -401,7 +401,7 @@
     <string name="ui_appearance">모양</string>
     <string name="ui_appearance_summary">위치, 크기, 색상, 아이콘</string>
     <string name="ui_behavior">동작</string>
-    <string name="ui_behavior_summary">애니메이션, 진동, 카드 표시 시간</string>
+    <string name="ui_behavior_summary">애니메이션, 성능, 진동, 카드 표시 시간</string>
     <string name="ui_advanced">고급 및 문제 해결</string>
     <string name="ui_advanced_summary">규칙 편집, 카메라 보정, 진단</string>
     <string name="ui_about">앱 정보</string>
@@ -453,4 +453,9 @@
     <string name="ui_animation_sample">확장·축소 미리보기</string>
     <string name="rule_name_assistant">어시스턴트</string>
     <string name="ui_no_apps_found">검색 결과 없음</string>
+    <string name="low_performance_mode">저사양 모드</string>
+    <string name="low_performance_desc">블러와 움직이는 효과를 줄여 기기 부담을 낮춥니다.</string>
+    <string name="low_performance_details_title">줄어드는 효과 안내</string>
+    <string name="low_performance_static_wave">정적인 파형 (저사양 모드)</string>
+    <string name="low_performance_details">내부 요소의 블러는 부드러운 투명도 전환으로 대체합니다. 카드 배경 블러는 불투명한 검은 배경으로 바꿉니다. 음악 효과는 앨범 색상을 정적으로 표시하고 앨범 전환 효과를 멈춥니다. 파형은 정적으로 표시하며 오디오 분석을 중지합니다. 움직이는 아이콘은 완료된 모습으로 표시하되 배터리 잔량 등 실제 상태는 계속 반영합니다. 지속적인 움직임은 최대 30fps, 터치 반응과 확장·축소는 최대 60fps로 제한합니다.\n\n기존 개별 설정값은 보존하며 모드를 끄면 다시 적용합니다. 알림·통화·타이머·음악 조작은 유지됩니다. 기본값은 꺼짐입니다.</string>
 </resources>

@@ -11,6 +11,7 @@ import dev.android.dynamicisland.island.graphics.Spring;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.media.MediaFx;
 import java.util.Random;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
  * The little equaliser at the right of the pill while music plays. With live audio the bars follow the
@@ -18,6 +19,7 @@ import java.util.Random;
  */
 final class Waveform {
     static final int BARS = 4;
+    private static final float[] STATIC_LEVELS = {.3f, .65f, .45f, .25f};
     /** Audio band that drives each bar, left to right. */
     private static final int[] BAND_ORDER = {2, 0, 1, 3};
     private static final float MAX_HEIGHT_DP = 18.0f;
@@ -49,6 +51,7 @@ final class Waveform {
      * @return true while the display needs more frames
      */
     boolean step(float dt, IslandItem item, AudioLevels audio) {
+        if (ModuleSettings.lowPerformance()) return false;
         boolean live = item.playing && audio != null && audio.isLive();
         float k = 1.0f - ((float) Math.exp((-dt) / LEVEL_SMOOTHING_S));
         boolean moving = false;
@@ -96,8 +99,9 @@ final class Waveform {
         float maxH = m.dp(MAX_HEIGHT_DP);
         float minH = m.dp(MIN_HEIGHT_DP);
         float x = left;
-        for (Spring bar : bars) {
-            float h = ((maxH - minH) * clamp01(bar.value())) + minH;
+        for (int i = 0; i < BARS; i++) {
+            float value = ModuleSettings.lowPerformance() ? STATIC_LEVELS[i] : bars[i].value();
+            float h = ((maxH - minH) * clamp01(value)) + minH;
             scratch.set(x, midY - (h / 2.0f), m.waveBarW + x, midY + (h / 2.0f));
             c.drawRoundRect(scratch, m.waveBarW / 2.0f, m.waveBarW / 2.0f, paint);
             x += m.waveBarW + m.waveGap;

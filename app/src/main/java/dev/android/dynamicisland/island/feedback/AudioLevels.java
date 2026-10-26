@@ -57,7 +57,7 @@ public final class AudioLevels {
 
     /** Starts or stops capturing; capturing also requires the visualizer setting to be on. */
     public void setActive(boolean wantActive) {
-        final boolean active = wantActive && ModuleSettings.visualizer();
+        final boolean active = wantActive && ModuleSettings.visualizer() && !ModuleSettings.lowPerformance();
         if (active == wanted) {
             return;
         }

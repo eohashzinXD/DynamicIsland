@@ -130,6 +130,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             onNotificationsSnapshot(lastNotifications);
             requestRefresh();
             HideDuplicated.rebuild();
+            ShadeMediaPlayer.refreshVisiblePlayers();
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         }));
         ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
             placement.updateGeometry();

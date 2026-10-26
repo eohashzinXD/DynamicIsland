@@ -401,7 +401,7 @@
     <string name="ui_appearance">外观</string>
     <string name="ui_appearance_summary">位置、尺寸、颜色和图标</string>
     <string name="ui_behavior">行为</string>
-    <string name="ui_behavior_summary">动画、振动和卡片显示时间</string>
+    <string name="ui_behavior_summary">动画、性能、振动和卡片显示时间</string>
     <string name="ui_advanced">高级与故障排查</string>
     <string name="ui_advanced_summary">规则编辑、相机校准和诊断</string>
     <string name="ui_about">应用信息</string>
@@ -453,4 +453,9 @@
     <string name="ui_animation_sample">展开与收起预览</string>
     <string name="rule_name_assistant">助手</string>
     <string name="ui_no_apps_found">没有匹配的应用</string>
+    <string name="low_performance_mode">低性能模式</string>
+    <string name="low_performance_desc">减少模糊和动态效果，降低渲染负担。</string>
+    <string name="low_performance_details_title">此模式减少的效果</string>
+    <string name="low_performance_static_wave">静态波形（低性能模式）</string>
+    <string name="low_performance_details">内容模糊改为交叉淡化，卡片背景模糊改为不透明黑色。音乐效果保留静态专辑色调和静止封面。波形静止并停止音频分析。动态图标显示结束帧，同时继续反映电量等实际状态。持续动画最高 30fps，触摸反馈及展开/收起最高 60fps。\n\n保留原有单项设置，关闭此模式后恢复应用。通知、通话、计时器和音乐控制继续工作。此选项默认关闭。</string>
 </resources>

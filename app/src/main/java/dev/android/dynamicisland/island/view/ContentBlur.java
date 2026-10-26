@@ -7,6 +7,7 @@ import android.graphics.RenderNode;
 import android.graphics.Shader;
 import android.view.View;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.Arrays;
 
 /** GPU-only foreground blur. One instance per card/layer: sharing a recorded node would repeat the last card. */
@@ -41,7 +42,7 @@ final class ContentBlur {
 
     /** Record just the foreground at its existing coordinates; the caller's clip still bounds the result. */
     Canvas begin(Canvas target, RectF bounds, float amount, float radius) {
-        int level = step(amount);
+        int level = ModuleSettings.lowPerformance() ? 0 : step(amount);
         if (failed || level == 0 || !target.isHardwareAccelerated() || bounds.isEmpty()) {
             if (node != null) {
                 if (node.hasDisplayList()) node.discardDisplayList();
@@ -80,7 +81,7 @@ final class ContentBlur {
 
     /** RemoteViews already own a RenderNode; apply the same curve without blurring the card behind them. */
     void apply(View view, float amount, float radius) {
-        int level = failed ? 0 : step(amount);
+        int level = failed || ModuleSettings.lowPerformance() ? 0 : step(amount);
         if (effectView == view && viewStep == level && effectRadius == radius) return;
         try {
             view.setRenderEffect(effect(level, radius));

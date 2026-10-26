@@ -10,6 +10,7 @@ import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.view.BlurSink;
 import dev.android.dynamicisland.island.view.CardPainter;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -82,7 +83,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
 
     @Override
     public boolean available() {
-        return backend.available();
+        return !ModuleSettings.lowPerformance() && backend.available();
     }
 
     @Override
@@ -197,7 +198,7 @@ public final class BlurLayer extends FrameLayout implements BlurSink {
             setAlpha(alpha);
             clipCorner = Math.min(corner, Math.min(getWidth(), getHeight()) / 2f);
             backdrop.invalidateOutline();
-            if (backdropAlpha > 0.001f && backend.available()) {
+            if (backdropAlpha > 0.001f && available()) {
                 refreshBlur(corner);
                 if (blurApplied) {
                     backdrop.setAlpha(Math.min(1, backdropAlpha));

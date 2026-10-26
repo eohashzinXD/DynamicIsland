@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import dev.android.dynamicisland.island.graphics.Easing;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
+import dev.android.dynamicisland.island.graphics.FramePacer;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
@@ -158,6 +159,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final ShadeCards shadeCards;
     private final RectF pillRect = new RectF();
 
+    private final FramePacer framePacer = new FramePacer();
+    private boolean renderingPaused;
+    private long touchActiveUntil;
     private boolean frameScheduled;
     private static final int MAX_FAILED_FRAMES = 3;
     private int failedFrames;
@@ -219,10 +223,31 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     void scheduleFrame() {
-        if (!frameScheduled) {
+        if (!frameScheduled && !renderingPaused) {
             frameScheduled = true;
-            choreographer.postFrameCallback(this);
+            long delay = framePacer.delayMillis(ModuleSettings.lowPerformance(), interactiveMotion(), System.nanoTime());
+            choreographer.postFrameCallbackDelayed(this, delay);
         }
+    }
+
+    /** Keep direct manipulation and structural transitions responsive; ambient motion uses the smaller budget. */
+    boolean interactiveMotion() {
+        long t = now();
+        if (t < touchActiveUntil || springs.animating() || buttons.animating() || seekBody != null || sliderBody != null
+                || scene.mainOut != null || scene.bubbleOut != null
+                || scene.contentHandoff != null && !scene.contentHandoff.finished(t)) return true;
+        for (Card c : scene.cards) {
+            if (c.leaving || t < c.startAt || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
+        }
+        return false;
+    }
+
+    /** Wake an input-driven frame even if a slower ambient callback was already queued. */
+    private void touchFrame() {
+        touchActiveUntil = now() + 250;
+        choreographer.removeFrameCallback(this);
+        frameScheduled = false;
+        scheduleFrame();
     }
 
     // ---- seams for the tests in this package -----------------------------------------------------------------------
@@ -531,6 +556,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     public boolean needsAudio() {
+        if (ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
         if (scene.mode != Mode.COMPACT || scene.mainIn == null || scene.visibleAlpha() < 0.2f) {
             return false;
         }
@@ -555,6 +581,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     @Override
     public void doFrame(long frameTimeNanos) {
+        frameScheduled = false;
+        if (renderingPaused) return;
+        if (!framePacer.allow(ModuleSettings.lowPerformance(), interactiveMotion(), frameTimeNanos)) {
+            scheduleFrame();
+            return;
+        }
         try {
             step(frameTimeNanos);
             failedFrames = 0;
@@ -572,6 +604,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         if (scene.frozenByShade()) {
             lastFrameNanos = 0L;
+            ticker.cancel();
+            notifyHost();
             return;
         }
         float dt = lastFrameNanos == 0 ? DEFAULT_FRAME_DT : (frameTimeNanos - lastFrameNanos) / 1.0E9f;
@@ -601,6 +635,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         active |= hasContinuousMotion(dt);
         stackPainter.placeBlurs();
         remote.sync();
+        if (isFullyHidden()) ticker.cancel(); else scheduleTick();
         invalidate();
         notifyHost();
         if (active && !isFullyHidden() && !scene.frozenByShade()) {
@@ -642,7 +677,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         for (Card c : scene.cards) {
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
-                    || (scene.mode == Mode.EXPANDED && c.item.isMedia);
+                    || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
@@ -688,6 +723,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        renderingPaused = !isShown() || getWindowVisibility() != VISIBLE;
+        framePacer.reset();
         scheduleTick();
         scheduleFrame();
     }
@@ -699,6 +736,36 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         lastFrameNanos = 0L;
         ticker.cancel();
+        framePacer.reset();
+        renderingPaused = true;
+        notifyHost();
+    }
+
+    @Override protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        updateRenderingVisibility();
+    }
+
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        updateRenderingVisibility();
+    }
+
+    private void updateRenderingVisibility() {
+        // Visibility callbacks can arrive from the View constructor before our fields have been initialized.
+        if (ticker == null || !isAttachedToWindow()) return;
+        renderingPaused = !isShown() || getWindowVisibility() != VISIBLE;
+        lastFrameNanos = 0L;
+        framePacer.reset();
+        if (renderingPaused) {
+            choreographer.removeFrameCallback(this);
+            frameScheduled = false;
+            ticker.cancel();
+        } else {
+            scheduleTick();
+            scheduleFrame();
+        }
+        notifyHost();
     }
 
     // ---- drawing -------------------------------------------------------------------------------------------------
@@ -852,7 +919,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (item == null || !item.isMedia) {
             return false;
         }
-        return item.playing || mediaFx.animating(item);
+        return !ModuleSettings.lowPerformance() && (item.playing || mediaFx.animating(item));
     }
 
     boolean buttonAnimating() {
@@ -868,6 +935,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         try {
+            touchFrame();
             return touch.handle(e);
         } catch (Throwable t) {
             XLog.once("IslandView.onTouchEvent", t);

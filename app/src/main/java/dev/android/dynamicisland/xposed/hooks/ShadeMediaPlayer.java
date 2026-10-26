@@ -73,6 +73,11 @@ public final class ShadeMediaPlayer {
         return PLAYERS;
     }
 
+    /** Visual overrides must reach even a paused or otherwise static card. */
+    public static void refreshVisiblePlayers() {
+        for (View player : PLAYERS.keySet()) if (player.isAttachedToWindow() && player.isShown()) player.invalidate();
+    }
+
     /** Called on source/settings changes as well as bind: GONE rows cannot restore themselves by drawing. */
     public static void refreshRecordingRows() {
         Set<View> hidden = new HashSet<>();

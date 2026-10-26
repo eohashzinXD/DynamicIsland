@@ -10,6 +10,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewParent;
 import android.view.accessibility.AccessibilityManager;
 import dev.android.dynamicisland.island.IslandController;
+import dev.android.dynamicisland.island.graphics.FramePacer;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -32,6 +33,7 @@ final class MediaPlayerBinding {
     private final float slop;
     private final MediaRowBackground background = new MediaRowBackground();
     private Runnable refresh;
+    private final FramePacer framePacer = new FramePacer();
 
     /** Scale and vertical offset the card was drawn with, to map touches back into card coordinates. */
     private float scale = 1.0f;
@@ -104,6 +106,7 @@ final class MediaPlayerBinding {
 
     /** Draws the card scaled down to fit the player's height, centred horizontally and vertically. */
     void draw(View player, Canvas canvas, IslandItem item) {
+        framePacer.allow(false, false, System.nanoTime());
         float cardHeight = renderer.shadeCardHeight(item, player.getWidth());
         scale = Math.min(1.0f, player.getHeight() / Math.max(1.0f, cardHeight));
         if (scale <= 0.0f) {
@@ -130,11 +133,14 @@ final class MediaPlayerBinding {
      */
     private void scheduleRedraw(View player, IslandItem item) {
         if (refresh == null) {
-            refresh = player::invalidate;
+            refresh = () -> {
+                if (player.isAttachedToWindow() && player.isShown() && player.getWindowVisibility() == View.VISIBLE) player.invalidate();
+            };
         }
         player.removeCallbacks(refresh);
         if (renderer.shadeButtonAnimating() || renderer.shadeMediaAnimating(item)) {
-            player.postInvalidateOnAnimation();
+            long delay = framePacer.delayMillis(ModuleSettings.lowPerformance(), renderer.shadeButtonAnimating() || seeking, System.nanoTime());
+            player.postOnAnimationDelayed(refresh, delay);
         } else {
             player.postDelayed(refresh, IDLE_REDRAW_MS);
         }

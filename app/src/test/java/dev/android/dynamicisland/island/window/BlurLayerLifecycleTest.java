@@ -92,4 +92,21 @@ public class BlurLayerLifecycleTest {
         layer.beginFrame(); layer.endFrame();
         assertEquals(View.GONE, slot.getVisibility());
     }
+    @Test public void lowPerformanceClearsNativeBlurWithoutRemovingThePaintedCardAndCanRestoreIt() {
+        dev.android.dynamicisland.settings.ModuleSettings.ensureStarted();
+        Backend backend=new Backend();BlurLayer layer=new BlurLayer(RuntimeEnvironment.getApplication(),backend);
+        Object owner=new Object();RectF rect=new RectF(20,10,300,160);
+        layer.beginFrame();layer.place(owner,rect,30,1,1);layer.endFrame();assertEquals(1,backend.applied);
+        org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class,"lowPerformance",true);
+        try {
+            assertFalse(layer.available());
+            layer.beginFrame();layer.place(owner,rect,30,1,1);layer.endFrame();
+            FrameLayout slot=(FrameLayout)layer.getChildAt(0);
+            assertEquals(1,backend.cleared);assertEquals(View.GONE,slot.getChildAt(0).getVisibility());
+            assertEquals(View.VISIBLE,slot.getVisibility());assertEquals(View.VISIBLE,slot.getChildAt(1).getVisibility());
+        } finally {org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class,"lowPerformance",false);}
+        layer.beginFrame();layer.place(owner,rect,30,1,1);layer.endFrame();
+        assertTrue(layer.available());assertEquals(2,backend.applied);
+    }
+
 }
