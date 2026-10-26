@@ -258,6 +258,8 @@ public final class SettingsActivity extends Activity {
         subPage(getString(R.string.ui_appearance));
         LinearLayout design = ui.card(page);
         ui.linkRow(design, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
+        ui.linkRow(design, getString(R.string.glow_title), getString(R.string.glow_summary),
+                () -> open(() -> new AmbientGlowScreen(this, ui, prefs).open()));
         ui.linkRow(design, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
         choice(design, R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
                 ModuleSettings.readPillOutlineMode(prefs),

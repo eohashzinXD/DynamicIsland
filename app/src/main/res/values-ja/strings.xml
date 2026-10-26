@@ -463,4 +463,19 @@
     <string name="pill_outline_auto">自動</string>
     <string name="pill_outline_always">常に表示</string>
     <string name="pill_outline_none">なし</string>
+    <string name="glow_title">外側のグロー</string>
+    <string name="glow_summary">コンパクトなアイランドの外側に柔らかな光を表示します。</string>
+    <string name="glow_strength">グローの強さ</string>
+    <string name="glow_strength_format">グローの強さ · %d%%</string>
+    <string name="glow_album">音楽ではアルバムの色を使用</string>
+    <string name="glow_album_summary">音楽ではアルバムの色、それ以外では選択した色の方式を使います。</string>
+    <string name="glow_colour">標準のグロー色</string>
+    <string name="glow_champagne">シャンパン</string>
+    <string name="glow_pearl">パール</string>
+    <string name="glow_note">テーマ色は外観 → 色の設定に従います。方式を変えても個別のグロー色は保持します。音楽のアルバム色が有効な場合はそちらを優先し、本体と輪郭は独立しています。</string>
+    <string name="glow_low_mode">現在は低負荷モードによりグローが無効です。選択した設定は保持されます。</string>
+    <string name="glow_colour_source">色の選択方法</string>
+    <string name="glow_follow_theme">テーマの色に合わせる</string>
+    <string name="glow_individual">個別に色を選ぶ</string>
+    <string name="glow_theme_colour">テーマ色の設定</string>
 </resources>

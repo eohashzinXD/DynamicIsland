@@ -92,6 +92,13 @@ public final class ModuleSettings {
     public static final String KEY_ACCENT_CUSTOM = "accent_custom";
     public static final String KEY_ACCENT_COLOR = "accent_color";
     public static final int DEFAULT_ACCENT = 0xFF3E91FF;
+    public static final String KEY_AMBIENT_GLOW = "ambient_glow";
+    public static final String KEY_GLOW_STRENGTH = "ambient_glow_strength";
+    public static final String KEY_GLOW_COLOUR = "ambient_glow_colour";
+    public static final String KEY_GLOW_ALBUM = "ambient_glow_album";
+    public static final String KEY_GLOW_FOLLOW_THEME = "ambient_glow_follow_theme";
+    public static final int DEFAULT_GLOW_COLOUR = 0xFFE0A97D;
+    public static final int DEFAULT_GLOW_STRENGTH = 45;
     public static final String KEY_ALL_NOTIFICATIONS = "all_notifications_island";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
@@ -147,6 +154,11 @@ public final class ModuleSettings {
     private static volatile boolean compactEventIcons;
     private static volatile boolean accentCustom;
     private static volatile int accentColor = DEFAULT_ACCENT;
+    private static volatile boolean ambientGlow;
+    private static volatile boolean glowAlbum = true;
+    private static volatile boolean glowFollowTheme;
+    private static volatile int glowStrength = DEFAULT_GLOW_STRENGTH;
+    private static volatile int glowColour = DEFAULT_GLOW_COLOUR;
     private static volatile boolean progressNotifications = true;
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
@@ -486,6 +498,7 @@ public final class ModuleSettings {
             hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
             accentCustom = source.getBoolean(KEY_ACCENT_CUSTOM, false);
             accentColor = source.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+            readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
@@ -524,6 +537,22 @@ public final class ModuleSettings {
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
         accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
+        readGlow(settings);
+    }
+
+    private static void readGlow(SharedPreferences source) {
+        ambientGlow = source.getBoolean(KEY_AMBIENT_GLOW, false);
+        glowAlbum = source.getBoolean(KEY_GLOW_ALBUM, true);
+        glowFollowTheme = source.getBoolean(KEY_GLOW_FOLLOW_THEME, false);
+        glowStrength = Math.max(0, Math.min(100, source.getInt(KEY_GLOW_STRENGTH, DEFAULT_GLOW_STRENGTH)));
+        glowColour = source.getInt(KEY_GLOW_COLOUR, DEFAULT_GLOW_COLOUR) | 0xFF000000;
+    }
+
+    public static boolean ambientGlow() { ensureStarted(); return ambientGlow && glowStrength > 0 && !lowPerformance; }
+    public static boolean glowAlbum() { return glowAlbum; }
+    public static int glowStrength() { return glowStrength; }
+    public static int glowColour() {
+        return glowFollowTheme ? (accentCustom ? accentColor : DEFAULT_ACCENT) : glowColour;
     }
 
     public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
@@ -538,14 +567,14 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges(SharedPreferences source) {
-        String now = "lowPerformance=" + lowPerformance + " haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
+        String now = "glow=" + ambientGlow + "/" + glowAlbum + "/" + glowFollowTheme + "/" + glowStrength + "/" + glowColour + " lowPerformance=" + lowPerformance + " haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
                 + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth

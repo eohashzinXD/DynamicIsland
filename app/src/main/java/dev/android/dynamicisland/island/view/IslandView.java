@@ -208,7 +208,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
         CardBridge bridge = new CardBridge(this, metrics, paints, scene, shapes, stackPainter);
-        pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge);
+        pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge, mediaFx);
         director = new Director(this, this.host, metrics, scene, shapes, bodies, mediaFx);
         touch = new TouchController(this, this.host, metrics, scene, shapes, director, buttons);
         ticker = new SecondTicker(this, scene, stackPainter);

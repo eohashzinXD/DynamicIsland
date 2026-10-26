@@ -472,4 +472,19 @@
     <string name="pill_outline_auto">Auto</string>
     <string name="pill_outline_always">Always</string>
     <string name="pill_outline_none">None</string>
+    <string name="glow_title">Ambient glow</string>
+    <string name="glow_summary">A soft glow just outside the compact island.</string>
+    <string name="glow_strength">Glow intensity</string>
+    <string name="glow_strength_format">Glow intensity · %d%%</string>
+    <string name="glow_album">Use album colours for music</string>
+    <string name="glow_album_summary">Use album colours for music; other activities follow the selected colour source.</string>
+    <string name="glow_colour">Default glow colour</string>
+    <string name="glow_champagne">Champagne</string>
+    <string name="glow_pearl">Pearl</string>
+    <string name="glow_note">Theme colour follows Appearance → Colours. Your separate glow colour is kept when switching modes. Album colours take priority for music when enabled; the body and outline remain independent.</string>
+    <string name="glow_low_mode">Low-performance mode currently disables the glow. Your choices are preserved.</string>
+    <string name="glow_colour_source">Colour source</string>
+    <string name="glow_follow_theme">Follow theme colour</string>
+    <string name="glow_individual">Choose separately</string>
+    <string name="glow_theme_colour">Theme colour settings</string>
 </resources>

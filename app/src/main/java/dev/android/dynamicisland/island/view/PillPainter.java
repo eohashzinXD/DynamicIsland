@@ -35,13 +35,16 @@ final class PillPainter {
     private final StackPainter stack;
     private final CardBridge bridge;
     private final Path clip = new Path();
+    private final Path glowCutout = new Path();
+    private final AmbientGlow glow;
+    private final MediaFxCache mediaFx;
     private final Path outlineCutout = new Path();
     private final Path neck = new Path();
     private final RectF bubble = new RectF();
     private final RectF outlineRect = new RectF();
     private final RectF shrunk = new RectF();
 
-    PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge) {
+    PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge, MediaFxCache mediaFx) {
         this.m = m;
         this.paints = paints;
         this.scene = scene;
@@ -49,6 +52,8 @@ final class PillPainter {
         this.shapes = shapes;
         this.stack = stack;
         this.bridge = bridge;
+        this.mediaFx = mediaFx;
+        glow = new AmbientGlow(m.dp(1));
     }
 
     private static boolean legacyMerge() {
@@ -95,6 +100,18 @@ final class PillPainter {
 
         // A returning compact body stays opaque; pillBlob only gates its content until the fold finishes.
         float bodyAlpha = scene.mode == Mode.COMPACT ? 1.0f : clamp01(sp.pillBlob.value());
+        if (ModuleSettings.ambientGlow() && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA) {
+            int save = canvas.save();
+            glowCutout.reset();
+            if (pillVisible) glowCutout.addRoundRect(pill, r, r, Path.Direction.CW);
+            if (hasBubble) glowCutout.addCircle(bubbleX, bubbleY, bubbleRadius, Path.Direction.CW);
+            canvas.clipOutPath(glowCutout);
+            if (hasNeck) canvas.clipOutPath(neck);
+            float glowAlpha = bodyAlpha * clamp01(contentScale);
+            if (pillVisible) glow.draw(canvas, pill, glowColour(scene.mainIn, t), glowAlpha, ModuleSettings.glowStrength());
+            if (hasBubble) glow.draw(canvas, bubble, glowColour(scene.bubbleIn, t), glowAlpha, ModuleSettings.glowStrength());
+            canvas.restoreToCount(save);
+        }
         boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
         if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA
                 && scene.pillOutlineOpacity() > IslandView.MIN_VISIBLE_ALPHA) {
@@ -137,6 +154,15 @@ final class PillPainter {
             drawBubbleLayer(canvas, scene.bubbleOut, t, extra);
             drawBubbleLayer(canvas, scene.bubbleIn, t, extra);
         }
+    }
+
+    private int glowColour(Layer layer, long time) {
+        if (ModuleSettings.glowAlbum() && layer != null && layer.content.item.isMedia && layer.content.item.accent != -1) {
+            // Share the existing album-colour transition; no new frame loop or artwork readback.
+            int album = mediaFx.obtain(layer.content.item).accent(time);
+            return Colors.blend(album, Colors.WHITE, .22f);
+        }
+        return ModuleSettings.glowColour();
     }
 
     /** Only the outer rim is white. Filling underneath a fading black body produces a grey pill. */

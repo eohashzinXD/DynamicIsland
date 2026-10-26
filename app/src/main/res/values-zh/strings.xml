@@ -463,4 +463,19 @@
     <string name="pill_outline_auto">自动</string>
     <string name="pill_outline_always">始终</string>
     <string name="pill_outline_none">无</string>
+    <string name="glow_title">外部光晕</string>
+    <string name="glow_summary">在收起的灵动岛边缘外显示柔和光晕。</string>
+    <string name="glow_strength">光晕强度</string>
+    <string name="glow_strength_format">光晕强度 · %d%%</string>
+    <string name="glow_album">音乐使用专辑配色</string>
+    <string name="glow_album_summary">音乐使用专辑配色，其他活动使用所选颜色来源。</string>
+    <string name="glow_colour">默认光晕颜色</string>
+    <string name="glow_champagne">香槟色</string>
+    <string name="glow_pearl">珍珠色</string>
+    <string name="glow_note">主题色跟随外观 → 颜色设置。切换方式时保留单独设置的光晕颜色。启用音乐专辑配色时优先使用专辑色；主体和轮廓保持独立。</string>
+    <string name="glow_low_mode">低性能模式当前会关闭光晕，所选设置将保留。</string>
+    <string name="glow_colour_source">颜色来源</string>
+    <string name="glow_follow_theme">跟随主题色</string>
+    <string name="glow_individual">单独选择颜色</string>
+    <string name="glow_theme_colour">主题色设置</string>
 </resources>

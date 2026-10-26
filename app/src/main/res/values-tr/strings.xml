@@ -463,4 +463,19 @@
     <string name="pill_outline_auto">Otomatik</string>
     <string name="pill_outline_always">Her zaman</string>
     <string name="pill_outline_none">Yok</string>
+    <string name="glow_title">Dış parlama</string>
+    <string name="glow_summary">Küçük adanın kenarının dışında yumuşak ışık gösterir.</string>
+    <string name="glow_strength">Parlama yoğunluğu</string>
+    <string name="glow_strength_format">Parlama yoğunluğu · %d%%</string>
+    <string name="glow_album">Müzikte albüm renklerini kullan</string>
+    <string name="glow_album_summary">Müzikte albüm renklerini, diğer etkinliklerde seçilen renk kaynağını kullanır.</string>
+    <string name="glow_colour">Varsayılan parlama rengi</string>
+    <string name="glow_champagne">Şampanya</string>
+    <string name="glow_pearl">İnci</string>
+    <string name="glow_note">Tema rengi Görünüm → Renkler ayarını izler. Mod değiştirildiğinde ayrı parlama rengi korunur. Açıksa müzikte albüm renkleri önceliklidir; gövde ve çerçeve bağımsızdır.</string>
+    <string name="glow_low_mode">Düşük performans modu şu anda parlamayı kapatıyor. Seçimleriniz korunur.</string>
+    <string name="glow_colour_source">Renk kaynağı</string>
+    <string name="glow_follow_theme">Tema rengini kullan</string>
+    <string name="glow_individual">Ayrı renk seç</string>
+    <string name="glow_theme_colour">Tema rengi ayarları</string>
 </resources>

@@ -463,4 +463,19 @@
     <string name="pill_outline_auto">Авто</string>
     <string name="pill_outline_always">Всегда</string>
     <string name="pill_outline_none">Нет</string>
+    <string name="glow_title">Внешнее свечение</string>
+    <string name="glow_summary">Мягкое свечение снаружи свёрнутого острова.</string>
+    <string name="glow_strength">Интенсивность свечения</string>
+    <string name="glow_strength_format">Интенсивность свечения · %d%%</string>
+    <string name="glow_album">Цвета альбома для музыки</string>
+    <string name="glow_album_summary">Музыка использует цвета альбома, остальные активности — выбранный источник цвета.</string>
+    <string name="glow_colour">Основной цвет свечения</string>
+    <string name="glow_champagne">Шампань</string>
+    <string name="glow_pearl">Жемчужный</string>
+    <string name="glow_note">Цвет темы берётся из Оформление → Цвета. При смене режима отдельный цвет свечения сохраняется. Для музыки цвета альбома имеют приоритет, если включены; фон и контур независимы.</string>
+    <string name="glow_low_mode">Режим низкой нагрузки сейчас отключает свечение. Ваш выбор сохраняется.</string>
+    <string name="glow_colour_source">Источник цвета</string>
+    <string name="glow_follow_theme">Цвет темы</string>
+    <string name="glow_individual">Выбрать отдельно</string>
+    <string name="glow_theme_colour">Настройки цвета темы</string>
 </resources>
