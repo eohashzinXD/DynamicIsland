@@ -71,6 +71,7 @@ final class IslandSources {
         progress = new ProgressSource(ctx, main, onChange);
         promoted = new PromotedSource(ctx, main, onChange);
         recorder = new RecorderNotificationSource(ctx, onChange);
+        recorder.setLifecycleSession(cast::recorderLifecycle);
         recorder.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         promoted.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules = new RuleSource(ctx, main, onChange);

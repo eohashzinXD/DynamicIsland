@@ -228,7 +228,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             }
         }
         headsUp.setSnapshot(allowed);
-        sources.recorder.update(allowed);
+        sources.recorder.update(all); // recording lifecycle is not an ordinary-notification app-filter rule
         sources.promoted.update(allowed);
         sources.progress.update(allowed);
         sources.rules.update(allowed);

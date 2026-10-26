@@ -25,7 +25,24 @@ public final class CastSource {
 
     /** System UI's cast controller; its {@code chipView} is clicked to stop. Set by the hooks. */
     public Object castController;
-    private Object bundle;
+    private volatile Object bundle;
+    private long lifecycleGeneration;
+    private long startGeneration;
+    private String lastRecorderPackage;
+    private boolean observedStop;
+    private volatile RecorderLifecycle lifecycle = new RecorderLifecycle(null, 0L, 0L);
+
+    public static final class RecorderLifecycle {
+        final String pkg;
+        public final long generation;
+        public final long start;
+
+        RecorderLifecycle(String pkg, long generation, long start) {
+            this.pkg = pkg;
+            this.generation = generation;
+            this.start = start;
+        }
+    }
 
     /** {@code ctx} is accepted for symmetry with the other sources; the chip model needs no context. */
     private volatile Set<String> recordingPackages = Collections.emptySet();
@@ -36,9 +53,52 @@ public final class CastSource {
 
     public CastSource(Context ctx) { this.ctx = ctx; }
 
-    /** Latest chip models of the status bar (a bundle of the three chip states). */
-    public void onBundle(Object b) {
+    /** Snapshot lifecycle changes now, even when UI refresh requests are later coalesced. */
+    public synchronized void onBundle(Object b) {
         bundle = b;
+        Object record = Refl.get(b, "screenRecord");
+        Object share = Refl.get(b, "shareToApp");
+        String shareOwner = isActive(share) ? (String) Refl.get(share, "managingPackageName") : null;
+        String pkg = null;
+        if (isActive(record)) {
+            pkg = (String) Refl.get(record, "managingPackageName");
+        } else if ("com.samsung.android.app.smartcapture".equals(shareOwner)) {
+            pkg = shareOwner;
+        }
+        RecorderLifecycle old = lifecycle;
+        if (pkg == null) {
+            // Missing/unknown models invalidate continuity but are not a confirmed stop.
+            boolean otherOwner = shareOwner != null && !shareOwner.isEmpty() && !shareOwner.equals(lastRecorderPackage);
+            if (isInactive(record) && (isInactive(share) || otherOwner)) observedStop = true;
+            lifecycle = new RecorderLifecycle(null, 0L, startGeneration);
+        } else if (!pkg.equals(old.pkg)) {
+            if (observedStop || !pkg.equals(lastRecorderPackage)) ++startGeneration;
+            lifecycle = new RecorderLifecycle(pkg, ++lifecycleGeneration, startGeneration);
+            lastRecorderPackage = pkg;
+            observedStop = false;
+        }
+    }
+
+    /** Atomically pairs continuity and start generation for notification consumers. */
+    public RecorderLifecycle recorderLifecycle(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state : null;
+    }
+
+    /** Zero is unknown, not evidence of recording termination. */
+    public long recorderSession(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state.generation : 0L;
+    }
+
+    /** Changes only after an observed stop/start or a different recorder owner, not a read failure. */
+    public long recorderStart(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state.start : 0L;
+    }
+
+    private static boolean isInactive(Object model) {
+        return model != null && model.getClass().getName().endsWith("$Inactive");
     }
 
     /** True when {@code notificationKey} is the notification of the screen recorder that has a card on the island. */
@@ -82,7 +142,7 @@ public final class CastSource {
         } else if (isActive(share)) {
             String manager = (String) Refl.get(share, "managingPackageName");
             // Samsung's own recorder reports itself as a share
-            boolean ownRecorder = manager != null && manager.contains("com.samsung.android.app.smartcapture");
+            boolean ownRecorder = "com.samsung.android.app.smartcapture".equals(manager);
             String title = ownRecorder ? IslandText.get(ctx, "island_screen_recording") : IslandText.get(ctx, "island_sharing_screen");
             IslandItem card = item("cast:share", share, IslandItem.Kind.RECORDING, RED, title);
             out.add(card);
