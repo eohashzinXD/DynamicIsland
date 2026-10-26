@@ -58,10 +58,10 @@ public final class CastSource {
         bundle = b;
         Object record = Refl.get(b, "screenRecord");
         Object share = Refl.get(b, "shareToApp");
-        String shareOwner = isActive(share) ? (String) Refl.get(share, "managingPackageName") : null;
+        String shareOwner = isActive(share) ? ownerPackage(share) : null;
         String pkg = null;
         if (isActive(record)) {
-            pkg = (String) Refl.get(record, "managingPackageName");
+            pkg = ownerPackage(record);
         } else if ("com.samsung.android.app.smartcapture".equals(shareOwner)) {
             pkg = shareOwner;
         }
@@ -95,6 +95,11 @@ public final class CastSource {
     public long recorderStart(String pkg) {
         RecorderLifecycle state = lifecycle;
         return pkg != null && pkg.equals(state.pkg) ? state.start : 0L;
+    }
+
+    private static String ownerPackage(Object model) {
+        Object value = Refl.get(model, "managingPackageName");
+        return value instanceof String && !((String) value).isEmpty() ? (String) value : null;
     }
 
     private static boolean isInactive(Object model) {

@@ -24,6 +24,12 @@ public class CastRecorderLifecycleTest {
 
     public static final class Inactive { }
 
+    public static final class Malformed {
+        public static final class Active {
+            public final Object managingPackageName = Integer.valueOf(42);
+        }
+    }
+
     public static final class Bundle {
         public final Object screenRecord;
         public final Object shareToApp;
@@ -66,7 +72,8 @@ public class CastRecorderLifecycleTest {
                 new Bundle(new Inactive(), null),
                 new Bundle(null, new Inactive()),
                 new Bundle(new Inactive(), new Object()),
-                new Bundle(new Active(null), new Inactive())
+                new Bundle(new Active(null), new Inactive()),
+                new Bundle(new Malformed.Active(), new Inactive())
         };
         for (Object model : unknown) {
             source.onBundle(model);
