@@ -65,6 +65,7 @@ final class AnimationScreen {
         @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
             island.setGeometry(w, w / 2f, ui.dp(36), ui.dp(20), false);
+            island.setHoleTextPadding(ModuleSettings.holeTextPaddingDp());
             island.setItems(java.util.Collections.singletonList(item));
         }
         @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); stopped = false; postDelayed(cycle, 650); }

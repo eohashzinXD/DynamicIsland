@@ -8,6 +8,8 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.source.CallSource;
 import dev.android.dynamicisland.island.source.CastSource;
 import dev.android.dynamicisland.island.source.EventSource;
+import dev.android.dynamicisland.island.source.ChargingSource;
+import dev.android.dynamicisland.island.source.HeadsetSource;
 import dev.android.dynamicisland.island.source.MediaSource;
 import dev.android.dynamicisland.island.source.OaSource;
 import dev.android.dynamicisland.island.source.PeekSource;
@@ -49,6 +51,8 @@ final class IslandSources {
     final MediaSource media;
     final CastSource cast;
     final EventSource events;
+    final ChargingSource charging;
+    final HeadsetSource headset;
     final TorchSource torch;
     final PrivacySource privacy;
     final ProgressSource progress;
@@ -68,6 +72,8 @@ final class IslandSources {
         media.setRecordingFilter(oa::isVoiceRecording);
         cast = new CastSource(ctx);
         events = new EventSource(ctx, main, onChange);
+        charging = new ChargingSource(ctx, main, onChange);
+        headset = new HeadsetSource(ctx, main, onChange);
         torch = new TorchSource(ctx, main, onChange);
         privacy = new PrivacySource(ctx, main, onChange);
         progress = new ProgressSource(ctx, main, onChange);
@@ -88,6 +94,7 @@ final class IslandSources {
     /** Starts the sources that listen on their own; the event and privacy islands may fail without harm. */
     void start(Runnable onChange) {
         media.start();
+        syncOptionalSources();
         try {
             events.start();
             torch.start();
@@ -96,6 +103,11 @@ final class IslandSources {
             XLog.e("event islands failed to start", t);
         }
         oa.onChanged = onChange;
+    }
+
+    void syncOptionalSources() {
+        guarded("charging settings", charging::syncSettings);
+        guarded("headset settings", headset::syncSettings);
     }
 
     /** Cheap vendor-cache query for ordinary banner scans; gather resolves the actual task once per pass. */
@@ -120,6 +132,9 @@ final class IslandSources {
         guarded("cast", () -> cast.collect(items));
         guarded("recorder notification", () -> recorder.collect(items));
         guarded("events", () -> events.collect(items));
+        guarded("charging info", () -> charging.collect(items));
+        guarded("headset", () -> headset.collect(items));
+        if (charging.isOffering()) items.removeIf(item -> "event:charging".equals(item.key));
         guarded("torch", () -> torch.collect(items));
         if (ModuleSettings.placementPreviewActive()) {
             items.add(placementSample());

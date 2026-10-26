@@ -453,7 +453,7 @@
     <string name="ui_reset_size">Reset size</string>
     <string name="ui_reset_size_summary">Reset height, widths and fixed width only.</string>
     <string name="ui_reset_calibration">Reset camera calibration</string>
-    <string name="ui_reset_calibration_summary">Reset camera detection and hole measurements only.</string>
+    <string name="ui_reset_calibration_summary">Reset camera detection, cutout dimensions and extra text clearance.</string>
     <string name="ui_input_range">Enter a value from %1$d to %2$d. Widths must stay ordered.</string>
     <string name="ui_decrease">Decrease by one</string>
     <string name="ui_increase">Increase by one</string>
@@ -489,4 +489,25 @@
     <string name="glow_theme_colour">Theme colour settings</string>
     <string name="show_in_fullscreen">Show in portrait full screen</string>
     <string name="show_in_fullscreen_desc">Keep active cards visible when apps such as Camera hide the status bar. The island still hides on the lock screen, Always On Display, or when there is no active content.</string>
+    <string name="setting_charging_info">Live charging card</string>
+    <string name="setting_charging_info_desc">Battery current, estimated power and temperature while plugged in.</string>
+    <string name="setting_charging_stats">Charging statistics</string>
+    <string name="setting_charging_stats_desc">Measure screen time and charge changes in the charging card.</string>
+    <string name="charging_statistics_note">Power is estimated at the battery, not the charger rating. Statistics include only observed periods after enabling measurement. Charge changes by screen state are estimates; mAh is hidden if the device does not report charge-counter data.</string>
+    <string name="setting_event_headset">Wired headphone alerts</string>
+    <string name="setting_event_headset_desc">Briefly show wired and USB headphone connections and disconnections.</string>
+    <string name="hole_text_padding">Extra space beside camera</string>
+    <string name="hole_text_padding_desc">0 dp keeps the original spacing. Extra space is limited to what fits inside the chosen island width.</string>
+    <string name="island_charge_full">Fully charged</string>
+    <string name="island_charge_connected">Charger connected</string>
+    <string name="island_charge_live">%1$s · %2$s · %3$s</string>
+    <string name="island_charge_screen_on">Screen on: %1$s · %2$s</string>
+    <string name="island_charge_screen_off">Screen off: %1$s · %2$s</string>
+    <string name="island_charge_gain">≈%1$s%%</string>
+    <string name="island_charge_hours">%1$d h %2$d min</string>
+    <string name="island_charge_minutes">%1$d min %2$d s</string>
+    <string name="island_headset_connected">Headphones connected</string>
+    <string name="island_headset_disconnected">Headphones disconnected</string>
+    <string name="island_wired_headset">Wired headphones</string>
+    <string name="island_charge_seconds">%1$d s</string>
 </resources>

@@ -444,7 +444,7 @@
     <string name="ui_reset_size">サイズをリセット</string>
     <string name="ui_reset_size_summary">高さ、幅、幅の固定のみリセットします。</string>
     <string name="ui_reset_calibration">カメラ補正をリセット</string>
-    <string name="ui_reset_calibration_summary">カメラ検出と穴の寸法のみリセットします。</string>
+    <string name="ui_reset_calibration_summary">カメラ検出・穴の寸法・文字の追加余白を初期化します。</string>
     <string name="ui_input_range">%1$d〜%2$d で入力してください。最小幅は最大幅以下にします。</string>
     <string name="ui_decrease">1 減らす</string>
     <string name="ui_increase">1 増やす</string>
@@ -480,4 +480,25 @@
     <string name="glow_theme_colour">テーマ色の設定</string>
     <string name="show_in_fullscreen">縦向きの全画面でも表示</string>
     <string name="show_in_fullscreen_desc">カメラなどステータスバーを隠すアプリでも進行中のアクティビティを表示します。ロック画面、常時表示ディスプレイ、表示する内容がないときは非表示になります。</string>
+    <string name="setting_charging_info">充電詳細カード</string>
+    <string name="setting_charging_info_desc">充電中のバッテリー電流・推定電力・温度を表示します。</string>
+    <string name="setting_charging_stats">充電統計</string>
+    <string name="setting_charging_stats_desc">充電詳細カードで画面状態別の時間と充電量を測定します。</string>
+    <string name="charging_statistics_note">電力は充電器の定格ではなく、バッテリー側の推定値です。統計は測定を有効にしてから観測した区間のみを含みます。画面状態別の充電量は推定値で、端末が充電量を提供しない場合はmAhを表示しません。</string>
+    <string name="setting_event_headset">有線イヤホン接続通知</string>
+    <string name="setting_event_headset_desc">有線・USBイヤホンの接続と取り外しを一時表示します。</string>
+    <string name="hole_text_padding">カメラ横の文字の追加余白</string>
+    <string name="hole_text_padding_desc">0dpでは従来の間隔を維持します。設定したアイランド幅に収まる範囲で余白を追加します。</string>
+    <string name="island_charge_full">充電完了</string>
+    <string name="island_charge_connected">充電器に接続中</string>
+    <string name="island_charge_live">%1$s · %2$s · %3$s</string>
+    <string name="island_charge_screen_on">画面オン: %1$s · %2$s</string>
+    <string name="island_charge_screen_off">画面オフ: %1$s · %2$s</string>
+    <string name="island_charge_gain">約%1$s%%</string>
+    <string name="island_charge_hours">%1$d時間%2$d分</string>
+    <string name="island_charge_minutes">%1$d分%2$d秒</string>
+    <string name="island_headset_connected">イヤホン接続済み</string>
+    <string name="island_headset_disconnected">イヤホン取り外し</string>
+    <string name="island_wired_headset">有線イヤホン</string>
+    <string name="island_charge_seconds">%1$d秒</string>
 </resources>

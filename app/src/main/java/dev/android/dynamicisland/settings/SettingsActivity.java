@@ -336,9 +336,20 @@ public final class SettingsActivity extends Activity {
     private void eventsPage() {
         subPage(getString(R.string.hub_events));
         LinearLayout device = ui.card(page);
-        toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        Switch charging = toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        Switch chargingInfo = toggle(device, R.string.setting_charging_info, R.string.setting_charging_info_desc, ModuleSettings.KEY_CHARGING_INFO, false);
+        Switch chargingStats = toggle(device, R.string.setting_charging_stats, R.string.setting_charging_stats_desc, ModuleSettings.KEY_CHARGING_STATS, false);
+        Runnable chargingDependencies = () -> {
+            OneUi.setDependentsEnabled(charging.isChecked(), OneUi.rowOf(chargingInfo));
+            OneUi.setDependentsEnabled(charging.isChecked() && chargingInfo.isChecked(), OneUi.rowOf(chargingStats));
+        };
+        OneUi.listen(charging, on -> chargingDependencies.run());
+        OneUi.listen(chargingInfo, on -> chargingDependencies.run());
+        chargingDependencies.run();
+        ui.details(page, getString(R.string.ui_details), getString(R.string.charging_statistics_note));
         toggle(device, R.string.setting_event_ringer, R.string.setting_event_ringer_desc, ModuleSettings.KEY_EVENT_RINGER, true);
         toggle(device, R.string.setting_event_bluetooth, R.string.setting_event_bluetooth_desc, ModuleSettings.KEY_EVENT_BLUETOOTH, true);
+        toggle(device, R.string.setting_event_headset, R.string.setting_event_headset_desc, ModuleSettings.KEY_EVENT_HEADSET, false);
         toggle(device, R.string.setting_event_toggles, R.string.setting_event_toggles_desc, ModuleSettings.KEY_EVENT_TOGGLES, true);
         toggle(device, R.string.setting_torch_pill, R.string.setting_torch_pill_desc, ModuleSettings.KEY_TORCH_PILL, true);
         ui.category(page, getString(R.string.group_privacy));

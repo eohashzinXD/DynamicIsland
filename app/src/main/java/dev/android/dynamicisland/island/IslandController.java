@@ -114,6 +114,9 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     private final AutoOpenCards autoOpenCards = new AutoOpenCards();
+    /** Prepared for review only: deliberately has no preference key or settings control. */
+    private static final boolean ENABLE_SOURCE_PEEKS = false;
+    private final SourcePeekRequests sourcePeekRequests = ENABLE_SOURCE_PEEKS ? new SourcePeekRequests() : null;
     private List<StatusBarNotification> lastNotifications = java.util.Collections.emptyList();
 
     public boolean ownsHeadsUp(String key) { return headsUp.owns(key); }
@@ -127,6 +130,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         sources.start(this::requestRefresh);
         // the position settings take effect without a restart (and the sample item comes and goes with them)
         ModuleSettings.setOnSwitchesChanged(() -> main.post(() -> {
+            sources.syncOptionalSources();
             onNotificationsSnapshot(lastNotifications);
             requestRefresh();
             HideDuplicated.rebuild();
@@ -497,6 +501,13 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             long now = SystemClock.uptimeMillis();
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
+            if (sourcePeekRequests != null) {
+                IslandItem requested = sourcePeekRequests.next(shape.shown, ModuleSettings.autoOpenCards(), now);
+                if (requested != null && !view.isExpanded() && view.canPeek()) {
+                    long duration = sourcePeekRequests.duration(requested, now);
+                    if (duration > 0 && view.peek(requested, duration)) sourcePeekRequests.opened(requested);
+                }
+            }
             IslandItem nextCard = autoOpenCards.next(shape.shown, ModuleSettings.autoOpenCards(), now);
             if (nextCard != null && !view.isExpanded() && view.canPeek() && view.peek(nextCard, ModuleSettings.autoOpenMs())) autoOpenCards.opened(nextCard);
             logItemChanges(shape);

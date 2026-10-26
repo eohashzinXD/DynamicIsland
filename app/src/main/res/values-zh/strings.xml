@@ -444,7 +444,7 @@
     <string name="ui_reset_size">重置尺寸</string>
     <string name="ui_reset_size_summary">仅重置高度、宽度和固定宽度。</string>
     <string name="ui_reset_calibration">重置相机校准</string>
-    <string name="ui_reset_calibration_summary">仅重置相机检测和开孔测量。</string>
+    <string name="ui_reset_calibration_summary">重置摄像头检测方式、开孔尺寸和额外文字间距。</string>
     <string name="ui_input_range">请输入 %1$d 至 %2$d 之间的值。最小宽度不能大于最大宽度。</string>
     <string name="ui_decrease">减少 1</string>
     <string name="ui_increase">增加 1</string>
@@ -480,4 +480,25 @@
     <string name="glow_theme_colour">主题色设置</string>
     <string name="show_in_fullscreen">竖屏全屏时仍然显示</string>
     <string name="show_in_fullscreen_desc">在相机等隐藏状态栏的应用中继续显示正在进行的活动。锁屏、息屏显示或没有活动内容时仍会隐藏。</string>
+    <string name="setting_charging_info">充电详情卡片</string>
+    <string name="setting_charging_info_desc">连接充电器时持续显示电池电流、估算功率和温度。</string>
+    <string name="setting_charging_stats">充电统计</string>
+    <string name="setting_charging_stats_desc">在充电详情卡片中测量亮屏和息屏的时间及电量变化。</string>
+    <string name="charging_statistics_note">功率为电池侧估算值，并非充电器额定功率。统计仅包含开启测量后实际观测的时段。按屏幕状态划分的充电量为估算值；设备不提供充电量数据时隐藏mAh。</string>
+    <string name="setting_event_headset">有线耳机连接提醒</string>
+    <string name="setting_event_headset_desc">短暂显示有线或USB耳机的连接与断开。</string>
+    <string name="hole_text_padding">摄像头旁文字额外间距</string>
+    <string name="hole_text_padding_desc">0dp保留原有间距。额外间距仅在设置的灵动岛宽度允许范围内生效。</string>
+    <string name="island_charge_full">充电完成</string>
+    <string name="island_charge_connected">已连接充电器</string>
+    <string name="island_charge_live">%1$s · %2$s · %3$s</string>
+    <string name="island_charge_screen_on">亮屏：%1$s · %2$s</string>
+    <string name="island_charge_screen_off">息屏：%1$s · %2$s</string>
+    <string name="island_charge_gain">约%1$s%%</string>
+    <string name="island_charge_hours">%1$d小时%2$d分钟</string>
+    <string name="island_charge_minutes">%1$d分钟%2$d秒</string>
+    <string name="island_headset_connected">耳机已连接</string>
+    <string name="island_headset_disconnected">耳机已断开</string>
+    <string name="island_wired_headset">有线耳机</string>
+    <string name="island_charge_seconds">%1$d秒</string>
 </resources>

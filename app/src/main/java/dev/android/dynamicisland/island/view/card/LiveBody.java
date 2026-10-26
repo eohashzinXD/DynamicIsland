@@ -125,7 +125,8 @@ public final class LiveBody extends CardBody {
         if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null && score == null) {
             secondary = item.trailingText;
         }
-        this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth, 3);
+        this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth,
+                Math.max(1, Math.min(8, item.descriptionMaxLines)));
         subtitle = (description != null || subChrono || secondary == null) ? null
                 : IslandView.layout(secondary, owner.bodyPaint, Math.max(1, textWidth - Math.round(secIndent)), 2);
         subY = y + ((title != null || titleChrono) ? owner.dp(3.0f) : 0.0f);

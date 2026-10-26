@@ -63,6 +63,8 @@ public final class IslandItem {
     public CharSequence detail;
     /** Accessibility/long description; replaces the secondary line when present (OngoingActivityData.mDescription). */
     public CharSequence description;
+    /** Bounded layout hint for module-owned multi-line cards; ordinary notifications keep three lines. */
+    public int descriptionMaxLines = 3;
     /** Text shown at the trailing edge of the compact pill / card, see {@link Trailing#TEXT}. */
     public CharSequence trailingText;
     /** Name of the owning app, shown in the card header. */

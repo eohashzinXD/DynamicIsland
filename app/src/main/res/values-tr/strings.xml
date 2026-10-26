@@ -444,7 +444,7 @@
     <string name="ui_reset_size">Boyutu sıfırla</string>
     <string name="ui_reset_size_summary">Yalnızca yüksekliği, genişliği ve genişlik sabitlemesini sıfırlar.</string>
     <string name="ui_reset_calibration">Kamera kalibrasyonunu sıfırla</string>
-    <string name="ui_reset_calibration_summary">Yalnızca kamera algılamasını ve delik ölçülerini sıfırlar.</string>
+    <string name="ui_reset_calibration_summary">Kamera algılamasını, delik boyutlarını ve ek metin boşluğunu sıfırlar.</string>
     <string name="ui_input_range">%1$d ile %2$d arasında bir değer girin. En küçük genişlik en büyük genişliği aşamaz.</string>
     <string name="ui_decrease">Bir azalt</string>
     <string name="ui_increase">Bir artır</string>
@@ -480,4 +480,25 @@
     <string name="glow_theme_colour">Tema rengi ayarları</string>
     <string name="show_in_fullscreen">Dikey tam ekranda göster</string>
     <string name="show_in_fullscreen_desc">Kamera gibi durum çubuğunu gizleyen uygulamalarda devam eden etkinlikleri gösterir. Kilit ekranında, Always On Display sırasında veya etkin içerik olmadığında ada gizlenir.</string>
+    <string name="setting_charging_info">Ayrıntılı şarj kartı</string>
+    <string name="setting_charging_info_desc">Şarja bağlıyken pil akımını, tahmini gücü ve sıcaklığı gösterir.</string>
+    <string name="setting_charging_stats">Şarj istatistikleri</string>
+    <string name="setting_charging_stats_desc">Şarj kartında ekran sürelerini ve pil şarjındaki değişimi ölçer.</string>
+    <string name="charging_statistics_note">Güç, şarj cihazının nominal değeri değil, pil tarafındaki bir tahmindir. İstatistikler yalnızca ölçüm açıldıktan sonra gözlenen aralıkları içerir. Ekran durumuna göre şarj dağılımı tahminidir; cihaz şarj sayacı verisi sunmuyorsa mAh gizlenir.</string>
+    <string name="setting_event_headset">Kablolu kulaklık bildirimleri</string>
+    <string name="setting_event_headset_desc">Kablolu ve USB kulaklık bağlantısını ve ayrılmasını kısa süre gösterir.</string>
+    <string name="hole_text_padding">Kamera yanındaki ek metin boşluğu</string>
+    <string name="hole_text_padding_desc">0dp özgün aralığı korur. Ek boşluk, seçilen ada genişliğine sığacak şekilde sınırlanır.</string>
+    <string name="island_charge_full">Tamamen şarj oldu</string>
+    <string name="island_charge_connected">Şarj cihazı bağlı</string>
+    <string name="island_charge_live">%1$s · %2$s · %3$s</string>
+    <string name="island_charge_screen_on">Ekran açık: %1$s · %2$s</string>
+    <string name="island_charge_screen_off">Ekran kapalı: %1$s · %2$s</string>
+    <string name="island_charge_gain">≈%%%1$s</string>
+    <string name="island_charge_hours">%1$d sa %2$d dk</string>
+    <string name="island_charge_minutes">%1$d dk %2$d sn</string>
+    <string name="island_headset_connected">Kulaklık bağlandı</string>
+    <string name="island_headset_disconnected">Kulaklık ayrıldı</string>
+    <string name="island_wired_headset">Kablolu kulaklık</string>
+    <string name="island_charge_seconds">%1$d sn</string>
 </resources>

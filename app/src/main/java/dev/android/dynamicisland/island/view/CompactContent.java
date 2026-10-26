@@ -85,9 +85,15 @@ public final class CompactContent extends Content {
     private float maxTrailingWidth() {
         float minWidth = owner.dp(MIN_TRAILING_DP);
         if (owner.holeD > 0.0f) {
-            return Math.max(minWidth, (((owner.maxPillW - owner.holeD) / 2.0f) - owner.holeGap) - owner.padding);
+            return Math.max(minWidth, (((owner.maxPillW - owner.holeD) / 2.0f) - owner.holeGap) - owner.padding - holeClearance());
         }
         return Math.max(minWidth, ((owner.maxPillW - (owner.padding * 2.0f)) - owner.leadSize) - owner.innerGap);
+    }
+
+    private float holeClearance() {
+        float spare = (owner.maxPillW - owner.holeD) / 2f - owner.holeGap - owner.padding
+                - Math.max(owner.leadSize, owner.dp(MIN_TRAILING_DP));
+        return Math.max(0, Math.min(owner.holeTextPadding, spare));
     }
 
     @Override
@@ -96,7 +102,8 @@ public final class CompactContent extends Content {
         if (owner.holeD > 0.0f) {
             // both sides get the width of the wider one, so the pill stays symmetric around the hole
             float side = Math.max(owner.leadSize, trailW);
-            width = owner.holeD + ((owner.holeGap + side + owner.padding) * 2.0f);
+            float extra = trailW > 0 ? holeClearance() : 0;
+            width = owner.holeD + ((owner.holeGap + extra + side + owner.padding) * 2.0f);
         } else {
             width = (trailW > 0.0f ? owner.innerGap + trailW : 0.0f) + (owner.padding * 2.0f) + owner.leadSize;
         }

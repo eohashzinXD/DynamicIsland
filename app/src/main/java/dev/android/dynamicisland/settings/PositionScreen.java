@@ -89,6 +89,11 @@ final class PositionScreen {
             slider(hole, R.string.hole_x, -ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.KEY_HOLE_X_DP, 0);
             slider(hole, R.string.hole_y, ModuleSettings.HOLE_Y_MIN_DP, ModuleSettings.HOLE_Y_MAX_DP, ModuleSettings.KEY_HOLE_Y_DP, 0);
         }
+        if (holeMode() != ModuleSettings.HOLE_NONE) {
+            slider(hole, R.string.hole_text_padding, 0, ModuleSettings.HOLE_TEXT_PADDING_MAX_DP,
+                    ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, 0);
+            ui.note(page, activity.getString(R.string.hole_text_padding_desc));
+        }
         ui.actionRow(hole, activity.getString(R.string.ui_reset_calibration), activity.getString(R.string.ui_reset_calibration_summary), () -> { resetCalibration(); rebuild(); });
     }
 
@@ -129,7 +134,8 @@ final class PositionScreen {
     }
     void resetCalibration() {
         prefs.edit().remove(ModuleSettings.KEY_HOLE_MODE).remove(ModuleSettings.KEY_HOLE_D_DP)
-                .remove(ModuleSettings.KEY_HOLE_X_DP).remove(ModuleSettings.KEY_HOLE_Y_DP).apply();
+                .remove(ModuleSettings.KEY_HOLE_X_DP).remove(ModuleSettings.KEY_HOLE_Y_DP)
+                .remove(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP).apply();
     }
 
     private int holeMode() {
@@ -168,6 +174,7 @@ final class PositionScreen {
             intent.putExtra(ModuleSettings.KEY_HOLE_D_DP, value(ModuleSettings.KEY_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP));
             intent.putExtra(ModuleSettings.KEY_HOLE_X_DP, value(ModuleSettings.KEY_HOLE_X_DP, 0));
             intent.putExtra(ModuleSettings.KEY_HOLE_Y_DP, value(ModuleSettings.KEY_HOLE_Y_DP, 0));
+            intent.putExtra(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, value(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, 0));
             intent.putExtra(ModuleSettings.EXTRA_SAMPLE_LONG, sampleLong);
             intent.putExtra(ModuleSettings.EXTRA_ACTIVE, active);
             // System UI only accepts it from this app, so the sender has to let it see who sent it (API 34)

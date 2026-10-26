@@ -444,7 +444,7 @@
     <string name="ui_reset_size">Сбросить размер</string>
     <string name="ui_reset_size_summary">Сбросить только высоту, ширину и её фиксацию.</string>
     <string name="ui_reset_calibration">Сбросить калибровку камеры</string>
-    <string name="ui_reset_calibration_summary">Сбросить только определение камеры и размеры выреза.</string>
+    <string name="ui_reset_calibration_summary">Сбросить обнаружение камеры, размеры выреза и отступ текста.</string>
     <string name="ui_input_range">Введите значение от %1$d до %2$d. Минимальная ширина не должна превышать максимальную.</string>
     <string name="ui_decrease">Уменьшить на один</string>
     <string name="ui_increase">Увеличить на один</string>
@@ -480,4 +480,25 @@
     <string name="glow_theme_colour">Настройки цвета темы</string>
     <string name="show_in_fullscreen">Показывать в портретном полноэкранном режиме</string>
     <string name="show_in_fullscreen_desc">Показывать текущие активности, когда камера или другое приложение скрывает строку состояния. На экране блокировки, Always On Display и при отсутствии активностей остров скрывается.</string>
+    <string name="setting_charging_info">Подробная карточка зарядки</string>
+    <string name="setting_charging_info_desc">Ток батареи, расчётная мощность и температура при зарядке.</string>
+    <string name="setting_charging_stats">Статистика зарядки</string>
+    <string name="setting_charging_stats_desc">Время и заряд по состоянию экрана в карточке зарядки.</string>
+    <string name="charging_statistics_note">Мощность оценивается на стороне батареи, а не по номиналу зарядного устройства. Статистика включает только наблюдаемые интервалы после включения измерения. Распределение заряда по состоянию экрана приблизительное; мА·ч скрываются, если устройство не сообщает данные счётчика заряда.</string>
+    <string name="setting_event_headset">Уведомления о проводных наушниках</string>
+    <string name="setting_event_headset_desc">Краткие уведомления о подключении и отключении проводных и USB-наушников.</string>
+    <string name="hole_text_padding">Дополнительный отступ у камеры</string>
+    <string name="hole_text_padding_desc">0dp сохраняет исходный интервал. Отступ ограничен выбранной шириной острова.</string>
+    <string name="island_charge_full">Полностью заряжено</string>
+    <string name="island_charge_connected">Зарядное устройство подключено</string>
+    <string name="island_charge_live">%1$s · %2$s · %3$s</string>
+    <string name="island_charge_screen_on">Экран включён: %1$s · %2$s</string>
+    <string name="island_charge_screen_off">Экран выключен: %1$s · %2$s</string>
+    <string name="island_charge_gain">≈%1$s%%</string>
+    <string name="island_charge_hours">%1$d ч %2$d мин</string>
+    <string name="island_charge_minutes">%1$d мин %2$d с</string>
+    <string name="island_headset_connected">Наушники подключены</string>
+    <string name="island_headset_disconnected">Наушники отключены</string>
+    <string name="island_wired_headset">Проводные наушники</string>
+    <string name="island_charge_seconds">%1$d с</string>
 </resources>

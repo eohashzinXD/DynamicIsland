@@ -56,6 +56,16 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # -> release/DynamicIsland-<versionName>
 
 `scripts/sign.sh` takes the keystore password from `KEYSTORE_PASSWORD` and creates a self-signed key in `release-keys/` on first run (git-ignored); keep it, updates must use the same key. To release: bump `versionCode` / `versionName` in `app/build.gradle` and `CrashGuard.BUILD`, run the tests, sign.
 
+## Optional device data
+
+`ChargingSource` and `HeadsetSource` join the existing source collector. Their preferences default to false and settings reload starts/stops their listeners on the main thread. The charging card keeps `EVENT` priority. Statistics are subordinate to it; disabling measurement clears its checkpoint and stops charge-counter reads. Live polling runs every 5 seconds while interactive (15 seconds in low-performance mode), and stops while the screen is off. Battery/screen events close measurement intervals without a wake lock.
+
+`ChargingSession` uses elapsed time, including deep sleep, and signed charge-counter/percentage changes. Each change is distributed across the screen-state durations accumulated since that value last changed, rather than assigned entirely to the last instant. These state splits are estimates, not separate hardware measurements. Unsupported charge counters stay unknown. A checkpoint can retain measured totals across a short SystemUI restart only after boot, plug, age and counter/level checks; the unobserved gap is excluded. An unverified restart starts a new measurement; these totals are not a complete charging-history log.
+
+`SourcePeekRequests` is prepared behind `ENABLE_SOURCE_PEEKS = false`; there is no settings entry or preference key. If enabled later, the controller requires the ordinary auto-open option, a free/peekable view and one successful request at a time. Event identity and expiry prevent repeated or stale announcements. Existing heads-up/OTP handling remains separate.
+
+Camera text clearance defaults to zero additional dp and uses the existing live calibration broadcast, preference reload and calibration reset. Rendering limits the extra clearance to the available pill width.
+
 ## README pictures
 
 Run `./gradlew testReleaseUnitTest -Prender --tests '*settings.Settings*Test' --tests '*ScreenshotsTest'` to generate README pictures. `ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`), while the settings captures write all six locales to `app/build/render`. Then `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/` and the strip `docs/banner.png` / `docs/banner_ko.png` at the top of the README. For settings alone, omit `--tests '*ScreenshotsTest'` and pass `--settings-only` to the Python script. `docs/icon.png` is the app icon rendered from the launcher layers, and `docs/social.png` (1280 x 640, from `scripts/social.html`) is the social preview to upload in the repository settings, and `docs/hero.png` / `docs/hero_ko.png` are the title pictures, made from `scripts/hero.html` / `scripts/hero_ko.html` (open in a browser at 1800 x 600 and save a screenshot; the Korean one uses the Pretendard font, SIL OFL). Refresh and commit the pictures after a change of the look.

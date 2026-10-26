@@ -124,6 +124,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     // layout values the content classes read; copies of the final ones in Metrics
     float bubbleR;
     final float holeGap;
+    float holeTextPadding;
     final float innerGap;
     float leadSize;
     float minPillW;
@@ -353,6 +354,13 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (metrics.applySize(heightPercent, minWidthDp, maxWidthDp)) {
             afterMetricsChanged();
         }
+    }
+
+    public void setHoleTextPadding(int extraDp) {
+        float padding = dp(Math.max(0, Math.min(ModuleSettings.HOLE_TEXT_PADDING_MAX_DP, extraDp)));
+        if (Math.abs(holeTextPadding - padding) < 0.01f) return;
+        holeTextPadding = padding;
+        afterMetricsChanged();
     }
 
     public void setGeometry(int screenWidth, float centerX, float centerY, float holeDiameter, boolean isTablet) {
