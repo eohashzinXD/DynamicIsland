@@ -56,6 +56,7 @@ public final class SettingsActivity extends Activity {
     private AppearanceScreen appearance;
     private LinearLayout page;
     private ScrollView scroll;
+    private SettingChangeFeedback changeFeedback;
     /** Builders of the open pages, the visible one on top. */
     private static final class PageState {
         final Runnable build;
@@ -70,7 +71,7 @@ public final class SettingsActivity extends Activity {
     private final Runnable statusPoll = new Runnable() {
         @Override public void run() {
             if (statusHero == null || isFinishing() || isDestroyed()) return;
-            boolean connected = Diagnostics.statusAcknowledged(SettingsActivity.this, statusNonce);
+            boolean connected = Diagnostics.statusAcknowledgedSince(SettingsActivity.this, statusNonce);
             if (connected) ui.setHero(statusHero, true, getString(R.string.ui_connected), getString(R.string.ui_connected_detail));
             else if (SystemClock.elapsedRealtime() - statusRequested >= 3000)
                 ui.setHero(statusHero, false, getString(R.string.ui_connection_unknown), getString(R.string.status_waiting_detail));
@@ -103,6 +104,8 @@ public final class SettingsActivity extends Activity {
         page.setPadding(ui.dp(14), 0, ui.dp(14), ui.dp(40));
         scroll.addView(page);
         setContentView(scroll);
+        changeFeedback = new SettingChangeFeedback(this, ui, prefs,
+                findViewById(android.R.id.content), this::confirmRestart);
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         open(this::hub);
     }
@@ -110,6 +113,7 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        changeFeedback.stop();
         saveScroll();
         position.stop();
         statusHandler.removeCallbacksAndMessages(null);
@@ -119,6 +123,7 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (changeFeedback != null) changeFeedback.start();
         if (!stack.isEmpty()) {
             render();
         }
@@ -257,6 +262,9 @@ public final class SettingsActivity extends Activity {
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
         LinearLayout design = ui.card(page);
+        choice(design, R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
+                ModuleSettings.readMaterialStyle(prefs),
+                selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
         ui.linkRow(design, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
         ui.linkRow(design, getString(R.string.glow_title), getString(R.string.glow_summary),
                 () -> open(() -> new AmbientGlowScreen(this, ui, prefs).open()));

@@ -516,4 +516,13 @@
     <string name="card_roundness_custom">角の半径を調整</string>
     <string name="card_roundness_desc">展開したカードの角を調整します。半径を大きくすると丸くなります。縮小表示とボタンの形は変わりません。</string>
     <string name="card_corner_radius_format">角の半径: %1$d dp</string>
+    <string name="setting_apply_soon">保存しました。まもなく適用されます。</string>
+    <string name="setting_apply_next_charge">保存しました。次回の充電接続から適用されます。</string>
+    <string name="setting_apply_next_card">保存しました。次にカードが表示されるときに適用されます。</string>
+    <string name="setting_apply_next_connection">保存しました。次回の接続状態の変化から適用されます。</string>
+    <string name="setting_apply_next_state">保存しました。次回の状態変化から適用されます。</string>
+    <string name="setting_apply_unconfirmed">SystemUIへの接続を確認できませんでした。変更が適用されない場合は再起動してください。</string>
+    <string name="material_style">カードの質感</string>
+    <string name="material_frosted">すりガラス</string>
+    <string name="material_classic">クラシック</string>
 </resources>

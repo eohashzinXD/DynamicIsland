@@ -516,4 +516,13 @@
     <string name="card_roundness_custom">Özel köşe yarıçapı</string>
     <string name="card_roundness_desc">Genişletilmiş kartların köşelerini ayarlar. Daha büyük yarıçap daha yuvarlak köşeler oluşturur. Küçük kapsülün ve düğmelerin şekilleri korunur.</string>
     <string name="card_corner_radius_format">Köşe yarıçapı: %1$d dp</string>
+    <string name="setting_apply_soon">Kaydedildi. Kısa süre içinde uygulanacak.</string>
+    <string name="setting_apply_next_charge">Kaydedildi. Bir sonraki şarj bağlantısında uygulanacak.</string>
+    <string name="setting_apply_next_card">Kaydedildi. Kart bir sonraki gösterildiğinde uygulanacak.</string>
+    <string name="setting_apply_next_connection">Kaydedildi. Bir sonraki bağlantı değişikliğinde uygulanacak.</string>
+    <string name="setting_apply_next_state">Kaydedildi. Bir sonraki durum değişikliğinde uygulanacak.</string>
+    <string name="setting_apply_unconfirmed">SystemUI bağlantısı doğrulanamadı. Değişiklikler uygulanmazsa SystemUI’yi yeniden başlatın.</string>
+    <string name="material_style">Kart malzemesi</string>
+    <string name="material_frosted">Buzlu cam</string>
+    <string name="material_classic">Klasik</string>
 </resources>

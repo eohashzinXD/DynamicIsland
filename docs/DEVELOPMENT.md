@@ -42,7 +42,10 @@ and the native [media capsule font family](https://github.com/488315/samsung_fra
 
 ## Runtime behaviour
 
+The expanded island defaults to Classic, with the existing fill, native blur, rim and media glow. Appearance → Card material can opt into the [frosted material](FROSTED-MATERIAL.md). Existing explicit selections are preserved. Foreground icons/buttons are shared unchanged by both materials.
+
 - The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread every few seconds (`ModuleSettings`); every getter falls back to its default when the file is unreadable.
+- Settings show a transient message after a saved value changes, with next-event timing for charging, connections and card timeouts. A fresh diagnostics ping checks the SystemUI connection only; it does not prove the value was applied. If no response arrives, the message offers the existing confirmed restart action. No individual preference is marked as always requiring a restart.
 - Each hook group is installed on its own (`SystemUiHooks.install`), so one that cannot attach does not take the others down. Hook bodies run through `SafeHook`, and each island source is collected inside its own try/catch.
 - `CrashGuard` counts unstable System UI starts and module-involved crashes in device-protected storage and keeps the module off after repeated failures. The state resets when the module version or the system build fingerprint changes, and an "off" verdict expires after 12 hours.
 - `Diagnostics` keeps a report (stages, facts, errors) and publishes it to the global setting `dynamicisland_report`, which the settings app reads.

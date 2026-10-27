@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialFrame;
 import android.content.Context;
 import android.graphics.Camera;
 import android.graphics.Canvas;
@@ -209,6 +211,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         remote = new RemoteCards(this, shapes, scene);
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
+        stackPainter.setMaterialFrameRequester(this::scheduleFrame);
         CardBridge bridge = new CardBridge(this, metrics, paints, scene, shapes, stackPainter);
         pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge);
         director = new Director(this, this.host, metrics, scene, shapes, bodies, mediaFx);
@@ -339,6 +342,36 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public void setBlurSink(BlurSink sink) {
         scene.blur = sink;
         sink.setPainter(stackPainter::paintInBlurSlot);
+    }
+
+    /** Already-filtered compositor pixels excluding this entire window; foreground is never part of it. */
+    public void setMaterialBackdrop(MaterialFrame frame) {
+        if (scene.materialFrame == frame) return;
+        scene.materialFrame = frame;
+        invalidate();
+        scheduleFrame();
+    }
+
+    /** Hard reset only when the host is actually hidden/detached, never on a missed readback. */
+    public void clearMaterialBackdrop() {
+        scene.materialFrame=null;
+        for(Card card:scene.cards)card.material.clear();
+    }
+
+    /** Capture the target stack extent up front, so opening does not chase a growing crop. */
+    public boolean materialBackdropRegion(Rect out) {
+        out.setEmpty();
+        if (!FrostedSurface.requested() || renderingPaused
+                || scene.cards.isEmpty() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA || scene.frozenByShade()) return false;
+        float bottom = 0;
+        for (Card card : scene.cards) {
+            bottom = Math.max(bottom, Math.max(card.cy.value() + card.h.value() / 2f,
+                    card.targetCy + card.body.h / 2f));
+        }
+        int[] location = new int[2];
+        getLocationOnScreen(location);
+        out.set(0, 0, metrics.screenW, (int)Math.ceil((bottom + location[1] + dp(64)) / 128f) * 128);
+        return !out.isEmpty();
     }
 
     public void setRemoteLayer(ViewGroup layer) {
@@ -787,7 +820,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         for (Card c : scene.cards) {
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
-                    || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
+                    || c.material.animating(now()) || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
@@ -848,6 +881,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        clearMaterialBackdrop();
         choreographer.removeFrameCallback(this);
         frameScheduled = false;
         lastFrameNanos = 0L;
@@ -988,6 +1022,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public void drawShadeCard(Canvas canvas, IslandItem item, float width) {
         shadeCards.draw(canvas, item, width);
     }
+
+    public boolean drawShadeCard(Canvas canvas, IslandItem item, float width, MaterialFrame backdrop, RectF screenBounds) {
+        return shadeCards.draw(canvas, item, width, backdrop, screenBounds);
+    }
+    public void clearShadeMaterial() { shadeCards.clearMaterial(); }
+    public boolean shadeMaterialAnimating() { return shadeCards.materialAnimating(); }
 
     public boolean shadeCardHasButton(IslandItem item, float width, float x, float y) {
         return shadeCards.hasButtonAt(item, width, x, y);

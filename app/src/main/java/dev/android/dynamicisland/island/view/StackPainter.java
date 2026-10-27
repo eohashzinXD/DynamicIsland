@@ -1,5 +1,8 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.view.media.MediaFx;
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialShape;
 import static dev.android.dynamicisland.island.graphics.Easing.easeOutBack;
 import static dev.android.dynamicisland.island.graphics.Easing.lerp;
 import static dev.android.dynamicisland.island.view.IslandView.clamp01;
@@ -36,6 +39,8 @@ final class StackPainter {
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
     private static final float GLASS_FROM = 0.1f;
+    /** The captured material has no lagging native surface to hide during a fold. */
+    private static final float FROSTED_FULL_AT = 0.65f;
     /** Stop the native backdrop well before the compact pill takes over; its compositor can lag a frame. */
     private static final float FOLD_BLUR_FADE_FROM = 0.1f;
     private static final float FOLD_BLUR_FADE_TO = 0.55f;
@@ -63,6 +68,7 @@ final class StackPainter {
     private float rimSettle = -1.0f;
     private int rimBase;
     private boolean drawFailureLogged;
+    private Runnable materialFrameRequester;
 
     StackPainter(Metrics m, Paints paints, Scene scene, Shapes shapes) {
         this.m = m;
@@ -70,6 +76,8 @@ final class StackPainter {
         this.scene = scene;
         this.shapes = shapes;
     }
+
+    void setMaterialFrameRequester(Runnable request) { materialFrameRequester=request; }
 
     /** Fade of a card's content: in once the card is nearly open, out quickly when it leaves. */
     static float contentAlpha(Card c, long t, float opening) {
@@ -181,7 +189,9 @@ final class StackPainter {
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     float opening = visualOpening(c, shapes.expansion(c));
-                    blur.place(c, slot, c.body.cornerRadius(m.cardRadius, slot.height()), alpha, blurFraction(c, opening));
+                    boolean frosted = FrostedSurface.requested();
+                    blur.place(c, slot, c.body.cornerRadius(m.cardRadius, slot.height()), alpha,
+                            frosted ? 0 : blurFraction(c, opening));
                 }
             }
         }
@@ -232,24 +242,36 @@ final class StackPainter {
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
         opening = visualOpening(c, opening);
-        paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
-        canvas.drawRoundRect(r, corner, corner, paints.card);
+        boolean canFrost = canvas.isHardwareAccelerated() && FrostedSurface.requested();
+        MediaFx music = canFrost && c.item.isMedia ? c.body.materialMusic() : null;
+        if (music != null) music.advance(t);
+        float material = frostedAmount(opening);
+        boolean frosted = c.material.draw(canvas, scene.materialFrame, r, corner, material, music, t);
+        // A capture can begin blending in this draw, after doFrame checked for
+        // motion. Explicitly schedule its following frames even on a static card.
+        if(frosted&&c.material.animating(t)&&materialFrameRequester!=null)materialFrameRequester.run();
+        if(canFrost&&!frosted&&materialFrameRequester!=null)materialFrameRequester.run();
+        if (!frosted) {
+            paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
+            canvas.drawRoundRect(r, corner, corner, paints.card);
+        }
         int morphOutline = Colors.withAlpha(c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE, scene.pillOutlineOpacity());
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
                 ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE)
                 : rimShader(r, 1.0f, rimSettled, morphOutline));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
-        canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
+        if (!frosted) canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
         float alpha = contentAlpha(c, t, opening);
         if (alpha <= IslandView.MIN_VISIBLE_ALPHA || c.body instanceof RemoteBody) {
             return;
         }
         int save = canvas.save();
         clip.reset();
-        clip.addRoundRect(r, corner, corner, Path.Direction.CW);
+        if (frosted) MaterialShape.path(clip, r, corner);
+        else clip.addRoundRect(r, corner, corner, Path.Direction.CW);
         canvas.clipPath(clip);
-        drawBackground(c.body, canvas, r, alpha);
+        if (!frosted || !c.item.isMedia) drawBackground(c.body, canvas, r, alpha);
         Canvas target = canvas;
         canvas = c.contentBlur.begin(target, r, contentBlurAmount(c, t, opening), m.dp(ContentBlur.RADIUS_DP));
         int contentSave = canvas.save();
@@ -276,6 +298,10 @@ final class StackPainter {
             c.contentBlur.end(target, canvas);
             target.restoreToCount(save);
         }
+    }
+
+    static float frostedAmount(float opening) {
+        return Easing.easeInOut(clamp01(opening / FROSTED_FULL_AT));
     }
 
     /** The light rim gradient of a card; rebuilt only when the card moved or changed height noticeably. */

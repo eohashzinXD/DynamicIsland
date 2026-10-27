@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.material.MaterialFrame;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ final class Scene {
     Layer bubbleOut;
     final List<Card> cards = new ArrayList<>();
     BlurSink blur;
+    MaterialFrame materialFrame;
 
     boolean suppressed;
     /** The open card is a notification popup that goes away by itself; touches elsewhere (typing) do not close it. */

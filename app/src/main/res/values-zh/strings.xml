@@ -516,4 +516,13 @@
     <string name="card_roundness_custom">自定义圆角半径</string>
     <string name="card_roundness_desc">调整展开卡片的圆角。半径越大，卡片越圆润。收起的胶囊和按钮形状保持不变。</string>
     <string name="card_corner_radius_format">圆角半径：%1$d dp</string>
+    <string name="setting_apply_soon">已保存。稍后生效。</string>
+    <string name="setting_apply_next_charge">已保存。下次连接充电器时生效。</string>
+    <string name="setting_apply_next_card">已保存。下次显示卡片时生效。</string>
+    <string name="setting_apply_next_connection">已保存。下次连接状态变化时生效。</string>
+    <string name="setting_apply_next_state">已保存。下次状态变化时生效。</string>
+    <string name="setting_apply_unconfirmed">无法确认 SystemUI 连接。如果更改未生效，请重启 SystemUI。</string>
+    <string name="material_style">卡片材质</string>
+    <string name="material_frosted">磨砂玻璃</string>
+    <string name="material_classic">经典</string>
 </resources>

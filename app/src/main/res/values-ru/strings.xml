@@ -516,4 +516,13 @@
     <string name="card_roundness_custom">Свой радиус углов</string>
     <string name="card_roundness_desc">Настройка углов раскрытых карточек. Чем больше радиус, тем круглее углы. Форма компактной капсулы и кнопок не меняется.</string>
     <string name="card_corner_radius_format">Радиус углов: %1$d dp</string>
+    <string name="setting_apply_soon">Сохранено. Изменения вступят в силу через несколько секунд.</string>
+    <string name="setting_apply_next_charge">Сохранено. Изменения вступят в силу при следующем подключении зарядки.</string>
+    <string name="setting_apply_next_card">Сохранено. Изменения вступят в силу при следующем показе карточки.</string>
+    <string name="setting_apply_next_connection">Сохранено. Изменения вступят в силу при следующем изменении подключения.</string>
+    <string name="setting_apply_next_state">Сохранено. Изменения вступят в силу при следующем изменении состояния.</string>
+    <string name="setting_apply_unconfirmed">Не удалось подтвердить соединение с SystemUI. Если изменения не применятся, перезапустите SystemUI.</string>
+    <string name="material_style">Материал карточек</string>
+    <string name="material_frosted">Матовое стекло</string>
+    <string name="material_classic">Классический</string>
 </resources>

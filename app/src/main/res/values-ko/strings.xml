@@ -516,4 +516,13 @@
     <string name="card_roundness_custom">모서리 반경 직접 조절</string>
     <string name="card_roundness_desc">펼친 카드의 모서리를 조절합니다. 반경이 클수록 더 둥글어집니다. 축소 알약과 버튼 모양은 유지됩니다.</string>
     <string name="card_corner_radius_format">모서리 반경: %1$d dp</string>
+    <string name="setting_apply_soon">저장했습니다. 잠시 후 적용됩니다.</string>
+    <string name="setting_apply_next_charge">저장했습니다. 다음 충전 연결부터 적용됩니다.</string>
+    <string name="setting_apply_next_card">저장했습니다. 다음 카드 표시부터 적용됩니다.</string>
+    <string name="setting_apply_next_connection">저장했습니다. 다음 연결 변경부터 적용됩니다.</string>
+    <string name="setting_apply_next_state">저장했습니다. 다음 상태 변경부터 적용됩니다.</string>
+    <string name="setting_apply_unconfirmed">SystemUI 연결을 확인하지 못했습니다. 적용되지 않으면 재시작해 주세요.</string>
+    <string name="material_style">카드 재질</string>
+    <string name="material_frosted">프로스티드 글라스</string>
+    <string name="material_classic">클래식</string>
 </resources>

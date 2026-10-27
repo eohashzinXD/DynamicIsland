@@ -525,4 +525,13 @@
     <string name="card_roundness_custom">Custom corner radius</string>
     <string name="card_roundness_desc">Adjusts the corners of expanded cards. A larger radius makes them rounder. The compact pill and buttons keep their shapes.</string>
     <string name="card_corner_radius_format">Corner radius: %1$d dp</string>
+    <string name="setting_apply_soon">Saved. Applies shortly.</string>
+    <string name="setting_apply_next_charge">Saved. Applies from the next charging connection.</string>
+    <string name="setting_apply_next_card">Saved. Applies the next time a card is shown.</string>
+    <string name="setting_apply_next_connection">Saved. Applies from the next connection change.</string>
+    <string name="setting_apply_next_state">Saved. Applies from the next state change.</string>
+    <string name="setting_apply_unconfirmed">Could not confirm the SystemUI connection. Restart it if changes do not apply.</string>
+    <string name="material_style">Card material</string>
+    <string name="material_frosted">Frosted glass</string>
+    <string name="material_classic">Classic</string>
 </resources>

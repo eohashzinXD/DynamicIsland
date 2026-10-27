@@ -57,6 +57,8 @@ public final class IslandWindow {
     private final SurfaceFader surfaceFader = new SurfaceFader();
     private final Rect pillSamplingRegion = new Rect();
     private PillBackgroundSampler pillSampler;
+    private MaterialCapture materialCapture;
+    private final Rect materialRegion = new Rect();
     private boolean pillSamplingRequested;
     /** Whether the root view has been added to the WindowManager. */
     private boolean added;
@@ -144,6 +146,7 @@ public final class IslandWindow {
     }
 
     void detach() {
+        if (materialCapture != null) { materialCapture.destroy(); materialCapture = null; }
         if (pillSampler != null) {
             pillSampler.destroy();
             pillSampler = null;
@@ -172,6 +175,8 @@ public final class IslandWindow {
                 pillSamplingRequested = false;
                 pillSampler.update(null, false);
             }
+            if (!shown && materialCapture != null) materialCapture.stop();
+            if (!shown) view.clearMaterialBackdrop();
         }
     }
 
@@ -299,6 +304,14 @@ public final class IslandWindow {
     /** Re-applies the surface fade before each frame: the surface can be recreated and lose it. */
     public boolean onPreDraw() {
         updatePillBackgroundSampling();
+        try {
+            boolean material = root.isHardwareAccelerated() && view.materialBackdropRegion(materialRegion);
+            if (material && materialCapture == null) materialCapture = new MaterialCapture(view, view::setMaterialBackdrop);
+            if (materialCapture != null) materialCapture.update(materialRegion, material);
+        } catch (Throwable t) {
+            if (materialCapture != null) materialCapture.stop();
+            XLog.once("material capture placement", t);
+        }
         if (!surfaceFader.isNeutral()) {
             applySurfaceFade();
         }
