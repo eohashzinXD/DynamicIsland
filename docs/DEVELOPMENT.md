@@ -149,6 +149,8 @@ This stable release consolidates the 0.1.13 development series and subsequent ca
 
 ## Known limitations
 
+The 0.1.14-dev12 quick-panel change targets the **compact pill disappearing when the system quick panel opens**, not a redesign of the expanded activity list. Its broad shade-open/close callback used to restore and reinstall every followed notification card. Only real overlay-card coverage changes now trigger that handoff. Once the compact pill is frozen out of sight, further panel-drag fractions do not schedule frames/window updates; closing the panel wakes the existing return spring. `QuickPanelGateTest` drives the real signal and animation for 50 cycles, retains the same shade card with zero extra height requests, and checks that an actual expanded-card handoff still restores the shade copy. This removes confirmed unnecessary work; it does not establish the cause of issue #22's reported 30–60-minute slowdown or demonstrate a device memory leak. Phone confirmation/logs are still needed.
+
 Open bugs are tracked as issues; the ones that are planned carry the `planned` label.
 
 - The status bar icons can come back a moment late after the shade is closed again; the cause is not known and has not been confirmed to be this module.

@@ -540,8 +540,13 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             }
         }
         applyShadeFade();
-        scheduleFrame();
-        notifyHost();
+        // After the compact pill has disappeared, subsequent panel-drag fractions
+        // need no frames or window updates. A return changes the spring target,
+        // so frozenByShade becomes false and the existing return animation wakes.
+        if (!scene.frozenByShade()) {
+            scheduleFrame();
+            notifyHost();
+        }
     }
 
     /**

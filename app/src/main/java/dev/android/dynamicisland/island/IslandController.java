@@ -300,9 +300,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void setShadeExpansion(float fraction) {
         IslandView view = placement.view();
         if (view != null) {
-            boolean pulled = view.shadePulled();
             view.setShadeFraction(fraction);
-            if (pulled != view.shadePulled()) dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+            // Compact-pill disappearance changes no overlay card coverage. The
+            // onIslandFrame coverage token handles real card handoffs, without
+            // rebuilding every notification row on each quick-panel open/close.
         }
     }
 
