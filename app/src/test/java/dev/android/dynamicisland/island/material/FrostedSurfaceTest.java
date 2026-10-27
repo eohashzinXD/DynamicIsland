@@ -98,8 +98,10 @@ public class FrostedSurfaceTest {
         assertTrue(outline.isConvex());
         FrostedSurface surface=new FrostedSurface();
         assertTrue(surface.draw(canvas,frame,new RectF(46,153,1118,400),100,1,null,1000));
-        assertTrue(surface.animating(1000));
+        assertFalse("prewarmed input is used immediately",surface.animating(1000));
+        Bitmap firstWarm=paintedShell(surface,1072,247);
         assertTrue(surface.draw(canvas,frame,new RectF(46,153,1118,400),100,1,null,1200));
+        assertTrue(firstWarm.sameAs(paintedShell(surface,1072,247)));
         assertFalse(surface.animating(1200));
         node.endRecording();assertTrue(node.hasDisplayList());
         // The shade route was previously left on drawBackground()/drawBody() only.
@@ -111,8 +113,20 @@ public class FrostedSurfaceTest {
         canvas=node.beginRecording();
         assertTrue(shade.drawShadeCard(canvas,item,360,frame,new RectF(46,153,406,153+height)));
         node.endRecording();
+        // A valid background must be prepared before the user opens a card.
+        dev.android.dynamicisland.island.view.IslandView compact=new dev.android.dynamicisland.island.view.IslandView(
+                RuntimeEnvironment.getApplication(),dev.android.dynamicisland.island.view.IslandHost.NONE);
+        compact.setGeometry(1164,582,40,24,false);compact.layout(0,0,1164,1600);compact.setItems(java.util.List.of(item));
+        long nanos=android.os.SystemClock.uptimeMillis()*1000000L;
+        for(int i=0;i<90;i++) {
+            org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(16));
+            compact.doFrame(nanos+=16000000L);
+        }
+        assertFalse(compact.isExpanded());assertTrue(compact.materialBackdropPrewarming());
+        assertTrue("capture starts while still compact",compact.materialBackdropRegion(new Rect()));
         prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE,ModuleSettings.MATERIAL_CLASSIC).commit();ModuleSettings.configurePreview(prefs);
         assertFalse(FrostedSurface.canUse(frame));
+        assertFalse("Classic never starts capture prewarming",compact.materialBackdropRegion(new Rect()));
         surface.clear();node.discardDisplayList();
         prefs.edit().clear().commit();ModuleSettings.configurePreview(prefs);
     }

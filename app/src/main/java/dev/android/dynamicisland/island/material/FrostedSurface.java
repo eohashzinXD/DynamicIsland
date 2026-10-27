@@ -52,7 +52,9 @@ public final class FrostedSurface {
             boolean bind=false;
             if(shader==null) {
                 shader=new RuntimeShader(FrostedShaderSource.CODE);paint.setShader(shader);
-                previous=current=new Input(null);bind=true;
+                // A compact-mode prewarm is already a valid background. Use it
+                // on the first morph frame instead of fading from artificial black.
+                previous=current=new Input(next);bind=true;
             }
             if(blending&&now-blendStartedAt>=CAPTURE_BLEND_MS) {
                 previous=current;blending=false;bind=true;

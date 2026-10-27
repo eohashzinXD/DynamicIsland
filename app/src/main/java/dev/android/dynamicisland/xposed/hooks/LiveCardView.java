@@ -3,8 +3,10 @@ package dev.android.dynamicisland.xposed.hooks;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.graphics.Path;
 import dev.android.dynamicisland.island.material.MaterialFrame;
 import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialShape;
 import dev.android.dynamicisland.island.window.ShadeMaterialBackdrop;
 import android.os.SystemClock;
 import android.view.HapticFeedbackConstants;
@@ -42,6 +44,8 @@ final class LiveCardView extends FrameLayout {
     private final ShadeMaterialAppearance materialAppearance=new ShadeMaterialAppearance();
     private final FrostedSurface remoteMaterial=new FrostedSurface();
     private final RectF materialLocal=new RectF(),materialScreen=new RectF();
+    private final Path remoteClip=new Path();
+    private boolean remoteFrosted;
 
     /** Touch gesture: the item and position at ACTION_DOWN, whether it left the slop, whether we own it. */
     private IslandItem downItem;
@@ -58,6 +62,7 @@ final class LiveCardView extends FrameLayout {
         setWillNotDraw(false);
         remote = new RemoteCardContent(this);
         renderer = new IslandView(ctx, null);
+        materialAppearance.follow(this, () -> !owner.isRestored());
         slop = ViewConfiguration.get(ctx).getScaledTouchSlop();
         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         setOnClickListener(v -> onTapped());
@@ -161,10 +166,13 @@ final class LiveCardView extends FrameLayout {
             materialLocal.set(0,0,getWidth(),getHeight());
             ShadeMaterialBackdrop.screenBounds(this,materialLocal,materialScreen);
             IslandItem latest = ShadeLiveCards.item(key);
+            remoteFrosted=false;
             if (latest != null && latest.remoteView != null) {
                 float radius=ModuleSettings.customCardRoundness() ? renderer.dp(ModuleSettings.cardCornerRadiusDp()) : getWidth()*100f/1072;
-                materialAppearance.sync(this,remoteMaterial.draw(canvas,frame,materialLocal,materialScreen,
-                        Math.min(radius,getHeight()/2f),1,null,IslandView.now()));
+                radius=Math.min(radius,getHeight()/2f);
+                remoteFrosted=remoteMaterial.draw(canvas,frame,materialLocal,materialScreen,radius,1,null,IslandView.now());
+                if(remoteFrosted)MaterialShape.path(remoteClip,materialLocal,radius);
+                materialAppearance.sync(this,remoteFrosted);
                 if (latest != current) {
                     current = latest;
                     post(this::requestLayout);
@@ -179,6 +187,17 @@ final class LiveCardView extends FrameLayout {
             scheduleRedraw();
         } catch (Throwable t) {
             owner.fail(t);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int save=canvas.save();
+        try {
+            if(remoteFrosted && remote.isShown())canvas.clipPath(remoteClip);
+            super.dispatchDraw(canvas);
+        } finally {
+            canvas.restoreToCount(save);
         }
     }
 

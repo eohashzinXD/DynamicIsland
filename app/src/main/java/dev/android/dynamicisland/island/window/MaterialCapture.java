@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 final class MaterialCapture {
     private static final int SAMPLE_WIDTH=420;
     private static final long PERIOD_MS=100;
+    private static final long PREWARM_PERIOD_MS=1000;
+    private long periodMs=PERIOD_MS;
     private final View host;
     private final Consumer<MaterialFrame> receiver;
     private final Handler main=new Handler(Looper.getMainLooper());
@@ -55,6 +57,9 @@ final class MaterialCapture {
         });
     }
     void update(Rect bounds,boolean enabled) {
+        update(bounds,enabled,false);
+    }
+    void update(Rect bounds,boolean enabled,boolean prewarming) {
         enabled=enabled&&!destroyed&&!failed&&bounds!=null&&!bounds.isEmpty()
                 &&host.isAttachedToWindow()&&host.isShown()&&host.getWindowVisibility()==View.VISIBLE;
         if(!enabled) { stop();return; }
@@ -71,7 +76,14 @@ final class MaterialCapture {
         if(active&&(oldWidth!=displaySize.x||oldHeight!=displaySize.y)){epoch++;requested.setEmpty();receiver.accept(null);}
         Rect safe=new Rect(bounds);
         if(!safe.intersect(0,0,displaySize.x,displaySize.y)) { stop();return; }
+        long nextPeriod=prewarming?PREWARM_PERIOD_MS:PERIOD_MS;
+        boolean changedMode=periodMs!=nextPeriod;periodMs=nextPeriod;
         if(!active) {epoch++;requested.set(safe);}
+        else if(changedMode) {
+            // Replace the full-display warm crop with the actual stack crop,
+            // keeping its already-published pixels while the new capture runs.
+            requested.set(safe);main.removeCallbacks(tick);main.post(tick);
+        }
         else if(!requested.contains(safe)) {
             // Keep a growing envelope through spring overshoot. In-flight
             // pixels from the smaller crop are usable (CLAMP) while the next
@@ -79,6 +91,9 @@ final class MaterialCapture {
             requested.union(safe);
         }
         if(!active) { active=true;main.post(tick); }
+    }
+    void refresh() {
+        if(active&&!busy){main.removeCallbacks(tick);main.post(tick);}
     }
     void stop() {
         if(!active)return;
@@ -95,11 +110,11 @@ final class MaterialCapture {
     }
     private void request() {
         if(!active||destroyed||failed)return;
-        if(busy){main.postDelayed(tick,PERIOD_MS);return;}
+        if(busy){main.postDelayed(tick,periodMs);return;}
         try {
             if(!host.isAttachedToWindow()||!host.isShown()||host.getWindowVisibility()!=View.VISIBLE) {stop();return;}
             SurfaceControl root=surface();
-            if(root==null||!root.isValid()) {main.postDelayed(tick,PERIOD_MS);return;}
+            if(root==null||!root.isValid()) {main.postDelayed(tick,periodMs);return;}
             if(copy==null) copy=SurfaceControl.class.getConstructor(SurfaceControl.class,String.class);
             if(isSame==null) isSame=SurfaceControl.class.getMethod("isSameSurface",SurfaceControl.class);
             SurfaceControl owned=copy.newInstance(root,"Island material capture exclusion");
@@ -140,12 +155,15 @@ final class MaterialCapture {
                 if(fault!=null){fail(fault);return;}
                 if(frame!=null) {
                     receiver.accept(frame);lastPublishedAt=SystemClock.uptimeMillis();
-                    Diagnostics.fact("card material backdrop","compositor below island; cropped, 10 Hz maximum");
+                    Diagnostics.fact("card material backdrop",periodMs==PREWARM_PERIOD_MS ? "compositor prewarmed while compact; 1 Hz" : "compositor below island; cropped, 10 Hz maximum");
                 }else missing();
             }catch(Throwable t){fail(t);}
             finally {
                 exclusion.release();
-                if(active&&!destroyed&&!failed)main.postDelayed(tick,Math.max(16,PERIOD_MS-(SystemClock.uptimeMillis()-start)));
+                if(active&&!destroyed&&!failed) {
+                    main.removeCallbacks(tick);
+                    main.postDelayed(tick,Math.max(16,periodMs-(SystemClock.uptimeMillis()-start)));
+                }
             }
         });
     }

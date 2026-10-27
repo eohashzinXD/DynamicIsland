@@ -42,6 +42,8 @@ and the native [media capsule font family](https://github.com/488315/samsung_fra
 
 ## Runtime behaviour
 
+Settings include [ranked offline search](SETTINGS-SEARCH.md), with translated names, related terms, Korean initials and bounded typo matching. Results navigate to existing controls without executing their actions.
+
 The expanded island defaults to Classic, with the existing fill, native blur, rim and media glow. Appearance → Card material can opt into the [frosted material](FROSTED-MATERIAL.md). Existing explicit selections are preserved. Foreground icons/buttons are shared unchanged by both materials.
 
 - The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread every few seconds (`ModuleSettings`); every getter falls back to its default when the file is unreadable.

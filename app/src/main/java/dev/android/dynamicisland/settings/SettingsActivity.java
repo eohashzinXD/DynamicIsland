@@ -57,10 +57,12 @@ public final class SettingsActivity extends Activity {
     private LinearLayout page;
     private ScrollView scroll;
     private SettingChangeFeedback changeFeedback;
+    private SettingsSearchScreen search;
     /** Builders of the open pages, the visible one on top. */
     private static final class PageState {
         final Runnable build;
         int scrollY;
+        String focusTitle,fallbackTitle;
         PageState(Runnable build) { this.build = build; }
     }
     private final Deque<PageState> stack = new ArrayDeque<>();
@@ -89,6 +91,8 @@ public final class SettingsActivity extends Activity {
         animation = new AnimationScreen(this, ui, prefs);
         position = new PositionScreen(this, ui, prefs);
         appearance = new AppearanceScreen(this, ui, prefs);
+        search = new SettingsSearchScreen(this, ui);
+        ui.setSearchAction(search::launch);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -108,12 +112,17 @@ public final class SettingsActivity extends Activity {
                 findViewById(android.R.id.content), this::confirmRestart);
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         open(this::hub);
+        if(savedInstanceState!=null) {
+            search.restore(savedInstanceState.getString("settings.search.query",""));
+            if(savedInstanceState.getBoolean("settings.search.open",false))open(search::open);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         changeFeedback.stop();
+        search.stop();
         saveScroll();
         position.stop();
         statusHandler.removeCallbacksAndMessages(null);
@@ -127,6 +136,15 @@ public final class SettingsActivity extends Activity {
         if (!stack.isEmpty()) {
             render();
         }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("settings.search.query",search.query());state.putBoolean("settings.search.open",search.visible());
+    }
+    @Override protected void onDestroy() {
+        if(search!=null)search.close();
+        super.onDestroy();
     }
 
     // ---------------------------------------------------------------- navigation
@@ -162,6 +180,7 @@ public final class SettingsActivity extends Activity {
             @Override public void onGlobalLayout() {
                 scroll.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 if (stack.peek() == state) scroll.scrollTo(0, state.scrollY);
+                if (stack.peek() == state && state.focusTitle != null) revealSearchTarget(state);
             }
         });
     }
@@ -169,6 +188,48 @@ public final class SettingsActivity extends Activity {
     /** Header of a sub page: back button and title. */
     void subPage(CharSequence title) {
         ui.pageHeader(page, title, this::goBack);
+    }
+
+    void openSearchResult(SettingsSearchCatalog.Row row) {
+        Runnable builder;
+        switch(row.route) {
+            case NOTIFICATIONS:builder=this::notificationsPage;break;
+            case EVENTS:builder=this::eventsPage;break;
+            case APPS:builder=this::appsPage;break;
+            case BEHAVIOR:builder=this::behaviorPage;break;
+            case ADVANCED:builder=this::advancedPage;break;
+            case ABOUT:builder=this::aboutPage;break;
+            case DIAGNOSTICS:builder=this::diagnosticsPage;break;
+            case POSITION:builder=position::open;break;
+            case CALIBRATION:builder=position::calibration;break;
+            case ANIMATION:builder=animation::open;break;
+            case ACCENT:builder=appearance::open;break;
+            case GLOW:builder=()->new AmbientGlowScreen(this,ui,prefs).open();break;
+            case ROUNDNESS:builder=()->new CardShapeScreen(this,ui,prefs).open();break;
+            case RULES:builder=rules::listPage;break;
+            case RULE_TOOLS:builder=rules::advancedPage;break;
+            default:builder=this::displayPage;break;
+        }
+        saveScroll();PageState state=new PageState(builder);
+        state.focusTitle=getString(row.title);state.fallbackTitle=row.fallback==0?null:getString(row.fallback);
+        stack.push(state);render();
+    }
+    private void revealSearchTarget(PageState state) {
+        View target=page.findViewWithTag(state.focusTitle);
+        if((target==null||!target.isEnabled())&&state.fallbackTitle!=null) {
+            target=page.findViewWithTag(state.fallbackTitle);
+            Toast.makeText(this,getString(R.string.search_parent_hint,state.fallbackTitle),Toast.LENGTH_LONG).show();
+        }
+        state.focusTitle=null;
+        if(target==null)return;
+        android.graphics.Rect bounds=new android.graphics.Rect();target.getDrawingRect(bounds);
+        page.offsetDescendantRectToMyCoords(target,bounds);
+        scroll.scrollTo(0,Math.max(0,bounds.top-ui.dp(88)));state.scrollY=scroll.getScrollY();
+        android.graphics.drawable.Drawable old=target.getForeground();
+        android.graphics.drawable.GradientDrawable highlight=ui.round(ui.accent,ui.dp(16));highlight.setAlpha(52);
+        target.setForeground(highlight);
+        android.animation.ObjectAnimator.ofInt(highlight,"alpha",52,0).setDuration(1500).start();
+        View selected=target;target.postDelayed(()->{if(selected.getForeground()==highlight)selected.setForeground(old);},1550);
     }
 
     // ---------------------------------------------------------------- preference access
@@ -202,6 +263,7 @@ public final class SettingsActivity extends Activity {
 
     private void hub() {
         ui.title(page, getString(R.string.app_name), getString(R.string.ui_home_hint), 28);
+        ui.searchEntry(page,search::launch);
         statusHero = ui.hero(page);
         ui.setHero(statusHero, false, getString(R.string.ui_checking_connection), getString(R.string.ui_status_hint));
         statusNonce = Diagnostics.requestStatus(this);

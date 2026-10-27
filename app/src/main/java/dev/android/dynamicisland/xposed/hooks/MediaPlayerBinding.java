@@ -55,6 +55,7 @@ final class MediaPlayerBinding {
         this.panel = new WeakReference<>(panel);
         Context ctx = player.getContext();
         renderer = new IslandView(ctx, null);
+        materialAppearance.follow(player, () -> item(player) != null);
         player.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override public void onViewAttachedToWindow(View view) { }
             @Override public void onViewDetachedFromWindow(View view) {

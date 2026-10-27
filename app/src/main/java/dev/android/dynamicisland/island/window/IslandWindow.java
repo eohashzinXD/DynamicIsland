@@ -77,6 +77,7 @@ public final class IslandWindow {
         windowManager = context.getSystemService(WindowManager.class);
 
         view = new IslandView(context, host);
+        view.setMaterialCaptureRefresh(()->{if(materialCapture!=null)materialCapture.refresh();});
         BlurLayer blur = new BlurLayer(context);
         view.setBlurSink(blur);
         FrameLayout remoteLayer = new FrameLayout(context);
@@ -307,7 +308,7 @@ public final class IslandWindow {
         try {
             boolean material = root.isHardwareAccelerated() && view.materialBackdropRegion(materialRegion);
             if (material && materialCapture == null) materialCapture = new MaterialCapture(view, view::setMaterialBackdrop);
-            if (materialCapture != null) materialCapture.update(materialRegion, material);
+            if (materialCapture != null) materialCapture.update(materialRegion, material, view.materialBackdropPrewarming());
         } catch (Throwable t) {
             if (materialCapture != null) materialCapture.stop();
             XLog.once("material capture placement", t);

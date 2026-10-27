@@ -46,6 +46,12 @@ The dev4 phone report confirms the new GPU material is actually running; it is n
 
 Run the visual capture with `./gradlew -Prender testReleaseUnitTest --tests '*FrostedMaterialRenderTest'`. Optional `MATERIAL_REVIEW_INPUTS` points to a directory containing `photo.png`, `apple.png`, and `busy.png`. Outputs are in `app/build/render/material/`. Full device parity still requires phone confirmation, especially when the firmware falls back to window-type capture.
 
+## Dev11 notification-shade perimeter
+
+The shade screenshot showed the short live card's corners intersecting another outline. Disabling `clipToOutline` on the row alone does not remove Samsung's explicit child `Canvas.clipPath`: the Samsung `ExpandableOutlineView` reference calls `getCustomClipPath(child)` and falls back to its circular `getClipPath(false)`. A scoped hook now supplies the same native path's rectangular bounds for content that actually contains a Frosted card. The renderer remains responsible for its G2 perimeter; the stock swipe bounds, content-height clip bounds, list clipping, ordinary notification rows and notification menus are retained.
+
+A pre-draw lease prepares the row, content ancestors and player's own outline before their first recorded frame, and hides the player's old background as well as the native row shell. Unchanged outline flags are not repeatedly written, avoiding an invalidation loop. Classic, low-performance mode, GPU failure, detach and the last owner leaving restore the stock state. Custom RemoteViews content is clipped to its own matching material perimeter. The native-graphics regression covers the formerly cut corner, retained rectangular limits, first-frame preparation and restoration. Actual One UI 9 phone confirmation is still required.
+
 ## Dev6 transmission correction
 
 The dev4/dev5 bright-background compensation was too neutral and opaque: ordinary bright cards approached a 72% → 60% scrim, a raised charcoal tint, and 90% luminance-preserving desaturation. This could itself produce the flat grey panel rejected in the device screenshots; it is not evidence that Samsung prevents blur-radius changes. The custom Frosted path filters the captured bitmap itself and suppresses the native SemBlur layer while it paints successfully. On a uniform backdrop, the filter preserves the colour, so changing blur radius cannot fix a transmission/colour-mixing defect.
@@ -73,6 +79,10 @@ Each accepted capture has an input bundle containing its texture, response field
 `MaterialCapture` tolerates short null/readback-root gaps for 200 ms before reporting a sustained loss. A `FrostedSurface` also retains a valid input for a short gap, then blends to its local opaque input rather than changing renderers. Input loss no longer clears shader, phase and geometry. Hidden/detached windows still hard-clear cached material. These are transient in-memory images; no screen data is saved by the app.
 
 The focused native pixel test now checks late capture past 500 ms, missing-frame hold, subsequent capture interpolation from the previous colour, and smooth sustained-loss fallback. The ordinary settled material and the music chroma enhancement remain the dev7 values.
+
+## Prewarming before expansion (dev10)
+
+The next phone recording showed ordinary notification cards changing from the local black input to the real backdrop after expansion had already begun. Interpolation alone cannot remove the delay of starting the first capture only once a card exists. Frosted now primes a full-display, 420px-wide backdrop while the compact island is visible, at 1 Hz. Touch-down requests a refresh. Expansion switches to the actual stack crop at the existing 10 Hz maximum; in-flight warm pixels remain usable, and the envelope is not kept full-screen for expanded captures. A surface created with a prewarmed frame uses it immediately, rather than starting another artificial black fade. Hidden, paused, shade-obscured, low-performance and Classic states do not prewarm. The focused test verifies capture eligibility while compact and immediate use of an available frame; real phone confirmation is still needed.
 
 ## Music
 

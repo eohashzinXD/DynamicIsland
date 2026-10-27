@@ -362,7 +362,14 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public boolean materialBackdropRegion(Rect out) {
         out.setEmpty();
         if (!FrostedSurface.requested() || renderingPaused
-                || scene.cards.isEmpty() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA || scene.frozenByShade()) return false;
+                || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA || scene.frozenByShade()) return false;
+        if(scene.cards.isEmpty()) {
+            if(scene.mode!=Mode.COMPACT||scene.primary==null)return false;
+            // MaterialCapture clips this to the physical display. Prime the
+            // background before a tap; do not wait for an expanded card to exist.
+            out.set(0,0,metrics.screenW,Math.max(getResources().getDisplayMetrics().heightPixels,getHeight()));
+            return !out.isEmpty();
+        }
         float bottom = 0;
         for (Card card : scene.cards) {
             bottom = Math.max(bottom, Math.max(card.cy.value() + card.h.value() / 2f,
@@ -373,6 +380,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         out.set(0, 0, metrics.screenW, (int)Math.ceil((bottom + location[1] + dp(64)) / 128f) * 128);
         return !out.isEmpty();
     }
+
+    public boolean materialBackdropPrewarming() { return scene.cards.isEmpty(); }
+    private Runnable materialCaptureRefresh;
+    public void setMaterialCaptureRefresh(Runnable refresh) { materialCaptureRefresh=refresh; }
 
     public void setRemoteLayer(ViewGroup layer) {
         remote.setLayer(layer);
@@ -1087,6 +1098,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         try {
+            if(e.getActionMasked()==MotionEvent.ACTION_DOWN&&materialCaptureRefresh!=null)materialCaptureRefresh.run();
             touchFrame();
             return touch.handle(e);
         } catch (Throwable t) {
