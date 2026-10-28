@@ -579,4 +579,10 @@
     <string name="search_terms_language">language translation English Korean Japanese Chinese Russian Turkish locale</string>
     <string name="search_terms_rules">rule rules automation custom parser pattern delivery taxi navigation food parcel tracking</string>
     <string name="search_terms_torch">flashlight torch light lamp</string>
+
+    <!-- Alternate flashlight controls -->
+    <string name="torch_style">Flashlight controls</string>
+    <string name="torch_style_desc">Choose the classic brightness slider or an expanding beam. Tap the flashlight to toggle power and drag the curved control to adjust brightness.</string>
+    <string name="torch_style_classic">Classic slider</string>
+    <string name="torch_style_beam">Expanding beam</string>
 </resources>

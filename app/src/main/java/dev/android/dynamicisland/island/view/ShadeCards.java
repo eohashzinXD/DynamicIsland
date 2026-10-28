@@ -38,7 +38,7 @@ final class ShadeCards {
         body = null;
     }
     void clearMaterial() { material.clear(); }
-    boolean materialAnimating() { return material.animating(IslandView.now()); }
+    boolean materialAnimating() { return material.animating(IslandView.now()) || body != null && body.animating(IslandView.now()); }
 
     private CardBody bodyFor(IslandItem wanted, float w) {
         view.followFont();

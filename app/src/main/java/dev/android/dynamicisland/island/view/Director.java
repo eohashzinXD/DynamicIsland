@@ -83,6 +83,13 @@ final class Director {
 
     private void collapseIfExpanded() {
         if (scene.mode == Mode.EXPANDED) {
+            long remaining=0, now=IslandView.now();
+            for(Card card:scene.cards) if(!card.leaving)
+                remaining=Math.max(remaining,card.item.keepExpandedUntilUptime-now);
+            if(remaining>0) {
+                scheduleAutoCollapse(remaining);
+                return;
+            }
             collapse();
         }
     }

@@ -570,4 +570,10 @@
     <string name="search_terms_language">言語 翻訳 英語 韓国語 日本語 中国語 ロシア語 トルコ語</string>
     <string name="search_terms_rules">ルール 規則 自動化 カスタム 解析 パターン 配達 タクシー ナビ 荷物 追跡</string>
     <string name="search_terms_torch">懐中電灯 ライト フラッシュ トーチ</string>
+
+    <!-- Alternate flashlight controls -->
+    <string name="torch_style">ライトの操作方法</string>
+    <string name="torch_style_desc">従来の明るさスライダーと広がる光を選べます。ライトをタップしてオン・オフし、曲線のつまみをドラッグして明るさを調整します。</string>
+    <string name="torch_style_classic">従来のスライダー</string>
+    <string name="torch_style_beam">広がる光</string>
 </resources>

@@ -403,6 +403,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     @Override
     public void onExpandedChanged(boolean expanded) {
+        sources.torch.onControlsExpanded(expanded);
         haptics.tick();
         dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         if (!expanded) requestRefresh();

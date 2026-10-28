@@ -128,6 +128,7 @@ public final class ModuleSettings {
     public static final String KEY_EVENT_TOGGLES = "event_toggles";
     /** The flashlight card shown on the island while the torch is on. */
     public static final String KEY_TORCH_PILL = "torch_pill";
+    public static final String KEY_TORCH_STYLE = "torch_style";
     public static final String KEY_PRIVACY = "privacy_indicator";
     public static final String KEY_PRIVACY_LOCATION = "privacy_location";
     public static final String KEY_OTP_CARD = "otp_card";
@@ -215,6 +216,7 @@ public final class ModuleSettings {
     private static volatile Runnable onSwitchesChanged;
     private static volatile boolean eventToggles = true;
     private static volatile boolean torchPill = true;
+    private static volatile int torchStyle;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
     private static volatile boolean otpCard = true;
@@ -539,6 +541,7 @@ public final class ModuleSettings {
             readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
+            torchStyle = source.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
@@ -572,6 +575,7 @@ public final class ModuleSettings {
         pillOutlineMode = readPillOutlineMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
         materialStyle = readMaterialStyle(settings);
+        torchStyle = settings.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
         showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
         eventCharging = settings.getBoolean(KEY_EVENT_CHARGING, true);
         readOptionalDeviceSettings(settings);
@@ -641,7 +645,7 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
                 + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
@@ -799,6 +803,7 @@ public final class ModuleSettings {
         ensureStarted();
         return torchPill;
     }
+    public static boolean torchBeamStyle() { ensureStarted(); return torchStyle == 1; }
 
     /** Camera / microphone in use island. */
     public static boolean privacyIndicator() {

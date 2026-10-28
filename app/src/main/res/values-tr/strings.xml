@@ -570,4 +570,10 @@
     <string name="search_terms_language">dil çeviri İngilizce Korece Japonca Çince Rusça Türkçe yerel</string>
     <string name="search_terms_rules">kural kurallar otomasyon özel ayrıştırıcı desen teslimat taksi navigasyon paket takip</string>
     <string name="search_terms_torch">el feneri fener ışık flaş</string>
+
+    <!-- Alternate flashlight controls -->
+    <string name="torch_style">El feneri denetimleri</string>
+    <string name="torch_style_desc">Klasik parlaklık kaydırıcısını veya genişleyen ışını seçin. Açıp kapatmak için el fenerine dokunun, parlaklığı ayarlamak için kavisli denetimi sürükleyin.</string>
+    <string name="torch_style_classic">Klasik kaydırıcı</string>
+    <string name="torch_style_beam">Genişleyen ışın</string>
 </resources>

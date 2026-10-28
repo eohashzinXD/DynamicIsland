@@ -189,6 +189,7 @@ final class TouchController {
                 view.sliderBody = slider;
                 view.sliderFraction = sliderStart;
                 lastSliderFraction = slider.snapped(sliderStart);
+                slider.onSliderStart();
                 view.getParent().requestDisallowInterceptTouchEvent(true);
                 view.invalidate();
             }
@@ -228,6 +229,7 @@ final class TouchController {
         }
         if (view.sliderBody != null && downCard != null) {
             view.sliderFraction = view.sliderBody.valueAfterDrag(sliderStart, x(e) - downX);
+            view.sliderBody.onSliderMove(y(e) - downY);
             tellSlider(view.sliderBody);
             view.scheduleFrame();
             view.invalidate();
@@ -351,6 +353,7 @@ final class TouchController {
 
     private void finishSlider() {
         SliderBody body = view.sliderBody;
+        if (body != null) body.onSliderEnd();
         view.sliderBody = null;
         lastSliderFraction = -1.0f;
         if (body != null) {
@@ -408,6 +411,7 @@ final class TouchController {
             host.onShadeDragEvent(e);
         }
         view.seekBody = null;
+        if (view.sliderBody != null) view.sliderBody.onSliderEnd();
         view.sliderBody = null;
         releaseStack();
         buttons.release();

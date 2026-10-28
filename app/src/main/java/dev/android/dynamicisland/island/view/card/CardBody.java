@@ -62,6 +62,7 @@ public abstract class CardBody {
     }
 
     public MediaFx materialMusic() { return null; }
+    public boolean animating(long now) { return false; }
 
     /** The button under ({@code lx}, {@code ly}) in body coordinates, or null. */
     public Btn hit(float lx, float ly) {

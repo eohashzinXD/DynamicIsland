@@ -111,6 +111,8 @@ final class SettingsSearchCatalog {
         add(Route.EVENTS,R.string.setting_event_headset,R.string.setting_event_headset_desc,R.string.search_terms_bluetooth,0);
         add(Route.EVENTS,R.string.setting_event_toggles,R.string.setting_event_toggles_desc,0,0);
         add(Route.EVENTS,R.string.setting_torch_pill,R.string.setting_torch_pill_desc,R.string.search_terms_torch,0);
+        add(Route.EVENTS,R.string.torch_style,R.string.torch_style_desc,R.string.search_terms_torch,R.string.setting_torch_pill,
+                R.string.torch_style_classic,R.string.torch_style_beam);
         add(Route.EVENTS,R.string.setting_privacy,R.string.setting_privacy_desc,R.string.search_terms_privacy,0);
         add(Route.EVENTS,R.string.setting_privacy_location,R.string.setting_privacy_location_desc,R.string.search_terms_location,R.string.setting_privacy);
         add(Route.APPS,R.string.apps_mode,R.string.apps_only_listed_desc,R.string.search_terms_apps,0,R.string.apps_blacklist,R.string.apps_whitelist);

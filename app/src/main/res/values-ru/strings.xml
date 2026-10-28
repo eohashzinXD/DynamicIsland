@@ -570,4 +570,10 @@
     <string name="search_terms_language">язык перевод английский корейский японский китайский русский турецкий</string>
     <string name="search_terms_rules">правило правила автоматизация пользовательский шаблон доставка такси навигация посылка отслеживание</string>
     <string name="search_terms_torch">фонарик фонарь свет вспышка</string>
+
+    <!-- Alternate flashlight controls -->
+    <string name="torch_style">Управление фонариком</string>
+    <string name="torch_style_desc">Выберите обычный ползунок яркости или расширяющийся луч. Нажмите на фонарик для включения и выключения, перетаскивайте изогнутый регулятор для изменения яркости.</string>
+    <string name="torch_style_classic">Обычный ползунок</string>
+    <string name="torch_style_beam">Расширяющийся луч</string>
 </resources>

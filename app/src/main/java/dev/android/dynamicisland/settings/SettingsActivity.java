@@ -425,6 +425,10 @@ public final class SettingsActivity extends Activity {
         toggle(device, R.string.setting_event_headset, R.string.setting_event_headset_desc, ModuleSettings.KEY_EVENT_HEADSET, false);
         toggle(device, R.string.setting_event_toggles, R.string.setting_event_toggles_desc, ModuleSettings.KEY_EVENT_TOGGLES, true);
         toggle(device, R.string.setting_torch_pill, R.string.setting_torch_pill_desc, ModuleSettings.KEY_TORCH_PILL, true);
+        choice(device, R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
+                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0,
+                style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
+        ui.details(page, getString(R.string.ui_details), getString(R.string.torch_style_desc));
         ui.category(page, getString(R.string.group_privacy));
         LinearLayout privacy = ui.card(page);
         Switch indicator = toggle(privacy, R.string.setting_privacy, R.string.setting_privacy_desc, ModuleSettings.KEY_PRIVACY, true);

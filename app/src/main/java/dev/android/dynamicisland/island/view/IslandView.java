@@ -176,6 +176,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     private final FramePacer framePacer = new FramePacer();
+    private TorchBeamVisual torchBeamVisual;
+    public TorchBeamVisual torchBeamVisual() {
+        if (torchBeamVisual == null) torchBeamVisual = new TorchBeamVisual();
+        return torchBeamVisual;
+    }
     private boolean renderingPaused;
     private long touchActiveUntil;
     private boolean frameScheduled;
@@ -836,6 +841,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         for (Card c : scene.cards) {
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
+                    || c.body.animating(now())
                     || c.material.animating(now()) || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
         }
         if (waveItem != null) {

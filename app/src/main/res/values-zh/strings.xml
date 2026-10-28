@@ -570,4 +570,10 @@
     <string name="search_terms_language">语言 翻译 英语 韩语 日语 中文 俄语 土耳其语</string>
     <string name="search_terms_rules">规则 自动化 自定义 解析 模式 外卖 配送 出租车 导航 包裹 跟踪</string>
     <string name="search_terms_torch">手电筒 闪光灯 照明</string>
+
+    <!-- Alternate flashlight controls -->
+    <string name="torch_style">手电筒控制方式</string>
+    <string name="torch_style_desc">选择经典亮度滑块或扩散光束。点击手电筒切换开关，拖动弧形控件调整亮度。</string>
+    <string name="torch_style_classic">经典滑块</string>
+    <string name="torch_style_beam">扩散光束</string>
 </resources>
