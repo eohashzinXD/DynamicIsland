@@ -140,7 +140,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             requestRefresh();
             HideDuplicated.rebuild();
             ShadeMediaPlayer.refreshVisiblePlayers();
-            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards(true);
         }));
         ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
             placement.updateGeometry();
@@ -389,13 +389,13 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     @Override
-    public void onPeekClosed() {
+    public void onPeekClosed(String key) {
         IslandWindow window = placement.window();
         if (window != null && window.isReplying()) {
             window.hideReply(); // the card was closed under the reply field (a swipe): the field goes with it
         }
         IslandItem showing = sources.peeks.showing();
-        if (showing != null) {
+        if (showing != null && showing.key.equals(key)) {
             sources.peeks.dismiss(showing);
         }
         requestRefresh();
