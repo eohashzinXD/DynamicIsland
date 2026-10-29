@@ -1,9 +1,7 @@
 package dev.android.dynamicisland.island;
 
 import android.content.Context;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,8 +36,9 @@ public final class IslandText {
         return CACHE.computeIfAbsent(language, name -> {
             Properties values = new Properties();
             if (!name.matches("[a-zA-Z-]+")) return values;
-            try (InputStream input = IslandText.class.getResourceAsStream(ROOT + name + ".properties")) {
-                if (input != null) values.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+            String raw = EmbeddedResources.get(ROOT + name + ".properties");
+            try (StringReader input = raw == null ? null : new StringReader(raw)) {
+                if (input != null) values.load(input);
             } catch (java.io.IOException ignored) {
                 // Missing locale data must not break SystemUI; the caller tries the English catalog.
             }
