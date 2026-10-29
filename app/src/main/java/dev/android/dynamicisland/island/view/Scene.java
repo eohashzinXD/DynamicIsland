@@ -32,6 +32,8 @@ final class Scene {
     MaterialFrame materialFrame;
 
     boolean suppressed;
+    /** The display is entering sleep; the visual gate owns the exit, input stops immediately. */
+    boolean sleeping;
     /** The open card is a notification popup that goes away by itself; touches elsewhere (typing) do not close it. */
     boolean peekOpen;
     /** The user is typing a reply on the open card: nothing closes it by itself until that is over. */

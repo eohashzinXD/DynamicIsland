@@ -292,6 +292,19 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         placement.setDozing(value);
     }
 
+    /** Early power transition, before keyguard/AOD can cover the exit animation. */
+    public void setSleeping(boolean sleeping) {
+        if (Looper.myLooper() != main.getLooper()) { main.post(() -> setSleeping(sleeping)); return; }
+        if (sleeping) recordingInput.setTarget(null);
+        placement.setSleeping(sleeping);
+    }
+
+    public void finishSleeping() {
+        if (Looper.myLooper() != main.getLooper()) { main.post(this::finishSleeping); return; }
+        recordingInput.setTarget(null);
+        placement.finishSleeping();
+    }
+
     /** @param state non-zero while the status bar is hidden (full-screen app) */
     public void setStatusBarWindowState(int state) {
         placement.setStatusBarWindowState(state);

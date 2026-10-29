@@ -55,6 +55,7 @@ final class Footprint {
     /** The part of the window that should receive touches; everything else lets them through. */
     void touchRegion(Region out) {
         out.setEmpty();
+        if (scene.sleeping) return;
         float pad = m.dp(TOUCH_PAD_DP);
         if (scene.mode == Mode.HIDDEN) {
             if (host.hasMinimized() && !scene.suppressed && scene.shadeAlpha() > 0.5f) {

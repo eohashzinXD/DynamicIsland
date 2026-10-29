@@ -181,6 +181,16 @@ public final class IslandWindow {
         }
     }
 
+    /** Also stop workers when the display stops producing frames before a final pre-draw can run. */
+    public void stopBackdropSampling() {
+        if (materialCapture != null) materialCapture.stop();
+        if (pillSampler != null && pillSamplingRequested) {
+            pillSamplingRequested = false;
+            pillSampler.update(null, false);
+        }
+        view.clearMaterialBackdrop();
+    }
+
     // ---- window geometry and touch -------------------------------------------------------------
 
     /** Resizes the window to the island's current extent (at least 1 px so the window stays valid). */

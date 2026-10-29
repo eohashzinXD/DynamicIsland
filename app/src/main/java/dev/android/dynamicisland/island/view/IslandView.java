@@ -504,15 +504,56 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             collapse();
         }
         springs.suppress.animateTo(value ? 0.0f : 1.0f, value ? 0.18f : 0.32f, 1.0f);
+        if (!value) retargetVisibilityGate();
         scheduleFrame();
     }
 
     public boolean isSuppressedNow() {
-        return scene.suppressed;
+        return scene.suppressed || scene.sleeping;
+    }
+
+    /** Begin before keyguard/doze removes the window, sharing the existing liquid gate with the shade. */
+    public void setSleeping(boolean sleeping) {
+        if (scene.sleeping == sleeping) return;
+        if (sleeping) {
+            long now = android.os.SystemClock.uptimeMillis();
+            MotionEvent cancel = MotionEvent.obtain(now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+            try { touch.handle(cancel); } finally { cancel.recycle(); }
+        }
+        scene.sleeping = sleeping;
+        if (sleeping) {
+            if (scene.mode == Mode.EXPANDED) collapse();
+            ticker.cancel();
+        }
+        // A wake on the lock screen must not reopen the gate before keyguard permits the reveal.
+        if (sleeping || !scene.suppressed) retargetVisibilityGate();
+        scheduleFrame();
+        notifyHost();
+    }
+
+    /** The display is off: no unfinished spring or stale surface may be exposed on the next wake. */
+    public void finishSleeping() {
+        setSleeping(true);
+        springs.shadeGate.snapTo(0);
+        applyShadeFade();
+        director.finishSleeping();
+        stackPainter.placeBlurs();
+        remote.sync();
+        ticker.cancel();
+        scheduleFrame();
+        notifyHost();
+    }
+
+    private void retargetVisibilityGate() {
+        boolean gone = scene.shadeGone || scene.sleeping;
+        if (scene.sleeping) springs.shadeGate.animateTo(0, .24f, 1f);
+        else springs.shadeGate.animateTo(gone ? 0 : 1,
+                gone ? SHADE_GO_RESPONSE : SHADE_BACK_RESPONSE,
+                gone ? SHADE_GO_DAMPING : SHADE_BACK_DAMPING);
     }
 
     public void reveal() {
-        if (scene.suppressed) {
+        if (isSuppressedNow()) {
             return; // suppressed again while the reveal delay ran; leaving it stays the job of setSuppressed(false)
         }
         springs.suppress.snapTo(1.0f);
@@ -538,11 +579,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         boolean gone = scene.shadeGone ? clamped > SHADE_BACK_AT : clamped > SHADE_GONE_AT;
         if (gone != scene.shadeGone) {
             scene.shadeGone = gone;
-            if (gone) {
-                springs.shadeGate.animateTo(0.0f, SHADE_GO_RESPONSE, SHADE_GO_DAMPING);
-            } else {
-                springs.shadeGate.animateTo(1.0f, SHADE_BACK_RESPONSE, SHADE_BACK_DAMPING);
-            }
+            if (scene.sleeping || !scene.suppressed) retargetVisibilityGate();
         }
         applyShadeFade();
         // After the compact pill has disappeared, subsequent panel-drag fractions
@@ -596,7 +633,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     /** Incoming cards may replace a manual card, but never a reply or a pulled-down shade. */
     public boolean canPeek() {
-        return metrics.screenW > 0 && !scene.suppressed && !scene.held && !scene.shadePulled();
+        return metrics.screenW > 0 && !isSuppressedNow() && !scene.held && !scene.shadePulled();
     }
 
     public boolean isShowingCard(IslandItem item) {
@@ -680,7 +717,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     public boolean needsAudio() {
-        if (ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
+        if (scene.sleeping || ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
         if (scene.mode != Mode.COMPACT || scene.visibleAlpha() < 0.2f) {
             return false;
         }
@@ -696,7 +733,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public String recordingInputTarget() {
         if (!ModuleSettings.concurrentRecordingInput() || renderingPaused || !isAttachedToWindow()
                 || !isShown() || getWindowVisibility() != VISIBLE || scene.visibleAlpha() < .2f
-                || scene.suppressed || scene.frozenByShade()) return null;
+                || isSuppressedNow() || scene.frozenByShade()) return null;
         if (scene.mode == Mode.EXPANDED) {
             for (Card card : scene.cards) {
                 if (!card.leaving && capturesRecording(card.item)) return card.item.key;
@@ -767,6 +804,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         if (scene.frozenByShade()) {
             lastFrameNanos = 0L;
+            if (scene.sleeping && isFullyHidden()) {
+                director.finishSleeping();
+                stackPainter.placeBlurs();
+                remote.sync();
+            }
             ticker.cancel();
             notifyHost();
             return;
@@ -796,6 +838,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         active |= scene.mainIn != null && !scene.mainIn.settled(t);
         active |= scene.bubbleIn != null && !scene.bubbleIn.settled(t);
         active |= hasContinuousMotion(dt);
+        if (scene.sleeping && isFullyHidden()) director.finishSleeping();
         stackPainter.placeBlurs();
         remote.sync();
         if (isFullyHidden()) ticker.cancel(); else scheduleTick();
@@ -1109,6 +1152,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         try {
+            if (scene.sleeping) return false;
             if(e.getActionMasked()==MotionEvent.ACTION_DOWN&&materialCaptureRefresh!=null)materialCaptureRefresh.run();
             touchFrame();
             return touch.handle(e);

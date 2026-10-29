@@ -379,6 +379,24 @@ final class Director {
         expand(Collections.singletonList(item), ms);
     }
 
+    /** Once the display is dark, do not carry half-folded cards or their blur surfaces into a wake. */
+    void finishSleeping() {
+        cancelAutoCollapse();
+        view.removeCallbacks(fadePillBlob);
+        boolean hadCards = !scene.cards.isEmpty();
+        for (Card card : scene.cards) {
+            if (scene.blur != null) scene.blur.release(card);
+            card.material.clear();
+        }
+        scene.cards.clear();
+        scene.mainOut = null;
+        scene.bubbleOut = null;
+        scene.contentHandoff = null;
+        sp.pillBlob.snapTo(1);
+        sp.outlineFade.snapTo(1);
+        if (hadCards) host.onWindowHeightNeeded(m.compactWindowHeight());
+    }
+
     /** The items changed while the stack is open: reuse the cards that stay, let the others leave. */
     private void rebuildStack() {
         List<IslandItem> show;
