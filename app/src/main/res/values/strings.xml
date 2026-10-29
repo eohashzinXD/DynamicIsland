@@ -93,6 +93,9 @@
     <string name="group_calls">Calls</string>
     <string name="group_charging">Device events</string>
     <string name="group_privacy">Privacy indicators</string>
+    <string name="group_events_power">Charging</string>
+    <string name="group_events_audio">Sound and headphones</string>
+    <string name="group_events_quick">Quick settings and flashlight</string>
     <string name="group_custom">Your own rules</string>
     <string name="seconds_format">%d s</string>
     <string name="apps_mode">App access mode</string>

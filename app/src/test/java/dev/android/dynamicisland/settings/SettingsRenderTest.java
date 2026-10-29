@@ -33,12 +33,10 @@ public class SettingsRenderTest {
         for (String page : new String[] {"displayPage", "notificationsPage", "eventsPage", "appsPage", "behaviorPage", "advancedPage", "aboutPage", "diagnosticsPage"}) {
             show(activity, activity, page, prefix + page);
         }
-        show(activity, field(activity, "animation"), "open", prefix + "animationPage");
         show(activity, field(activity, "position"), "open", prefix + "positionPage");
         show(activity, field(activity, "position"), "calibration", prefix + "calibrationPage");
         show(activity, field(activity, "appearance"), "open", prefix + "coloursPage");
         show(activity, rules, "advancedPage", prefix + "rulesAdvanced");
-        show(activity, rules, "listPage", prefix + "rulesList");
         show(activity, field(rules, "wizard"), "page", prefix + "ruleWizard");
         show(activity, rules, "testPage", prefix + "rulesTest");
         java.util.List<android.widget.EditText> fields = new java.util.ArrayList<>();

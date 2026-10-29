@@ -587,7 +587,14 @@ public final class ModuleSettings {
         cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
-        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
+        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+        compactEventIcons = settings.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
+        hideBatteryIcon = settings.getBoolean(KEY_HIDE_BATTERY_ICON, true);
+        visualizer = settings.getBoolean(KEY_VISUALIZER, true);
+        haptics = settings.getBoolean(KEY_HAPTICS, true);
+        autoCollapseS = settings.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
+        eventToggles = settings.getBoolean(KEY_EVENT_TOGGLES, true);
+        torchPill = settings.getBoolean(KEY_TORCH_PILL, true);
         readGlow(settings);
     }
 

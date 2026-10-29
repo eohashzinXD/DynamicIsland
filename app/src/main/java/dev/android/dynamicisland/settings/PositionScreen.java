@@ -74,6 +74,8 @@ final class PositionScreen {
                 });
         ui.actionRow(sizing, activity.getString(R.string.ui_reset_size), activity.getString(R.string.ui_reset_size_summary), () -> { resetSize(); rebuild(); });
         ui.details(page, activity.getString(R.string.ui_details), activity.getString(R.string.size_note));
+        LinearLayout hole = ui.card(page);
+        ui.linkRow(hole, activity.getString(R.string.ui_camera_calibration), activity.getString(R.string.ui_camera_calibration_summary), () -> activity.open(this::calibration));
     }
 
     void calibration() {

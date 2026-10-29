@@ -346,6 +346,53 @@ final class OneUi {
         return (TextView) ((LinearLayout) box.getChildAt(0)).getChildAt(1);
     }
 
+    /**
+     * A choice shown as side-by-side chips: tapping one selects it at once, with no dialog in between, so
+     * the preview above can show the result. The title row carries the tag the search jumps to.
+     */
+    LinearLayout chipRow(LinearLayout group, CharSequence title, CharSequence[] labels, int selected, java.util.function.IntConsumer onSelect) {
+        separator(group);
+        LinearLayout box = new LinearLayout(ctx);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setTag(title.toString());
+        box.setPadding(dp(22), dp(14), dp(16), dp(14));
+        box.addView(text(title, 17, textColor));
+        LinearLayout chips = new LinearLayout(ctx);
+        chips.setOrientation(LinearLayout.HORIZONTAL);
+        chips.setPadding(0, dp(10), 0, 0);
+        TextView[] views = new TextView[labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            TextView chip = text(labels[i], 14, textColor);
+            chip.setGravity(Gravity.CENTER);
+            chip.setMinHeight(dp(44));
+            chip.setMaxLines(2);
+            chip.setPadding(dp(8), dp(6), dp(8), dp(6));
+            chip.setContentDescription(title + ", " + labels[i]);
+            views[i] = chip;
+            final int index = i;
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1);
+            if (i > 0) p.leftMargin = dp(8);
+            chips.addView(chip, p);
+            chip.setOnClickListener(v -> {
+                paintChips(views, index);
+                onSelect.accept(index);
+            });
+        }
+        paintChips(views, selected);
+        box.addView(chips, new LinearLayout.LayoutParams(-1, -2));
+        group.addView(box, new LinearLayout.LayoutParams(-1, -2));
+        return box;
+    }
+
+    private void paintChips(TextView[] views, int selected) {
+        for (int i = 0; i < views.length; i++) {
+            boolean on = i == selected;
+            views[i].setBackground(round(on ? accent : (dark ? 0xff26262a : 0xffececf0), dp(14)));
+            views[i].setTextColor(on ? 0xffffffff : textColor);
+            views[i].setSelected(on);
+        }
+    }
+
     /** Entry to a sub page. */
     TextView linkRow(LinearLayout group, CharSequence title, CharSequence summary, Runnable open) {
         LinearLayout box = box(group, title, summary, muted, open, true);

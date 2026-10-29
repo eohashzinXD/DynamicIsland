@@ -87,6 +87,9 @@
     <string name="group_calls">通话</string>
     <string name="group_charging">设备事件</string>
     <string name="group_privacy">隐私指示器</string>
+    <string name="group_events_power">充电</string>
+    <string name="group_events_audio">声音与耳机</string>
+    <string name="group_events_quick">快捷设置与手电筒</string>
     <string name="group_custom">我的规则</string>
     <string name="seconds_format">%d 秒</string>
     <string name="apps_mode">应用允许方式</string>

@@ -1,14 +1,12 @@
 package dev.android.dynamicisland.settings;
 
 import static org.junit.Assert.*;
-import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import dev.android.dynamicisland.R;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.*;
 import org.robolectric.annotation.*;
-import org.robolectric.shadows.ShadowAlertDialog;
 import org.robolectric.util.ReflectionHelpers;
 
 @RunWith(RobolectricTestRunner.class)
@@ -19,11 +17,10 @@ public class IModeSettingsTest {
             SettingsActivity a=controller.get();SharedPreferences prefs=ReflectionHelpers.getField(a,"prefs");
             prefs.edit().clear().commit();ModuleSettings.configurePreview(prefs);
             assertFalse(ModuleSettings.iMode());
-            AnimationScreen animation=ReflectionHelpers.getField(a,"animation");
-            a.open(animation::open);
+            a.openSetting(SettingsSearchCatalog.Route.APPEARANCE,R.string.anim_title,0);
             SettingsSearchCatalog catalog=new SettingsSearchCatalog(a);
             var result=catalog.rows.get(catalog.engine.search("iMotion",5).get(0).id);
-            assertEquals(SettingsSearchCatalog.Route.ANIMATION,result.route);
+            assertEquals(SettingsSearchCatalog.Route.APPEARANCE,result.route);
             choose(a,2);assertTrue(prefs.getBoolean(ModuleSettings.KEY_I_MODE,false));assertTrue(ModuleSettings.iMode());
             assertFalse(prefs.getBoolean(ModuleSettings.KEY_LEGACY_ANIMATION,false));
             choose(a,1);assertFalse(ModuleSettings.iMode());assertTrue(ModuleSettings.legacyAnimation());
@@ -31,10 +28,12 @@ public class IModeSettingsTest {
             prefs.edit().clear().commit();ModuleSettings.configurePreview(prefs);
         }
     }
+    /** Taps one chip of the animation choice; the live preview plays the result. */
     private void choose(SettingsActivity activity,int index) {
-        activity.page().findViewWithTag(activity.getString(R.string.anim_title)).performClick();
-        AlertDialog dialog=ShadowAlertDialog.getLatestAlertDialog();assertNotNull(dialog);
-        assertEquals(3,dialog.getListView().getAdapter().getCount());
-        dialog.getListView().performItemClick(null,index,index);
+        android.view.ViewGroup row=(android.view.ViewGroup)activity.page().findViewWithTag(activity.getString(R.string.anim_title));
+        assertNotNull(row);
+        android.view.ViewGroup chips=(android.view.ViewGroup)row.getChildAt(1);
+        assertEquals(3,chips.getChildCount());
+        chips.getChildAt(index).performClick();
     }
 }

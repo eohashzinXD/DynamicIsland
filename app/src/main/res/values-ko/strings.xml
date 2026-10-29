@@ -87,6 +87,9 @@
     <string name="group_calls">통화</string>
     <string name="group_charging">기기 이벤트</string>
     <string name="group_privacy">개인정보 표시</string>
+    <string name="group_events_power">충전</string>
+    <string name="group_events_audio">소리와 이어폰</string>
+    <string name="group_events_quick">빠른 설정과 손전등</string>
     <string name="group_custom">내 규칙</string>
     <string name="seconds_format">%d초</string>
     <string name="apps_mode">앱 허용 방식</string>

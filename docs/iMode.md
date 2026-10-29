@@ -1,6 +1,6 @@
 # iMotion
 
-iMotion is an optional presentation under **Behavior → Animations → iMotion**. It is off by default.
+iMotion is an optional presentation under **Appearance → Animation → iMotion**. It is off by default.
 The existing modern and legacy stack presentations remain available. Changing the selection is live;
 installing a different module APK still requires restarting SystemUI to load its new code.
 

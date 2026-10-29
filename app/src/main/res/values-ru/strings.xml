@@ -87,6 +87,9 @@
     <string name="group_calls">Звонки</string>
     <string name="group_charging">События устройства</string>
     <string name="group_privacy">Индикаторы конфиденциальности</string>
+    <string name="group_events_power">Зарядка</string>
+    <string name="group_events_audio">Звук и наушники</string>
+    <string name="group_events_quick">Быстрые настройки и фонарик</string>
     <string name="group_custom">Свои правила</string>
     <string name="seconds_format">%d с</string>
     <string name="apps_mode">Режим допуска приложений</string>
