@@ -24,6 +24,13 @@ import dev.android.dynamicisland.testutil.RenderCapture;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk=35,qualifiers="ko-rKR-w360dp-h800dp-night-xxhdpi")
 public class ReleaseRecommendationsTest {
+    /** The curated content belongs to one release family, so the tests must not depend on the version being built. */
+    @org.junit.Before public void pinVersion() throws Exception {
+        android.app.Application app=RuntimeEnvironment.getApplication();
+        android.content.pm.PackageInfo info=app.getPackageManager().getPackageInfo(app.getPackageName(),0);
+        info.versionName="0.1.14";
+        org.robolectric.Shadows.shadowOf(app.getPackageManager()).installPackage(info);
+    }
     private void clearHistory() { RuntimeEnvironment.getApplication().getSharedPreferences(ReleaseRecommendations.PREFS,Context.MODE_PRIVATE).edit().clear().commit(); }
 
     @Test public void oneRandomSuggestionAtATimeReachesEveryFeatureAndOpensItsSettingWithoutChangingPreferences() {
