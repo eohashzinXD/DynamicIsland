@@ -28,12 +28,13 @@ public class IModeSettingsTest {
             prefs.edit().clear().commit();ModuleSettings.configurePreview(prefs);
         }
     }
-    /** Taps one chip of the animation choice; the live preview plays the result. */
+    /** Taps one row of the animation radio list; the live preview plays the result. */
     private void choose(SettingsActivity activity,int index) {
-        android.view.ViewGroup row=(android.view.ViewGroup)activity.page().findViewWithTag(activity.getString(R.string.anim_title));
-        assertNotNull(row);
-        android.view.ViewGroup chips=(android.view.ViewGroup)row.getChildAt(1);
-        assertEquals(3,chips.getChildCount());
-        chips.getChildAt(index).performClick();
+        android.view.ViewGroup card=(android.view.ViewGroup)activity.page().findViewWithTag(activity.getString(R.string.anim_title));
+        assertNotNull(card);
+        java.util.List<android.view.View> rows=new java.util.ArrayList<>();
+        for(int i=0;i<card.getChildCount();i++)if(card.getChildAt(i).isClickable())rows.add(card.getChildAt(i));
+        assertEquals(3,rows.size());
+        rows.get(index).performClick();
     }
 }

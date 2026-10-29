@@ -347,49 +347,62 @@ final class OneUi {
     }
 
     /**
-     * A choice shown as side-by-side chips: tapping one selects it at once, with no dialog in between, so
-     * the preview above can show the result. The title row carries the tag the search jumps to.
+     * A One UI radio list: a small accent label, then a card with one row per option and a radio dot at the end.
+     * Tapping a row selects it at once, with no dialog in between, so the preview above can show the result.
+     * The card carries the tag the search jumps to.
      */
-    LinearLayout chipRow(LinearLayout group, CharSequence title, CharSequence[] labels, int selected, java.util.function.IntConsumer onSelect) {
-        separator(group);
-        LinearLayout box = new LinearLayout(ctx);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setTag(title.toString());
-        box.setPadding(dp(22), dp(14), dp(16), dp(14));
-        box.addView(text(title, 17, textColor));
-        LinearLayout chips = new LinearLayout(ctx);
-        chips.setOrientation(LinearLayout.HORIZONTAL);
-        chips.setPadding(0, dp(10), 0, 0);
-        TextView[] views = new TextView[labels.length];
+    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence[] labels, int selected, java.util.function.IntConsumer onSelect) {
+        category(page, title);
+        LinearLayout card = card(page);
+        card.setTag(title.toString());
+        RadioDot[] dots = new RadioDot[labels.length];
         for (int i = 0; i < labels.length; i++) {
-            TextView chip = text(labels[i], 14, textColor);
-            chip.setGravity(Gravity.CENTER);
-            chip.setMinHeight(dp(44));
-            chip.setMaxLines(2);
-            chip.setPadding(dp(8), dp(6), dp(8), dp(6));
-            chip.setContentDescription(title + ", " + labels[i]);
-            views[i] = chip;
+            LinearLayout row = box(card, labels[i], null, muted, null, false);
+            row.setTag(null);
+            row.setMinimumHeight(dp(56));
+            row.setBackground(ripple());
+            RadioDot dot = new RadioDot(ctx, i == selected);
+            dots[i] = dot;
+            row.addView(dot, new LinearLayout.LayoutParams(dp(24), dp(24)));
+            row.setSelected(i == selected);
             final int index = i;
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1);
-            if (i > 0) p.leftMargin = dp(8);
-            chips.addView(chip, p);
-            chip.setOnClickListener(v -> {
-                paintChips(views, index);
+            row.setOnClickListener(v -> {
+                for (int k = 0; k < dots.length; k++) dots[k].set(k == index);
                 onSelect.accept(index);
             });
         }
-        paintChips(views, selected);
-        box.addView(chips, new LinearLayout.LayoutParams(-1, -2));
-        group.addView(box, new LinearLayout.LayoutParams(-1, -2));
-        return box;
+        return card;
     }
 
-    private void paintChips(TextView[] views, int selected) {
-        for (int i = 0; i < views.length; i++) {
-            boolean on = i == selected;
-            views[i].setBackground(round(on ? accent : (dark ? 0xff26262a : 0xffececf0), dp(14)));
-            views[i].setTextColor(on ? 0xffffffff : textColor);
-            views[i].setSelected(on);
+    /** The round selection mark of a radio row: an outline, or the accent colour with a tick when chosen. */
+    private final class RadioDot extends View {
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private boolean on;
+        RadioDot(Context context, boolean on) { super(context); this.on = on; setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO); }
+        void set(boolean value) { on = value; invalidate(); }
+        @Override protected void onDraw(android.graphics.Canvas c) {
+            float r = getWidth() / 2f - dp(2);
+            float cx = getWidth() / 2f, cy = getHeight() / 2f;
+            if (on) {
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+                paint.setColor(accent);
+                c.drawCircle(cx, cy, r + dp(1), paint);
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setColor(0xffffffff);
+                paint.setStrokeWidth(dp(2));
+                paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+                paint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+                android.graphics.Path tick = new android.graphics.Path();
+                tick.moveTo(cx - r * 0.42f, cy + r * 0.02f);
+                tick.lineTo(cx - r * 0.08f, cy + r * 0.38f);
+                tick.lineTo(cx + r * 0.5f, cy - r * 0.32f);
+                c.drawPath(tick, paint);
+            } else {
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setColor(dark ? 0xff6a6a72 : 0xffb4b4bc);
+                paint.setStrokeWidth(dp(2));
+                c.drawCircle(cx, cy, r, paint);
+            }
         }
     }
 

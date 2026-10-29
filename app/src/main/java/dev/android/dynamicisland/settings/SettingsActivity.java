@@ -55,7 +55,8 @@ public final class SettingsActivity extends Activity {
     private AppearanceScreen appearance;
     private LinearLayout page;
     private ScrollView scroll;
-    private android.widget.FrameLayout previewFrame;
+    private LinearLayout previewFrame;
+    private LinearLayout previewHeader;
     private LivePreview preview;
     private SettingChangeFeedback changeFeedback;
     private SettingsSearchScreen search;
@@ -113,10 +114,14 @@ public final class SettingsActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(ui.background);
         root.setFitsSystemWindows(true);
-        previewFrame = new android.widget.FrameLayout(this);
-        previewFrame.setPadding(ui.dp(14), ui.dp(4), ui.dp(14), ui.dp(6));
+        previewFrame = new LinearLayout(this);
+        previewFrame.setOrientation(LinearLayout.VERTICAL);
+        previewFrame.setPadding(ui.dp(14), 0, ui.dp(14), ui.dp(8));
         previewFrame.setVisibility(View.GONE);
-        root.addView(previewFrame, new LinearLayout.LayoutParams(-1, ui.dp(236)));
+        previewHeader = new LinearLayout(this);
+        previewHeader.setOrientation(LinearLayout.VERTICAL);
+        previewFrame.addView(previewHeader, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(previewFrame, new LinearLayout.LayoutParams(-1, -2));
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
         changeFeedback = new SettingChangeFeedback(this, ui, prefs,
@@ -197,13 +202,19 @@ public final class SettingsActivity extends Activity {
         });
     }
 
-    /** Pins the live island preview above the scrolling page; the page builder calls this. */
+    /** Pins the page header and the live island preview above the scrolling page; the page builder calls this after {@link #subPage}. */
     void showPreview() {
+        if (page.getChildCount() > 0) {
+            View header = page.getChildAt(0);
+            page.removeViewAt(0);
+            previewHeader.removeAllViews();
+            previewHeader.addView(header);
+        }
         if (preview == null) {
             preview = new LivePreview(this, ui, prefs);
             preview.setBackground(ui.round(0xFF0B0B0D, ui.dp(26)));
             preview.setClipToOutline(true);
-            previewFrame.addView(preview, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            previewFrame.addView(preview, new LinearLayout.LayoutParams(-1, ui.dp(176)));
         }
         previewFrame.setVisibility(View.VISIBLE);
         preview.start();
@@ -211,6 +222,7 @@ public final class SettingsActivity extends Activity {
 
     private void hidePreview() {
         if (preview != null) preview.stop();
+        if (previewHeader != null) previewHeader.removeAllViews();
         if (previewFrame != null) previewFrame.setVisibility(View.GONE);
     }
 
@@ -367,38 +379,38 @@ public final class SettingsActivity extends Activity {
 
     // ---------------------------------------------------------------- pages
 
-    /** A choice shown as chips; the live preview above plays the result as soon as one is tapped. */
-    void chips(LinearLayout group, int title, int[] labels, int selected, java.util.function.IntConsumer save) {
+    /** A One UI radio list; the live preview above plays the result as soon as an option is tapped. */
+    LinearLayout radios(int title, int[] labels, int selected, java.util.function.IntConsumer save) {
         CharSequence[] names = new CharSequence[labels.length];
         for (int i = 0; i < labels.length; i++) names[i] = getString(labels[i]);
-        ui.chipRow(group, getString(title), names, selected, which -> { save.accept(which); refreshPreview(); });
+        return ui.radioGroup(page, getString(title), names, selected, which -> { save.accept(which); refreshPreview(); });
     }
 
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
         showPreview();
-        LinearLayout motion = ui.card(page);
-        chips(motion, R.string.anim_title, new int[]{R.string.anim_new, R.string.anim_legacy, R.string.imode_title},
+        radios(R.string.anim_title, new int[]{R.string.anim_new, R.string.anim_legacy, R.string.imode_title},
                 flag(ModuleSettings.KEY_I_MODE, false) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_LEGACY_ANIMATION, selected == 1)
                         .putBoolean(ModuleSettings.KEY_I_MODE, selected == 2).apply());
-        chips(motion, R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
+        ui.note(page, getString(R.string.imode_desc));
+        radios(R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
                 ModuleSettings.readMaterialStyle(prefs),
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
-        chips(motion, R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
+        radios(R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
                 ModuleSettings.readPillOutlineMode(prefs),
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
         ui.note(page, getString(R.string.pill_outline_desc));
-        ui.note(page, getString(R.string.imode_desc));
+        ui.category(page, getString(R.string.group_card));
         LinearLayout cards = ui.card(page);
         new CardShapeScreen(this, ui, prefs).addTo(cards);
-        chips(cards, R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},
+        radios(R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},
                 flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_COMPACT_EVENT_ICONS, selected == 1).apply());
-        chips(cards, R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
+        radios(R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
                 prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0,
                 style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
-        ui.details(page, getString(R.string.ui_details), getString(R.string.torch_style_desc));
+        ui.note(page, getString(R.string.torch_style_desc));
         LinearLayout look = ui.card(page);
         previewToggle(look, R.string.setting_card_header, R.string.setting_card_header_desc, ModuleSettings.KEY_CARD_HEADER, true);
         previewToggle(look, R.string.setting_color_icons, R.string.setting_color_icons_desc, ModuleSettings.KEY_COLOR_ICONS, false);
