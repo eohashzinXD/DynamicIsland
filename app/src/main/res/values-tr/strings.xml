@@ -415,6 +415,8 @@
     <string name="ui_event_icon_size">Olay simgesi boyutu</string>
     <string name="ui_size_large">Büyük (varsayılan)</string>
     <string name="ui_size_small">Küçük</string>
+    <string name="tag_recommended">Önerilen</string>
+    <string name="ui_size_large_label">Büyük</string>
     <string name="ui_show_battery_icon">Pil simgesini göster</string>
     <string name="ui_show_battery_icon_summary">Şarj yüzdesinin yanında simge gösterir.</string>
     <string name="ui_wave_motion">Dalga hareketi</string>

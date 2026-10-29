@@ -415,6 +415,8 @@
     <string name="ui_event_icon_size">イベントアイコンのサイズ</string>
     <string name="ui_size_large">大（標準）</string>
     <string name="ui_size_small">小</string>
+    <string name="tag_recommended">おすすめ</string>
+    <string name="ui_size_large_label">大</string>
     <string name="ui_show_battery_icon">バッテリーアイコンを表示</string>
     <string name="ui_show_battery_icon_summary">充電率の横にアイコンを表示します。</string>
     <string name="ui_wave_motion">波形の動き</string>

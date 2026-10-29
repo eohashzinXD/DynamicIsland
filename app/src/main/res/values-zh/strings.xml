@@ -415,6 +415,8 @@
     <string name="ui_event_icon_size">事件图标大小</string>
     <string name="ui_size_large">大（默认）</string>
     <string name="ui_size_small">小</string>
+    <string name="tag_recommended">推荐</string>
+    <string name="ui_size_large_label">大</string>
     <string name="ui_show_battery_icon">显示电池图标</string>
     <string name="ui_show_battery_icon_summary">在充电百分比旁显示图标。</string>
     <string name="ui_wave_motion">波形动态</string>

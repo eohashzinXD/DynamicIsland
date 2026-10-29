@@ -415,6 +415,8 @@
     <string name="ui_event_icon_size">Размер значков событий</string>
     <string name="ui_size_large">Большие (по умолчанию)</string>
     <string name="ui_size_small">Маленькие</string>
+    <string name="tag_recommended">Рекомендуется</string>
+    <string name="ui_size_large_label">Крупные</string>
     <string name="ui_show_battery_icon">Показывать значок батареи</string>
     <string name="ui_show_battery_icon_summary">Значок рядом с процентом заряда.</string>
     <string name="ui_wave_motion">Движение волны</string>

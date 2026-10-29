@@ -415,6 +415,8 @@
     <string name="ui_event_icon_size">이벤트 아이콘 크기</string>
     <string name="ui_size_large">크게 (기본값)</string>
     <string name="ui_size_small">작게</string>
+    <string name="tag_recommended">추천</string>
+    <string name="ui_size_large_label">크게</string>
     <string name="ui_show_battery_icon">배터리 아이콘 표시</string>
     <string name="ui_show_battery_icon_summary">충전 비율 옆에 아이콘을 표시합니다.</string>
     <string name="ui_wave_motion">파형 움직임</string>

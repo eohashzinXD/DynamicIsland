@@ -351,27 +351,54 @@ final class OneUi {
      * Tapping a row selects it at once, with no dialog in between, so the preview above can show the result.
      * The card carries the tag the search jumps to.
      */
-    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence[] labels, int selected, java.util.function.IntConsumer onSelect) {
+    static final int TAG_DEFAULT = 1, TAG_RECOMMENDED = 2;
+
+    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence[] labels, int[] tags, int selected, java.util.function.IntConsumer onSelect) {
         category(page, title);
         LinearLayout card = card(page);
         card.setTag(title.toString());
         RadioDot[] dots = new RadioDot[labels.length];
         for (int i = 0; i < labels.length; i++) {
-            LinearLayout row = box(card, labels[i], null, muted, null, false);
-            row.setTag(null);
+            separator(card);
+            LinearLayout row = new LinearLayout(ctx);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(22), dp(10), dp(16), dp(10));
             row.setMinimumHeight(dp(56));
             row.setBackground(ripple());
+            LinearLayout line = new LinearLayout(ctx);
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.addView(text(labels[i], 17, textColor));
+            int flags = tags == null ? 0 : tags[i];
+            if ((flags & TAG_DEFAULT) != 0) line.addView(tagPill(ctx.getString(R.string.ui_default), accent));
+            if ((flags & TAG_RECOMMENDED) != 0) line.addView(tagPill(ctx.getString(R.string.tag_recommended), good));
+            row.addView(line, new LinearLayout.LayoutParams(0, -2, 1));
             RadioDot dot = new RadioDot(ctx, i == selected);
             dots[i] = dot;
             row.addView(dot, new LinearLayout.LayoutParams(dp(24), dp(24)));
             row.setSelected(i == selected);
+            row.setContentDescription(labels[i]);
             final int index = i;
             row.setOnClickListener(v -> {
                 for (int k = 0; k < dots.length; k++) dots[k].set(k == index);
                 onSelect.accept(index);
             });
+            card.addView(row, new LinearLayout.LayoutParams(-1, -2));
         }
         return card;
+    }
+
+    /** A small rounded label next to an option ("Default", "Recommended"), tinted with {@code colour}. */
+    private TextView tagPill(CharSequence label, int colour) {
+        TextView pill = text(label, 12, colour);
+        pill.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        pill.setPadding(dp(8), dp(2), dp(8), dp(2));
+        GradientDrawable bg = round(colour, dp(8));
+        bg.setAlpha(36);
+        pill.setBackground(bg);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
+        p.leftMargin = dp(10);
+        pill.setLayoutParams(p);
+        return pill;
     }
 
     /** The round selection mark of a radio row: an outline, or the accent colour with a tick when chosen. */

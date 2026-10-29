@@ -393,34 +393,39 @@ public final class SettingsActivity extends Activity {
     // ---------------------------------------------------------------- pages
 
     /** A One UI radio list; the live preview above plays the result as soon as an option is tapped. */
-    LinearLayout radios(int title, int[] labels, int selected, int sample, java.util.function.IntConsumer save) {
+    LinearLayout radios(int title, int[] labels, int[] tags, int selected, int sample, java.util.function.IntConsumer save) {
         CharSequence[] names = new CharSequence[labels.length];
         for (int i = 0; i < labels.length; i++) names[i] = getString(labels[i]);
-        return ui.radioGroup(page, getString(title), names, selected, which -> { save.accept(which); refreshPreview(sample); });
+        return ui.radioGroup(page, getString(title), names, tags, selected, which -> { save.accept(which); refreshPreview(sample); });
     }
 
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
         showPreview();
         radios(R.string.anim_title, new int[]{R.string.anim_new, R.string.anim_legacy, R.string.imode_title},
+                new int[]{OneUi.TAG_DEFAULT, 0, OneUi.TAG_RECOMMENDED},
                 flag(ModuleSettings.KEY_I_MODE, false) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_LEGACY_ANIMATION, selected == 1)
                         .putBoolean(ModuleSettings.KEY_I_MODE, selected == 2).apply());
         ui.note(page, getString(R.string.imode_desc));
         radios(R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
+                new int[]{OneUi.TAG_RECOMMENDED, OneUi.TAG_DEFAULT},
                 ModuleSettings.readMaterialStyle(prefs), LivePreview.MUSIC,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
         radios(R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
+                new int[]{OneUi.TAG_DEFAULT | OneUi.TAG_RECOMMENDED, 0, 0},
                 ModuleSettings.readPillOutlineMode(prefs), LivePreview.RING,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
         ui.note(page, getString(R.string.pill_outline_desc));
         ui.category(page, getString(R.string.group_card));
         LinearLayout cards = ui.card(page);
         new CardShapeScreen(this, ui, prefs).addTo(cards);
-        radios(R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},
+        radios(R.string.ui_event_icon_size, new int[]{R.string.ui_size_large_label, R.string.ui_size_small},
+                new int[]{OneUi.TAG_DEFAULT, 0},
                 flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_COMPACT_EVENT_ICONS, selected == 1).apply());
         radios(R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
+                new int[]{OneUi.TAG_DEFAULT, OneUi.TAG_RECOMMENDED},
                 prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0, LivePreview.TORCH,
                 style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
         ui.note(page, getString(R.string.torch_style_desc));
