@@ -214,10 +214,18 @@ public final class SettingsActivity extends Activity {
             preview = new LivePreview(this, ui, prefs);
             preview.setBackground(ui.round(0xFF0B0B0D, ui.dp(26)));
             preview.setClipToOutline(true);
-            previewFrame.addView(preview, new LinearLayout.LayoutParams(-1, ui.dp(160)));
+            previewFrame.addView(preview, new LinearLayout.LayoutParams(-1, previewHeight()));
+        } else {
+            preview.getLayoutParams().height = previewHeight();
         }
         previewFrame.setVisibility(View.VISIBLE);
         preview.start();
+    }
+
+    /** About 30% of the screen, so tall cards (music) fit on every phone; never tiny, never half the screen. */
+    private int previewHeight() {
+        int screen = getResources().getDisplayMetrics().heightPixels;
+        return Math.max(ui.dp(190), Math.min(ui.dp(340), Math.round(screen * 0.30f)));
     }
 
     private void hidePreview() {
