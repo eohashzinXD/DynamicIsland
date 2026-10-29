@@ -171,3 +171,16 @@ Open bugs are tracked as issues; the ones that are planned carry the `planned` l
 ## Icons
 
 The island's pictograms (`GlyphIcon`) play Lottie animations. The animations live in `tools/lottie/json`; `tools/lottie/embed.py` packs them into `LottieData.java`, because a System UI process cannot read this module's resources. `LottiePlayer` is a small player that handles what these files use (shape and pre-composition layers, mattes, trim, merge and round-corner modifiers, bezier-eased keyframes) and paints every shape in the colour the island asks for. `tools/lottie/mk.py` draws the icons that are not from the ColorOS pack; run `python3 tools/lottie/mk.py <dir>` and copy the result into `json/` to change them. `LottieFilmTest` writes a strip of frames per icon to `app/build/render/lottie` with `-Prender`. The canvas drawings in `GlyphIcon` remain as the fallback if an animation fails to parse.
+
+## 0.1.14 validation
+
+The stable release consolidates the 0.1.14 development series and the optional iMotion presentation.
+The default suite contains 155 Android tests and two translation-tool tests; all six catalogs contain
+587 translated strings. The release candidate also passes release lint and APK assembly. iMotion
+covers more than four sources, reversible transitions, native custom notification gestures, coordinated
+header/page swipes, quick-panel gathering and the final circular frosted mask. Five translated feature
+recommendations rotate without replacement and route to existing settings without changing preferences.
+Maintainer feedback on local builds informed motion tuning; OEM/device coverage remains limited.
+See [0.1.14 release notes](release-notes/0.1.14.md), [iMotion](iMode.md) and
+[release recommendations](release-recommendations.md). Classic material and the existing animation
+remain the defaults.

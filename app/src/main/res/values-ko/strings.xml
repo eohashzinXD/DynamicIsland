@@ -576,4 +576,21 @@
     <string name="torch_style_desc">기존 밝기 슬라이더와 넓어지는 빛 중 선택합니다. 손전등을 눌러 켜고 끄고 곡선 조절부를 드래그해 밝기를 바꿉니다.</string>
     <string name="torch_style_classic">기존 슬라이더</string>
     <string name="torch_style_beam">넓어지는 빛</string>
+    <string name="imode_title">iMotion</string>
+    <string name="imode_desc">활동 하나를 펼치고 블러와 움직임을 함께 전환합니다. 좌우로 넘겨 모든 활동을 볼 수 있습니다. 위로 밀면 알약을 모두 숨기고, 펀치홀 주변을 아래로 당기면 다시 표시합니다.</string>
+    <string name="recommend_label">이번 업데이트의 새로운 기능</string>
+    <string name="recommend_open">살펴보기</string>
+    <string name="recommend_next">다음 추천</string>
+    <string name="recommend_dismiss">이 버전의 추천 숨기기</string>
+    <string name="recommend_about">새로운 기능</string>
+    <string name="recommend_motion">알약에서 카드로 자연스럽게 펼쳐집니다. 좌우로 넘겨 여러 활동을 확인해 보세요.</string>
+    <string name="recommend_torch">밝기에 따라 퍼지는 빛을 보며 조절하세요. 손전등 그림을 누르면 부드럽게 켜고 끕니다.</string>
+    <string name="recommend_search">관련 표현이나 한글 초성으로도 원하는 설정을 찾아보세요.</string>
+    <string name="recommend_glass">배경과 앨범 색이 부드럽게 스며드는 실험적 프로스티드 재질을 사용해 보세요.</string>
+    <string name="recommend_motion_title">새로운 움직임, iMotion</string>
+    <string name="recommend_gesture_title">밀어서 숨기고, 당겨서 다시 보기</string>
+    <string name="recommend_gesture">iMotion에서 위로 밀면 알약을 숨기고, 펀치홀 주변을 아래로 당기면 다시 표시합니다.</string>
+    <string name="recommend_torch_title">빛을 당겨 손전등 조절하기</string>
+    <string name="recommend_search_title">이름이 생각나지 않아도 검색</string>
+    <string name="recommend_glass_title">새로운 재질을 먼저 만나보세요 · 실험적</string>
 </resources>

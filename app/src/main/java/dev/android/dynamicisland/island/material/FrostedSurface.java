@@ -26,7 +26,7 @@ public final class FrostedSurface {
     private boolean blending;
     private long blendStartedAt,missingSince=-1,lastTime,lastInputReport;
     private final RectF lastBounds=new RectF();
-    private float lastCorner=-1,phase;
+    private float lastCorner=-1,lastCornerPower=-1,phase;
     private boolean primed;
     private final float[] common=new float[12],edge=new float[16],shadow=new float[16];
 
@@ -45,6 +45,10 @@ public final class FrostedSurface {
     }
     public boolean draw(Canvas canvas,MaterialFrame next,RectF bounds,RectF screenBounds,float radius,
             float amount,MediaFx music,long now) {
+        return draw(canvas,next,bounds,screenBounds,radius,amount,music,now,2.4f);
+    }
+    public boolean draw(Canvas canvas,MaterialFrame next,RectF bounds,RectF screenBounds,float radius,
+            float amount,MediaFx music,long now,float cornerPower) {
         if(!requested()){clear();return false;}
         if(!canvas.isHardwareAccelerated()||bounds.width()<1||bounds.height()<1)return false;
         if(!canUse(next,screenBounds))next=null;
@@ -74,9 +78,10 @@ public final class FrostedSurface {
             if(bind||beforeChanged)previous.bind(shader,true);
             if(bind||afterChanged)current.bind(shader,false);
             float scale=bounds.width()/1072f,w=bounds.width()/scale,h=bounds.height()/scale,corner=radius/scale;
-            if(!lastBounds.equals(bounds)||lastCorner!=radius) {
+            cornerPower=Math.max(2,Math.min(2.4f,cornerPower));
+            if(!lastBounds.equals(bounds)||lastCorner!=radius||lastCornerPower!=cornerPower) {
                 shader.setFloatUniform("designScale",scale);shader.setFloatUniform("cornerRadius",corner);
-                configureLight(w,h,corner);lastBounds.set(bounds);lastCorner=radius;
+                configureLight(w,h,corner,cornerPower);lastBounds.set(bounds);lastCorner=radius;lastCornerPower=cornerPower;
             }
             if(current.frame!=null&&(lastInputReport==0||now-lastInputReport>=5000)) {
                 Diagnostics.fact("card material inputs",String.format(java.util.Locale.US,
@@ -155,13 +160,13 @@ public final class FrostedSurface {
         shader.setFloatUniform(name,((color>>16)&255)/255f,((color>>8)&255)/255f,(color&255)/255f);
     }
     /** Approved COUI style-2 binding in reference units. */
-    private void configureLight(float w,float h,float corner) {
+    private void configureLight(float w,float h,float corner,float cornerPower) {
         float density=3*.34f,mw=w/density,mh=h/density;
         float[] ab=fade(.18f,.35f,600,200,mw,mh),cd=fade(.25f,.25f,600,200,mw,mh);
         float[] e={1,1,1,2,4,2,4,.7f*.6f,.6f*.6f,ab[0],ab[0]+ab[1],cd[0],cd[0]+cd[1],0,4,.8f};
         float[] s={1,1,1,.6f*.3f,0,0,86*density,0,10*density,1+.1f*600/mw,1+.07f*600/mh,4,.7f,density,1,0};
         System.arraycopy(e,0,edge,0,16);System.arraycopy(s,0,shadow,0,16);
-        float[] c={w,h,0,0,w,h,corner,corner,corner,corner,2.4f,1};System.arraycopy(c,0,common,0,12);
+        float[] c={w,h,0,0,w,h,corner,corner,corner,corner,cornerPower,1};System.arraycopy(c,0,common,0,12);
         shader.setFloatUniform("u_commonArray",common);shader.setFloatUniform("u_edgeArray",edge);shader.setFloatUniform("u_shadowArray",shadow);
         shader.setFloatUniform("u_edge",1);shader.setFloatUniform("u_shadow",1);
     }
@@ -176,6 +181,6 @@ public final class FrostedSurface {
     }
     public void clear() {
         previous=current=null;shader=null;paint.setShader(null);blending=false;missingSince=-1;
-        lastBounds.setEmpty();lastCorner=-1;lastTime=lastInputReport=0;primed=false;
+        lastBounds.setEmpty();lastCorner=lastCornerPower=-1;lastTime=lastInputReport=0;primed=false;
     }
 }

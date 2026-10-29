@@ -585,4 +585,21 @@
     <string name="torch_style_desc">Choose the classic brightness slider or an expanding beam. Tap the flashlight to toggle power and drag the curved control to adjust brightness.</string>
     <string name="torch_style_classic">Classic slider</string>
     <string name="torch_style_beam">Expanding beam</string>
+    <string name="imode_title">iMotion</string>
+    <string name="imode_desc">Open one activity at a time with coordinated blur and motion. Swipe sideways to switch between all activities. Swipe up to hide all pills, then pull down near the camera hole to show them again.</string>
+    <string name="recommend_label">New in this update</string>
+    <string name="recommend_open">Explore</string>
+    <string name="recommend_next">Next suggestion</string>
+    <string name="recommend_dismiss">Hide suggestions for this version</string>
+    <string name="recommend_about">What’s new</string>
+    <string name="recommend_motion">Watch a pill unfold smoothly into a card. Swipe sideways to browse your activities.</string>
+    <string name="recommend_torch">Adjust brightness by dragging the expanding beam. Tap the flashlight graphic to turn it smoothly on or off.</string>
+    <string name="recommend_search">Find settings using related terms or Korean initials.</string>
+    <string name="recommend_glass">Try experimental frosted cards that softly blend the backdrop and album colours.</string>
+    <string name="recommend_motion_title">A new way to move: iMotion</string>
+    <string name="recommend_gesture_title">Swipe to hide, pull to restore</string>
+    <string name="recommend_gesture">In iMotion, swipe up to hide the island. Pull down near the camera hole to show it again.</string>
+    <string name="recommend_torch_title">Drag the light to adjust your flashlight</string>
+    <string name="recommend_search_title">Search without the exact name</string>
+    <string name="recommend_glass_title">Try a new material · Experimental</string>
 </resources>

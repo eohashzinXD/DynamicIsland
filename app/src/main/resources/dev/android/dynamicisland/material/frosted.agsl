@@ -375,7 +375,8 @@ float sm(float a,float b,float x) {
 }
 float materialSdf(float2 p,float2 halfSize,float r) {
     float2 q=abs(p)-halfSize+r;
-    float d=pow(pow(max(q.x,0.0),2.4)+pow(max(q.y,0.0),2.4),1.0/2.4)-r;
+    float power=max(2.0,u_commonArray[10]);
+    float d=pow(pow(max(q.x,0.0),power)+pow(max(q.y,0.0),power),1.0/power)-r;
     return q.x>0.0 && q.y>0.0 ? d : max(q.x,q.y)-r;
 }
 float3 mixBackdrop(float3 c) {

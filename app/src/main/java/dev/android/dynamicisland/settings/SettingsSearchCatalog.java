@@ -15,7 +15,7 @@ import java.util.Set;
 /** Search metadata and safe page destinations. No page builders run while indexing. */
 final class SettingsSearchCatalog {
     enum Route { NOTIFICATIONS,EVENTS,APPS,APPEARANCE,BEHAVIOR,ADVANCED,ABOUT,DIAGNOSTICS,
-        POSITION,CALIBRATION,ANIMATION,ACCENT,GLOW,ROUNDNESS,RULES,RULE_TOOLS }
+        POSITION,CALIBRATION,ANIMATION,ACCENT,GLOW,ROUNDNESS,RULES,RULE_TOOLS,SEARCH }
     static final class Row {
         final Route route;final int title,fallback;
         final SettingsSearchEngine.Document document;
@@ -79,6 +79,7 @@ final class SettingsSearchCatalog {
             case DIAGNOSTICS:root=R.string.ui_advanced;child=R.string.diagnostics_title;break;
             case RULE_TOOLS:root=R.string.ui_advanced;child=R.string.ui_rules_advanced;break;
             case ABOUT:root=R.string.ui_about;break;
+            case SEARCH:root=R.string.search_title;break;
             case POSITION:child=R.string.pos_title;break;
             case ACCENT:child=R.string.accent_page;break;
             case GLOW:child=R.string.glow_title;break;
@@ -126,7 +127,7 @@ final class SettingsSearchCatalog {
         add(Route.BEHAVIOR,R.string.ui_auto_open_time,0,R.string.search_terms_timing,R.string.auto_open_cards);
         add(Route.BEHAVIOR,R.string.setting_auto_collapse,0,R.string.search_terms_timing,0);
         add(Route.BEHAVIOR,R.string.setting_paused_timeout,0,R.string.search_terms_paused,0);
-        add(Route.ANIMATION,R.string.anim_title,R.string.anim_sum,R.string.search_terms_animation,0,R.string.anim_new,R.string.anim_legacy);
+        add(Route.ANIMATION,R.string.anim_title,R.string.anim_sum,R.string.search_terms_animation,0,R.string.anim_new,R.string.anim_legacy,R.string.imode_title,R.string.imode_desc);
         add(Route.ACCENT,R.string.accent_enabled,R.string.accent_note,R.string.search_terms_colour,0,R.string.ui_default,R.string.ui_custom);
         add(Route.ACCENT,R.string.accent_custom,R.string.accent_note,R.string.search_terms_colour,R.string.accent_enabled);
         add(Route.GLOW,R.string.glow_title,R.string.glow_summary,R.string.search_terms_glow,0);

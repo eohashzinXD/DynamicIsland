@@ -80,7 +80,7 @@ public final class IslandWindow {
         view.setMaterialCaptureRefresh(()->{if(materialCapture!=null)materialCapture.refresh();});
         BlurLayer blur = new BlurLayer(context);
         view.setBlurSink(blur);
-        FrameLayout remoteLayer = new FrameLayout(context);
+        FrameLayout remoteLayer = new ActivityRemoteLayer(context,view);
         remoteLayer.setClipChildren(false);
         view.setRemoteLayer(remoteLayer);
 
@@ -96,6 +96,8 @@ public final class IslandWindow {
         view.setPillSamplingStateChanged(this::updatePillBackgroundSampling);
     }
 
+    // TYPE_STATUS_BAR_SUB_PANEL is a hidden framework window type used only inside SystemUI.
+    @android.annotation.SuppressLint("WrongConstant")
     private static Context createWindowContext(Context systemUiContext) {
         Display display = systemUiContext.getSystemService(DisplayManager.class).getDisplay(Display.DEFAULT_DISPLAY);
         try {

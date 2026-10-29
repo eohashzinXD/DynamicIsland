@@ -15,6 +15,8 @@ final class Scene {
     final PillOutlinePolicy pillOutline = new PillOutlinePolicy();
     Mode mode = Mode.HIDDEN;
     ContentHandoff contentHandoff;
+    /** Optional, independent single-activity presentation. */
+    IMode iMode;
     /** Shown items, most important first. */
     final List<IslandItem> items = new ArrayList<>();
     /** Minimized items that still show up (behind the live ones) when the stack is opened. */
@@ -68,6 +70,10 @@ final class Scene {
     }
 
     float pillOutlineOpacity() {
+        return iMode!=null ? iMode.outlineOpacity() : pillOutlineTarget();
+    }
+
+    float pillOutlineTarget() {
         boolean bubble = springs.split.value() > 0.003f;
         return pillOutline.visible(ModuleSettings.pillOutlineMode(), pillBodyColor(mainIn), pillBodyColor(bubbleIn), bubble) ? 1f : 0f;
     }

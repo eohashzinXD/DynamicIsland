@@ -58,6 +58,7 @@ public final class SettingsActivity extends Activity {
     private ScrollView scroll;
     private SettingChangeFeedback changeFeedback;
     private SettingsSearchScreen search;
+    private ReleaseRecommendations recommendations;
     /** Builders of the open pages, the visible one on top. */
     private static final class PageState {
         final Runnable build;
@@ -92,6 +93,8 @@ public final class SettingsActivity extends Activity {
         position = new PositionScreen(this, ui, prefs);
         appearance = new AppearanceScreen(this, ui, prefs);
         search = new SettingsSearchScreen(this, ui);
+        recommendations=new ReleaseRecommendations(this,ui,version());
+        if(savedInstanceState!=null) recommendations.restore(savedInstanceState.getString("settings.recommendation"));
         ui.setSearchAction(search::launch);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
@@ -141,6 +144,7 @@ public final class SettingsActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putString("settings.search.query",search.query());state.putBoolean("settings.search.open",search.visible());
+        state.putString("settings.recommendation",recommendations.currentId());
     }
     @Override protected void onDestroy() {
         if(search!=null)search.close();
@@ -191,8 +195,12 @@ public final class SettingsActivity extends Activity {
     }
 
     void openSearchResult(SettingsSearchCatalog.Row row) {
+        openSetting(row.route,row.title,row.fallback);
+    }
+    void openSetting(SettingsSearchCatalog.Route route,int title,int fallback) {
+        if(route==SettingsSearchCatalog.Route.SEARCH) { search.launch();return; }
         Runnable builder;
-        switch(row.route) {
+        switch(route) {
             case NOTIFICATIONS:builder=this::notificationsPage;break;
             case EVENTS:builder=this::eventsPage;break;
             case APPS:builder=this::appsPage;break;
@@ -211,7 +219,7 @@ public final class SettingsActivity extends Activity {
             default:builder=this::displayPage;break;
         }
         saveScroll();PageState state=new PageState(builder);
-        state.focusTitle=getString(row.title);state.fallbackTitle=row.fallback==0?null:getString(row.fallback);
+        state.focusTitle=getString(title);state.fallbackTitle=fallback==0?null:getString(fallback);
         stack.push(state);render();
     }
     private void revealSearchTarget(PageState state) {
@@ -264,6 +272,7 @@ public final class SettingsActivity extends Activity {
     private void hub() {
         ui.title(page, getString(R.string.app_name), getString(R.string.ui_home_hint), 28);
         ui.searchEntry(page,search::launch);
+        recommendations.addTo(page);
         statusHero = ui.hero(page);
         ui.setHero(statusHero, false, getString(R.string.ui_checking_connection), getString(R.string.ui_status_hint));
         statusNonce = Diagnostics.requestStatus(this);
@@ -299,6 +308,10 @@ public final class SettingsActivity extends Activity {
         ui.note(page, getString(R.string.ui_language_scope));
         LinearLayout information = ui.card(page);
         ui.actionRow(information, getString(R.string.hub_version), "Dynamic Island " + version(), null);
+        if(recommendations.available()) ui.actionRow(information,getString(R.string.recommend_about),null,()->{
+            recommendations.showAgain();
+            while(stack.size()>1) stack.pop();stack.peek().scrollY=0;render();
+        });
         ui.actionRow(information, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
         ui.details(page, getString(R.string.hub_credits), getString(R.string.hub_credits_text));
     }
@@ -361,7 +374,7 @@ public final class SettingsActivity extends Activity {
                 new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
                         .setPositiveButton(android.R.string.ok, null).show());
         LinearLayout motion = ui.card(page);
-        ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
+        ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_I_MODE, false) ? R.string.imode_title : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
         toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
         if (low) {
             ui.actionRow(motion, getString(R.string.ui_wave_motion), getString(R.string.low_performance_static_wave), null);

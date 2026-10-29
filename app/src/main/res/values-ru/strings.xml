@@ -576,4 +576,21 @@
     <string name="torch_style_desc">Выберите обычный ползунок яркости или расширяющийся луч. Нажмите на фонарик для включения и выключения, перетаскивайте изогнутый регулятор для изменения яркости.</string>
     <string name="torch_style_classic">Обычный ползунок</string>
     <string name="torch_style_beam">Расширяющийся луч</string>
+    <string name="imode_title">iMotion</string>
+    <string name="imode_desc">Разворачивайте одно действие с плавным движением и размытием. Листайте влево или вправо для переключения между всеми действиями. Смахните вверх, чтобы скрыть все капсулы, и потяните вниз у отверстия камеры, чтобы вернуть их.</string>
+    <string name="recommend_label">Новое в этом обновлении</string>
+    <string name="recommend_open">Посмотреть</string>
+    <string name="recommend_next">Следующий совет</string>
+    <string name="recommend_dismiss">Скрыть рекомендации для этой версии</string>
+    <string name="recommend_about">Что нового</string>
+    <string name="recommend_motion">Капсула плавно разворачивается в карточку. Листайте влево или вправо, чтобы просматривать действия.</string>
+    <string name="recommend_torch">Регулируйте яркость, растягивая луч. Коснитесь рисунка фонарика для плавного включения или выключения.</string>
+    <string name="recommend_search">Находите настройки по близким словам или начальным согласным корейских слогов.</string>
+    <string name="recommend_glass">Попробуйте экспериментальный матовый материал с мягким смешением фона и цветов обложки.</string>
+    <string name="recommend_motion_title">Новое движение: iMotion</string>
+    <string name="recommend_gesture_title">Смахните, чтобы скрыть, потяните, чтобы вернуть</string>
+    <string name="recommend_gesture">В iMotion смахните вверх, чтобы скрыть капсулы. Потяните вниз у отверстия камеры, чтобы вернуть их.</string>
+    <string name="recommend_torch_title">Потяните луч, чтобы настроить фонарик</string>
+    <string name="recommend_search_title">Поиск без точного названия</string>
+    <string name="recommend_glass_title">Новый материал · Экспериментальный</string>
 </resources>

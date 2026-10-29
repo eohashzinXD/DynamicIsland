@@ -256,11 +256,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** Keep direct manipulation and structural transitions responsive; ambient motion uses the smaller budget. */
     boolean interactiveMotion() {
         long t = now();
+        if (scene.iMode != null && scene.iMode.animating()) return true;
         if (t < touchActiveUntil || springs.animating() || buttons.animating() || seekBody != null || sliderBody != null
                 || scene.mainOut != null || scene.bubbleOut != null
                 || scene.contentHandoff != null && !scene.contentHandoff.finished(t)) return true;
         for (Card c : scene.cards) {
-            if (c.leaving || t < c.startAt || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
+            if (c.leaving || t < c.startAt || c.iMode && !c.cx.isAtRest() || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
         }
         return false;
     }
@@ -308,9 +309,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             post(() -> setPillBackgroundLuma(luma));
             return;
         }
-        float before = scene.pillOutlineOpacity();
+        float before = scene.pillOutlineTarget();
         scene.pillOutline.sample(luma);
-        if (before != scene.pillOutlineOpacity()) {
+        if(scene.iMode!=null) scene.iMode.syncOutlineTarget();
+        if (before != scene.pillOutlineTarget()) {
             invalidate();
             scheduleFrame();
         }
@@ -319,15 +321,18 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** A thin bottom-edge band avoids sampling the physical camera hole in the pill's centre. */
     public boolean pillBackgroundSamplingRegion(Rect out) {
         out.setEmpty();
+        boolean iMotion=scene.iMode!=null;
         if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE
-                || scene.mode != Mode.COMPACT || scene.shadePulled() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA) {
+                || scene.shadePulled()
+                || (iMotion ? scene.sleeping || scene.suppressed
+                    : scene.mode != Mode.COMPACT || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA)) {
             return false;
         }
-        shapes.paintedMain(samplingPill);
+        if(iMotion) scene.iMode.outlineSamplingBounds(samplingPill);else shapes.paintedMain(samplingPill);
         if (samplingPill.width() < 2f || samplingPill.height() < 2f) return false;
         float left = samplingPill.left;
         float right = samplingPill.right;
-        if (springs.split.value() > 0.003f) {
+        if (!iMotion && springs.split.value() > 0.003f) {
             shapes.bubble(samplingPill, samplingBubble);
             left = Math.min(left, samplingBubble.left);
             right = Math.max(right, samplingBubble.right);
@@ -389,6 +394,29 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public boolean materialBackdropPrewarming() { return scene.cards.isEmpty(); }
     private Runnable materialCaptureRefresh;
     public void setMaterialCaptureRefresh(Runnable refresh) { materialCaptureRefresh=refresh; }
+
+    public boolean iModeGestureEnabled() {
+        return scene.iMode!=null && !scene.held && !isSuppressedNow();
+    }
+
+    public boolean iModeTouchEnabled() {
+        return iModeGestureEnabled()
+                && (scene.iMode.hiddenByGesture() || scene.visibleAlpha()>.4f);
+    }
+
+    public boolean iModeOwnsTouch(float x,float y) {
+        if(!iModeTouchEnabled()) return false;
+        if(scene.iMode.hiddenByGesture()) return x>=metrics.cx-dp(46) && x<=metrics.cx+dp(46)
+                && y>=metrics.cy-metrics.pillH/2-dp(4) && y<=metrics.cy+metrics.pillH/2+dp(4);
+        if(scene.iMode.hit(x,y,dp(4))!=null) return true;
+        RectF bounds=new RectF();
+        for(Card card:scene.cards) if(card.iMode) {
+            shapes.card(card,bounds);
+            if(bounds.contains(x,y) && (card.leaving || Math.abs(card.w.value()-card.body.w)>dp(3)
+                    || Math.abs(card.h.value()-card.body.h)>dp(3))) return true;
+        }
+        return false;
+    }
 
     public void setRemoteLayer(ViewGroup layer) {
         remote.setLayer(layer);
@@ -633,7 +661,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     /** Incoming cards may replace a manual card, but never a reply or a pulled-down shade. */
     public boolean canPeek() {
-        return metrics.screenW > 0 && !isSuppressedNow() && !scene.held && !scene.shadePulled();
+        return metrics.screenW > 0 && !isSuppressedNow() && !scene.held && !scene.shadePulled()
+                && !(scene.iMode!=null && scene.iMode.hiddenByGesture());
     }
 
     public boolean isShowingCard(IslandItem item) {
@@ -646,7 +675,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     private boolean cardOccupiesOverlay(Card card) {
-        return scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
+        return (!card.iMode || card.iModeOpacity.value() > MIN_VISIBLE_ALPHA)
+                && scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
                 || card.leaving && StackPainter.contentAlpha(card, now(), 1) > MIN_VISIBLE_ALPHA);
     }
 
@@ -718,12 +748,17 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     public boolean needsAudio() {
         if (scene.sleeping || ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
-        if (scene.mode != Mode.COMPACT || scene.visibleAlpha() < 0.2f) {
+        if ((scene.mode != Mode.COMPACT && scene.iMode==null) || scene.visibleAlpha() < 0.2f) {
             return false;
         }
         IslandItem music = scene.musicForGlow();
-        return (music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0)
-                || needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
+        if(music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0) return true;
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems())
+                if(item.playing && item.trailing==IslandItem.Trailing.WAVEFORM && ModuleSettings.visualizer()) return true;
+            return false;
+        }
+        return needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
     }
 
     public boolean hasRecordingWaveform(IslandItem item) {
@@ -738,7 +773,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             for (Card card : scene.cards) {
                 if (!card.leaving && capturesRecording(card.item)) return card.item.key;
             }
-        } else if (scene.mode == Mode.COMPACT) {
+        }
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems()) if(capturesRecording(item)) return item.key;
+            return null;
+        }
+        if (scene.mode == Mode.COMPACT) {
             if (scene.mainIn != null && capturesRecording(scene.mainIn.content.item)) return scene.mainIn.content.item.key;
             if (scene.bubbleIn != null && springs.split.value() > .05f && capturesRecording(scene.bubbleIn.content.item)) return scene.bubbleIn.content.item.key;
         }
@@ -863,12 +903,17 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         Layer main = scene.mainIn;
         Layer bubble = scene.bubbleIn;
         boolean need = false;
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems())
+                need |= runningStopwatch(item) || iconPlaying(item);
+        }
         need |= pillPainter.stepGlow(dt, host.audio());
         IslandItem waveItem = null;
         if (main != null && scene.mode == Mode.COMPACT) {
             IslandItem it = main.content.item;
             waveItem = it.trailing == IslandItem.Trailing.WAVEFORM ? it : null;
-            need = it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
+            boolean compactMotion=it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
+            need=scene.iMode==null ? compactMotion : need | compactMotion;
         }
         if (main != null) {
             need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item))
@@ -886,6 +931,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
                     || c.body.animating(now())
                     || c.material.animating(now()) || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
+        }
+        if(scene.iMode!=null) {
+            waveItem=null;
+            for(IslandItem item:scene.iMode.visibleItems())
+                if(item.trailing==IslandItem.Trailing.WAVEFORM) { waveItem=item; break; }
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
@@ -985,6 +1035,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         notifyHost();
     }
 
+    void drawCompactGlow(Canvas canvas,RectF bounds,float alpha) {
+        pillPainter.drawCompactGlow(canvas,bounds,alpha);
+    }
+
     // ---- drawing -------------------------------------------------------------------------------------------------
 
     @Override
@@ -1018,6 +1072,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         int save = canvas.save();
         if (alpha < 0.995f) {
             canvas.saveLayerAlpha(0.0f, 0.0f, metrics.screenW, getHeight(), Math.round(255.0f * alpha));
+        }
+        if(scene.iMode!=null) {
+            scene.iMode.draw(canvas,now());
+            canvas.restoreToCount(save);
+            return;
         }
         stackPainter.drawGoo(canvas);
         float scale = springs.press.value() * (springs.pulse.value() + 1.0f);

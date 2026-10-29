@@ -576,4 +576,21 @@
     <string name="torch_style_desc">选择经典亮度滑块或扩散光束。点击手电筒切换开关，拖动弧形控件调整亮度。</string>
     <string name="torch_style_classic">经典滑块</string>
     <string name="torch_style_beam">扩散光束</string>
+    <string name="imode_title">iMotion</string>
+    <string name="imode_desc">以联动的模糊和动画展开单个活动，左右滑动可切换所有活动。向上滑动可隐藏全部胶囊，从摄像头开孔附近向下拖动可重新显示。</string>
+    <string name="recommend_label">本次更新的新功能</string>
+    <string name="recommend_open">了解一下</string>
+    <string name="recommend_next">下一个推荐</string>
+    <string name="recommend_dismiss">隐藏此版本的推荐</string>
+    <string name="recommend_about">新功能</string>
+    <string name="recommend_motion">胶囊自然展开为卡片，左右滑动即可浏览多个活动。</string>
+    <string name="recommend_torch">通过随亮度扩散的光束直观调节，轻触手电筒图案即可平滑开关。</string>
+    <string name="recommend_search">使用相关词语或韩文首辅音也能找到所需设置。</string>
+    <string name="recommend_glass">试用实验性磨砂玻璃材质，让背景与专辑色彩柔和融入卡片。</string>
+    <string name="recommend_motion_title">全新动效，iMotion</string>
+    <string name="recommend_gesture_title">上滑隐藏，下拉恢复</string>
+    <string name="recommend_gesture">在 iMotion 中向上滑动可隐藏胶囊，从摄像头开孔附近向下拖动可重新显示。</string>
+    <string name="recommend_torch_title">拖动光束调节手电筒</string>
+    <string name="recommend_search_title">记不清名称也能搜索</string>
+    <string name="recommend_glass_title">尝试全新材质 · 实验性</string>
 </resources>
