@@ -177,6 +177,15 @@ final class OneUi {
         page.addView(label);
     }
 
+    /** A section label with a small line below it saying what the section is. */
+    void category(LinearLayout page, CharSequence title, CharSequence description) {
+        category(page, title);
+        if (description == null || description.length() == 0) return;
+        TextView sub = text(description, 13, muted);
+        sub.setPadding(dp(22), dp(2), dp(22), 0);
+        page.addView(sub);
+    }
+
     LinearLayout card(LinearLayout page) {
         LinearLayout c = new LinearLayout(ctx);
         c.setOrientation(LinearLayout.VERTICAL);
@@ -353,8 +362,8 @@ final class OneUi {
      */
     static final int TAG_DEFAULT = 1, TAG_RECOMMENDED = 2;
 
-    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence[] labels, int[] tags, int selected, java.util.function.IntConsumer onSelect) {
-        category(page, title);
+    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence description, CharSequence[] labels, int[] tags, int selected, java.util.function.IntConsumer onSelect) {
+        category(page, title, description);
         LinearLayout card = card(page);
         card.setTag(title.toString());
         RadioDot[] dots = new RadioDot[labels.length];

@@ -123,7 +123,7 @@ final class RulesScreen {
         activity.toggle(master, R.string.setting_smart_rules, R.string.setting_smart_rules_desc, ModuleSettings.KEY_SMART_RULES, true);
         ui.note(activity.page(), str(R.string.rules_about));
 
-        ui.category(activity.page(), str(R.string.group_rule_cards));
+        ui.category(activity.page(), str(R.string.group_rule_cards), str(R.string.desc_rule_cards));
         LinearLayout cards = ui.card(activity.page());
         RuleDictionary all = everything();
         Set<String> off = disabled();
@@ -133,7 +133,7 @@ final class RulesScreen {
         }
         ui.actionRow(cards, str(R.string.rule_new), str(R.string.rule_new_sum), () -> activity.open(wizard::page));
 
-        ui.category(activity.page(), str(R.string.group_rule_tools));
+        ui.category(activity.page(), str(R.string.group_rule_tools), str(R.string.desc_rule_tools));
         LinearLayout tools = ui.card(activity.page());
         ui.linkRow(tools, str(R.string.rule_test), str(R.string.rule_test_sum), () -> activity.open(this::testPage));
         ui.actionRow(tools, str(R.string.rules_export), str(R.string.rules_export_sum), this::exportRules);
