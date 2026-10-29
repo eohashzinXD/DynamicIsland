@@ -214,7 +214,7 @@ public final class SettingsActivity extends Activity {
             preview = new LivePreview(this, ui, prefs);
             preview.setBackground(ui.round(0xFF0B0B0D, ui.dp(26)));
             preview.setClipToOutline(true);
-            previewFrame.addView(preview, new LinearLayout.LayoutParams(-1, ui.dp(176)));
+            previewFrame.addView(preview, new LinearLayout.LayoutParams(-1, ui.dp(160)));
         }
         previewFrame.setVisibility(View.VISIBLE);
         preview.start();
@@ -228,7 +228,12 @@ public final class SettingsActivity extends Activity {
 
     /** Plays the preview again after a setting it shows has changed. */
     void refreshPreview() {
-        if (preview != null && previewFrame.getVisibility() == View.VISIBLE) preview.refresh();
+        refreshPreview(LivePreview.KEEP);
+    }
+
+    /** Same, but plays the sample card that shows the changed setting best. */
+    void refreshPreview(int sample) {
+        if (preview != null && previewFrame.getVisibility() == View.VISIBLE) preview.refresh(sample);
     }
 
     /** Header of a sub page: back button and title. */
@@ -380,35 +385,35 @@ public final class SettingsActivity extends Activity {
     // ---------------------------------------------------------------- pages
 
     /** A One UI radio list; the live preview above plays the result as soon as an option is tapped. */
-    LinearLayout radios(int title, int[] labels, int selected, java.util.function.IntConsumer save) {
+    LinearLayout radios(int title, int[] labels, int selected, int sample, java.util.function.IntConsumer save) {
         CharSequence[] names = new CharSequence[labels.length];
         for (int i = 0; i < labels.length; i++) names[i] = getString(labels[i]);
-        return ui.radioGroup(page, getString(title), names, selected, which -> { save.accept(which); refreshPreview(); });
+        return ui.radioGroup(page, getString(title), names, selected, which -> { save.accept(which); refreshPreview(sample); });
     }
 
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
         showPreview();
         radios(R.string.anim_title, new int[]{R.string.anim_new, R.string.anim_legacy, R.string.imode_title},
-                flag(ModuleSettings.KEY_I_MODE, false) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0,
+                flag(ModuleSettings.KEY_I_MODE, false) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_LEGACY_ANIMATION, selected == 1)
                         .putBoolean(ModuleSettings.KEY_I_MODE, selected == 2).apply());
         ui.note(page, getString(R.string.imode_desc));
         radios(R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
-                ModuleSettings.readMaterialStyle(prefs),
+                ModuleSettings.readMaterialStyle(prefs), LivePreview.MUSIC,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
         radios(R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
-                ModuleSettings.readPillOutlineMode(prefs),
+                ModuleSettings.readPillOutlineMode(prefs), LivePreview.RING,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
         ui.note(page, getString(R.string.pill_outline_desc));
         ui.category(page, getString(R.string.group_card));
         LinearLayout cards = ui.card(page);
         new CardShapeScreen(this, ui, prefs).addTo(cards);
         radios(R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},
-                flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0,
+                flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_COMPACT_EVENT_ICONS, selected == 1).apply());
         radios(R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
-                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0,
+                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0, LivePreview.TORCH,
                 style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
         ui.note(page, getString(R.string.torch_style_desc));
         LinearLayout look = ui.card(page);
@@ -417,7 +422,7 @@ public final class SettingsActivity extends Activity {
         ui.switchRow(look, getString(R.string.ui_show_battery_icon), getString(R.string.ui_show_battery_icon_summary),
                 !flag(ModuleSettings.KEY_HIDE_BATTERY_ICON, true), on -> {
                     prefs.edit().putBoolean(ModuleSettings.KEY_HIDE_BATTERY_ICON, !on).apply();
-                    refreshPreview();
+                    refreshPreview(LivePreview.CHARGING);
                 });
         LinearLayout more = ui.card(page);
         ui.linkRow(more, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));

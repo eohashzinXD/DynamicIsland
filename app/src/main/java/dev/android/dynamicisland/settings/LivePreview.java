@@ -40,11 +40,13 @@ final class LivePreview extends FrameLayout {
     private final List<IslandItem> samples = new ArrayList<>();
     private int next;
     private int shown;
+    /** After a setting changed, the sample that shows it is replayed until the preview is tapped. */
+    private boolean holding;
     private boolean running;
     private final Runnable cycle = new Runnable() {
         @Override public void run() {
             if (!running || !isAttachedToWindow()) return;
-            shown = next++ % samples.size();
+            shown = holding ? shown : next++ % samples.size();
             IslandItem sample = samples.get(shown);
             if (ModuleSettings.iMode()) {
                 island.peek(sample, SAMPLE_MS);
@@ -149,8 +151,14 @@ final class LivePreview extends FrameLayout {
         return pixels;
     }
 
-    /** Re-reads the saved settings and plays the current sample again from the start. */
-    void refresh() {
+    static final int RING = 0, CHARGING = 1, MUSIC = 2, TORCH = 3, KEEP = -1;
+
+    /** Re-reads the saved settings and plays {@code sample} (or the current one for KEEP) again from the start. */
+    void refresh(int sample) {
+        if (sample >= 0 && sample < samples.size()) {
+            shown = sample;
+            holding = true;
+        }
         ModuleSettings.configurePreview(prefs);
         island.collapse();
         island.setItems(ModuleSettings.iMode() ? new ArrayList<>(samples) : Collections.singletonList(samples.get(shown)));
@@ -161,7 +169,8 @@ final class LivePreview extends FrameLayout {
 
     void start() {
         running = true;
-        refresh();
+        holding = false;
+        refresh(KEEP);
     }
 
     void stop() {
@@ -182,6 +191,7 @@ final class LivePreview extends FrameLayout {
 
     @Override public boolean onInterceptTouchEvent(MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_UP && event.getEventTime() - event.getDownTime() < 180) {
+            holding = false;
             removeCallbacks(cycle);
             post(cycle);
         }

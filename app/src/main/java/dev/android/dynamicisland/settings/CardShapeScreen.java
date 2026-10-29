@@ -41,9 +41,9 @@ final class CardShapeScreen {
             public void onProgressChanged(SeekBar bar, int amount, boolean fromUser) {
                 value.setText(activity.getString(R.string.card_corner_radius_format, amount));
                 if (fromUser) save(amount);
-                if (fromUser && !tracking) activity.refreshPreview();
+                if (fromUser && !tracking) activity.refreshPreview(LivePreview.MUSIC);
             }
-            public void onStopTrackingTouch(SeekBar bar) { tracking = false; save(bar.getProgress()); activity.refreshPreview(); }
+            public void onStopTrackingTouch(SeekBar bar) { tracking = false; save(bar.getProgress()); activity.refreshPreview(LivePreview.MUSIC); }
             private void save(int amount) {
                 prefs.edit().putInt(ModuleSettings.KEY_CARD_CORNER_RADIUS_DP, amount).apply();
                 ModuleSettings.configurePreview(prefs);
