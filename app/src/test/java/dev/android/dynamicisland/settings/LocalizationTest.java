@@ -18,6 +18,20 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35, qualifiers = "w411dp-h891dp-xxhdpi")
 public class LocalizationTest {
+    @Test public void brazilianPortugueseUsesAvailableResourcesAndEnglishFallback() {
+        Context app = RuntimeEnvironment.getApplication();
+        Configuration configuration = new Configuration(app.getResources().getConfiguration());
+        configuration.setLocales(new LocaleList(Locale.forLanguageTag("pt-BR")));
+        Context localized = app.createConfigurationContext(configuration);
+        assertEquals("Ilha sempre visível", localized.getString(R.string.always_visible_island));
+        assertEquals("Dynamic Island", localized.getString(R.string.app_name));
+        assertEquals(IslandText.get(Locale.ENGLISH, "island_reply_to", "Ana"),
+                IslandText.get(Locale.forLanguageTag("pt-BR"), "island_reply_to", "Ana"));
+        configuration.setLocales(new LocaleList(Locale.forLanguageTag("pt-PT")));
+        Context otherPortuguese = app.createConfigurationContext(configuration);
+        assertEquals(app.getString(R.string.always_visible_island),
+                otherPortuguese.getString(R.string.always_visible_island));
+    }
     @Test public void resourcesAndSystemUiShareTranslationsAndFormatArgumentsAcrossAllLocales() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         for (String language : IslandText.languages()) {

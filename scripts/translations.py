@@ -44,6 +44,13 @@ def formats(text: str):
     return Counter(found)
 
 
+def resource_dir(language: str) -> str:
+    """Map a BCP 47 language-region tag to an Android resource qualifier."""
+    if language == 'en':
+        return 'values'
+    return 'values-' + re.sub(r'-([A-Z]{2})$', r'-r\1', language)
+
+
 def check() -> int:
     english = read(RES / 'values/strings.xml')
     required = {k: n for k, n in english.items() if n.get('translatable') != 'false'}
@@ -52,7 +59,7 @@ def check() -> int:
     if len(languages) != len(set(languages)) or not languages or languages[0] != 'en':
         errors.append('locales_config.xml must list English first, with no duplicate locales')
     for language in languages:
-        path = RES / ('values' if language == 'en' else f'values-{language}') / 'strings.xml'
+        path = RES / resource_dir(language) / 'strings.xml'
         if not path.exists():
             errors.append(f'{language}: missing {path.relative_to(ROOT)}')
             continue
@@ -68,6 +75,21 @@ def check() -> int:
             if required[key].get('formatted') != 'false' and formats(''.join(required[key].itertext())) != formats(text):
                 errors.append(f'{language}: format placeholders differ for {key}')
         print(f'{language}: {len(set(entries) & set(required))}/{len(required)} translatable strings')
+    # Unregistered drafts may be incomplete, but must not contain invalid keys or formats.
+    registered = {resource_dir(language) for language in languages}
+    for path in RES.glob('values-*/strings.xml'):
+        if path.parent.name in registered:
+            continue
+        entries = read(path)
+        for key in sorted(set(entries) - set(english)):
+            errors.append(f'{path.parent.name}: unknown key {key}')
+        for key in set(required) & set(entries):
+            text = ''.join(entries[key].itertext())
+            if not text.strip():
+                errors.append(f'{path.parent.name}: empty {key}')
+            if required[key].get('formatted') != 'false' and formats(''.join(required[key].itertext())) != formats(text):
+                errors.append(f'{path.parent.name}: format placeholders differ for {key}')
+        print(f'{path.parent.name}: {len(set(entries) & set(required))}/{len(required)} (unregistered draft)')
     for path in (ROOT / 'app/src/main/java').rglob('*.java'):
         for key in re.findall(r'"(island_[a-z0-9_]+)"', path.read_text()):
             if key not in english:
@@ -78,9 +100,9 @@ def check() -> int:
 
 
 def init(language: str) -> int:
-    if not re.fullmatch('[a-z]{2,3}', language) or language == 'en':
-        raise ValueError('Use a base ISO language code, for example de or es; English is values/strings.xml')
-    path = RES / f'values-{language}' / 'strings.xml'
+    if not re.fullmatch(r'[a-z]{2,3}(?:-[A-Z]{2})?', language) or language == 'en':
+        raise ValueError('Use an ISO language or language-region tag, for example de or pt-BR')
+    path = RES / resource_dir(language) / 'strings.xml'
     if path.exists():
         raise ValueError(f'Refusing to overwrite {path.relative_to(ROOT)}')
     root = ET.Element('resources')
