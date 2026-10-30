@@ -24,6 +24,8 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Set;
 
 /**
  * A notification that would have popped up as a heads-up banner, shown as an island card instead:
@@ -47,6 +49,58 @@ public final class PeekSource {
         }
     };
     private IslandItem current;
+    private boolean promoted;
+    private static final int MAX_PENDING = 4;
+    private static final long MAX_WAIT_MS = 30000;
+    private static final class Pending {
+        final IslandItem item;
+        final long duration, deadline;
+        Pending(IslandItem item, long duration, long deadline) {
+            this.item = item; this.duration = duration; this.deadline = deadline;
+        }
+    }
+    private final ArrayDeque<Pending> pending = new ArrayDeque<>();
+
+    /** Queues a distinct notification; a full queue leaves the stock banner available. */
+    public boolean enqueue(IslandItem item, long duration) {
+        long now = SystemClock.uptimeMillis();
+        pending.removeIf(p -> p.deadline <= now || p.item.key.equals(item.key));
+        if (pending.size() >= MAX_PENDING) return false;
+        pending.addLast(new Pending(item, duration, now + MAX_WAIT_MS));
+        return true;
+    }
+
+    public boolean hasPending(String key, long postTime) {
+        for (Pending p : pending) if (p.item.sourceKey != null && p.item.sourceKey.equals(key)
+                && p.item.postTime == postTime && p.deadline > SystemClock.uptimeMillis()) return true;
+        return false;
+    }
+
+    /** Only remove keys observed before and subsequently absent from the SystemUI snapshot. */
+    public void removeNotifications(Set<String> removed) {
+        if (removed.isEmpty()) return;
+        boolean changed = pending.removeIf(p -> removed.contains(p.item.sourceKey));
+        if (current != null && removed.contains(current.sourceKey)) {
+            current = null;
+            promoted = false;
+            main.removeCallbacks(tick);
+            changed = true;
+        }
+        if (changed) onChange.run();
+    }
+
+    private void advance() {
+        long now = SystemClock.uptimeMillis();
+        if (current != null && current.expiresAtUptime > now) return;
+        current = null;
+        while (!pending.isEmpty()) {
+            Pending next = pending.removeFirst();
+            if (next.deadline <= now) continue;
+            show(next.item, next.duration);
+            promoted = true;
+            break;
+        }
+    }
 
     public PeekSource(Context ctx, Handler main, Runnable onChange) {
         this.ctx = ctx;
@@ -58,24 +112,40 @@ public final class PeekSource {
     public void show(IslandItem item, long ms) {
         item.expiresAtUptime = SystemClock.uptimeMillis() + ms;
         current = item;
+        promoted = false;
         main.removeCallbacks(tick);
         main.postDelayed(tick, ms + 40);
     }
 
     /** The card on the island right now, or null when none is (or its time is up). */
     public IslandItem showing() {
+        advance();
         IslandItem it = current;
         return it != null && it.expiresAtUptime > SystemClock.uptimeMillis() ? it : null;
+    }
+
+    /** A queued item waits for the controller to open it, including across suppression. */
+    public IslandItem promoted() {
+        IslandItem item = showing();
+        return promoted ? item : null;
+    }
+
+    public void presented(IslandItem item) {
+        if (current == item) promoted = false;
     }
 
     /** Takes back a card the island could not show after all. */
     public void dismiss(IslandItem item) {
         if (current == item) {
             current = null;
+            promoted = false;
+            main.removeCallbacks(tick);
+            onChange.run();
         }
     }
 
     public void collect(List<IslandItem> out) {
+        advance();
         if (current == null) {
             return;
         }

@@ -42,6 +42,8 @@ final class IMode {
     private final RectF gatherOther=new RectF();
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private String selected;
+    /** Expanded activity temporarily covered by a notification card. */
+    private String resumeAfterPeek;
     private String rowAnchor;
     private boolean initialized;
     private int rowCount;
@@ -311,6 +313,7 @@ final class IMode {
         node.bounds(source);
         float iconOnly=node.iconOnly.value();
         if(manual) {
+            resumeAfterPeek=null;
             if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
             scene.peekOpen=false;
         }
@@ -352,6 +355,11 @@ final class IMode {
     }
 
     void peek(IslandItem item) {
+        Node previous=selected==null ? null : nodes.get(selected);
+        if (scene.mode==Mode.EXPANDED && previous!=null && !previous.removed
+                && previous.item.kind!=IslandItem.Kind.PEEK && !selected.equals(item.key)) {
+            resumeAfterPeek=selected;
+        }
         Node node=nodes.get(item.key);
         if(node==null) { node=new Node(view,item); seed(node); nodes.put(item.key,node); activities.add(item); }
         else node.refresh(view,item);
@@ -443,8 +451,17 @@ final class IMode {
         abortSwipe();
         boolean peek=scene.peekOpen;
         String closed=director.clearPeek();
+        String resume=peek ? resumeAfterPeek : null;
+        resumeAfterPeek=null;
         scene.peekOpen=false; scene.held=false;
         director.cancelAutoCollapse();
+        Node previous=resume==null ? null : nodes.get(resume);
+        if (previous!=null && !previous.removed && !scene.sleeping && !scene.suppressed && !gestureHidden) {
+            selected=null;
+            if(peek) host.onPeekClosed(closed);
+            open(resume,false);
+            return;
+        }
         selected=null; scene.mode=scene.items.isEmpty() ? Mode.HIDDEN : Mode.COMPACT;
         closeCards(); layout();
         if(peek) host.onPeekClosed(closed);
@@ -458,7 +475,7 @@ final class IMode {
         finishCompactInteraction();abortSwipe();
         boolean expanded=scene.mode==Mode.EXPANDED;
         if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
-        scene.peekOpen=false;selected=null;gestureHidden=true;scene.mode=Mode.HIDDEN;
+        scene.peekOpen=false;selected=null;resumeAfterPeek=null;gestureHidden=true;scene.mode=Mode.HIDDEN;
         director.cancelAutoCollapse();closeCards();layout();
         scene.springs.stackDx.animateTo(0);scene.springs.stackDy.animateTo(0);
         scene.springs.visibility.animateTo(0,.36f,1);
@@ -606,6 +623,7 @@ final class IMode {
             compactPage.pull.animateTo(0);compactPage.load.animateTo(0);
         }
         if(commit) {
+            resumeAfterPeek=null;
             if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
             scene.peekOpen=false;
             selected=next.item.key;
@@ -995,7 +1013,7 @@ final class IMode {
     void finishSleeping() {
         if(compactPage!=null) { compactPage.clear();compactPage=null; }
         swipeCard=null;swipePreview=null;
-        selected=null;
+        selected=null;resumeAfterPeek=null;
         for(Card c:new ArrayList<>(scene.cards)) release(c);
         scene.mode=gestureHidden ? Mode.HIDDEN : scene.items.isEmpty()
                 ? (ModuleSettings.alwaysVisible() ? Mode.IDLE : Mode.HIDDEN) : Mode.COMPACT;

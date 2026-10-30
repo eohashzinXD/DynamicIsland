@@ -61,6 +61,10 @@ final class HeadsUpTakeover {
     }
 
     void setSnapshot(List<StatusBarNotification> notifications) {
+        java.util.Set<String> removed = new java.util.HashSet<>();
+        for (StatusBarNotification old : snapshot) if (old != null) removed.add(old.getKey());
+        for (StatusBarNotification next : notifications) if (next != null) removed.remove(next.getKey());
+        sources.peeks.removeNotifications(removed);
         snapshot = new java.util.ArrayList<>(notifications);
     }
 
@@ -93,6 +97,7 @@ final class HeadsUpTakeover {
             if (isOnIslandNow(sbn)) {
                 return true; // already on the island: the banner is asked about again on updates
             }
+            if (sources.peeks.hasPending(sbn.getKey(), sbn.getPostTime())) return false;
             if (view.isSuppressedNow() || !PeekSource.eligible(sbn)
                     || (!ModuleSettings.experimentalRecovery()
                     && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
@@ -127,7 +132,7 @@ final class HeadsUpTakeover {
 
     /**
      * The "all notifications" setting: a fresh notification that never became a banner (silent, or the system
-     * did not ask) still gets a card. Looks at each posting once and shows only the newest of a burst.
+     * did not ask) still gets a card. Each fresh posting is considered once, oldest first.
      */
     void scanAll(List<StatusBarNotification> snapshot) {
         if (!ModuleSettings.allNotifications() || !placement.ready()) {
@@ -137,7 +142,7 @@ final class HeadsUpTakeover {
             allChecked.clear();
         }
         long now = System.currentTimeMillis();
-        StatusBarNotification newest = null;
+        List<StatusBarNotification> fresh = new java.util.ArrayList<>();
         for (StatusBarNotification sbn : snapshot) {
             long age = now - sbn.getPostTime();
             if (age > ALL_FRESH_MS || age < -OTP_CLOCK_SKEW_MS || !allChecked.add(sbn.getKey() + "@" + sbn.getPostTime())) {
@@ -148,11 +153,9 @@ final class HeadsUpTakeover {
                     && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 continue;
             }
-            if (newest == null || sbn.getPostTime() >= newest.getPostTime()) {
-                newest = sbn;
-            }
+            fresh.add(sbn);
         }
-        if (newest == null) {
+        if (fresh.isEmpty()) {
             return;
         }
         IslandView view = placement.view();
@@ -160,11 +163,13 @@ final class HeadsUpTakeover {
             reject("all notifications: the island is unavailable");
             return;
         }
-        IslandItem item = sources.peeks.build(newest);
-        if (item != null) {
-            if (show(newest, item)) {
-                note("card for " + newest.getPackageName() + " from the notification list (stock banner asked to leave: "
-                        + HeadsUpHooks.dismissStock(newest.getKey()) + ")"); // the system's banner may have come up first
+        fresh.sort(java.util.Comparator.comparingLong(StatusBarNotification::getPostTime));
+        for (StatusBarNotification notification : fresh) {
+            IslandItem item = sources.peeks.build(notification);
+            if (item == null) continue;
+            if (show(notification, item)) {
+                note("card for " + notification.getPackageName() + " from the notification list (stock banner asked to leave: "
+                        + HeadsUpHooks.dismissStock(notification.getKey()) + ")");
             } else {
                 reject("all notifications: the island could not open");
             }
@@ -238,10 +243,28 @@ final class HeadsUpTakeover {
         return code != null && code.equals(lastOtpCode) && SystemClock.uptimeMillis() - lastOtpAt < OTP_REPEAT_WINDOW_MS;
     }
 
+    /** Only remove the system banner after a queued alert is actually visible. */
+    void onQueuedPresented(IslandItem item) {
+        if (item.sourceKey != null) HeadsUpHooks.dismissStock(item.sourceKey);
+        if (item.otpCode != null) {
+            lastOtpCode = item.otpCode;
+            lastOtpAt = SystemClock.uptimeMillis();
+            if (ModuleSettings.otpAutoCopy()) sources.peeks.copy(item.otpCode);
+        }
+    }
+
     /** @return whether the island really shows the card; only then is it remembered (and a code copied). */
     private boolean show(StatusBarNotification sbn, IslandItem item) {
         if (!placement.view().canPeek()) return false;
         long millis = item.peekMillis > 0 ? item.peekMillis : DEFAULT_PEEK_MS;
+        IslandItem showing = sources.peeks.showing();
+        if (showing != null && !showing.key.equals(item.key)) {
+            if (!sources.peeks.enqueue(item, millis)) return false;
+            if (peeked.size() > MAX_PEEKED) peeked.clear();
+            peeked.put(sbn.getKey(), sbn.getPostTime());
+            // The hook must not suppress a stock banner before the island actually displays it.
+            return false;
+        }
         sources.peeks.show(item, millis);
         refreshNow.run();
         if (!placement.view().peek(item, millis)) {

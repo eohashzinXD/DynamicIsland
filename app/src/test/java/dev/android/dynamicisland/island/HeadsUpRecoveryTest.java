@@ -62,7 +62,8 @@ public class HeadsUpRecoveryTest {
         assertTrue(takeover.take(child));
         assertEquals(child.getKey(), sources.peeks.showing().sourceKey);
         takeover.scanAll(snapshot);
-        assertEquals(summary.getKey(), sources.peeks.showing().sourceKey);
+        assertEquals(child.getKey(), sources.peeks.showing().sourceKey);
+        assertTrue(sources.peeks.hasPending(summary.getKey(), summary.getPostTime()));
 
         BannerManager manager = new BannerManager();
         ReflectionHelpers.setStaticField(HeadsUpHooks.class, "manager", manager);
@@ -92,6 +93,34 @@ public class HeadsUpRecoveryTest {
         assertEquals(false, remove.invoke(null, unsupported, "unsupported"));
         ReflectionHelpers.setStaticField(HeadsUpHooks.class, "manager", unsupported);
         assertEquals("no supported removeNotification signature", HeadsUpHooks.dismissStock("unsupported"));
+    }
+
+    @Test public void pendingNotificationIsRemovedWithItsSystemUiSnapshot() {
+        Context app = RuntimeEnvironment.getApplication();
+        Handler main = new Handler(Looper.getMainLooper());
+        IslandSources sources = new IslandSources(app, getClass().getClassLoader(), main, () -> { });
+        IslandPlacement placement = new IslandPlacement(app, main, getClass().getClassLoader(), IslandHost.NONE,
+                new IslandWindow.Listener() {
+                    @Override public void onWindowConfigurationChanged() { }
+                    @Override public void onWindowInsetsChanged() { }
+                }, new AudioLevels());
+        placement.ensureWindow(true);
+        HeadsUpTakeover takeover = new HeadsUpTakeover(sources, placement, () -> {
+            var item = sources.peeks.showing();
+            placement.view().setItems(item == null ? List.of() : List.of(item));
+        });
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "foregroundNotifications", true);
+        long now = System.currentTimeMillis();
+        StatusBarNotification one = note(app, 10, false, now);
+        StatusBarNotification two = note(app, 11, false, now + 1);
+        takeover.setSnapshot(List.of(one, two));
+        assertTrue(takeover.take(one));
+        assertFalse(takeover.take(two)); // queued, but the stock banner remains until it is displayed
+        assertTrue(sources.peeks.hasPending(two.getKey(), two.getPostTime()));
+        takeover.setSnapshot(List.of(one));
+        assertFalse(sources.peeks.hasPending(two.getKey(), two.getPostTime()));
+        assertEquals(one.getKey(), sources.peeks.showing().sourceKey);
     }
 
     public static class RemovalProbe {

@@ -919,4 +919,55 @@ public class IModeTest {
             assertFalse(f.view.isFullyHidden());
         }
     }
+
+    @Test public void temporaryCardKeepsContinuousActivityAndReturnsAfterRemoval() {
+        try (Fixture f=new Fixture(1)) {
+            IslandItem music=f.items.get(0);
+            IslandItem alert=item("alert",2); alert.kind=IslandItem.Kind.PEEK;
+            f.view.setItems(List.of(alert,music));
+            assertTrue(f.view.peek(alert,5000));
+            f.step(16,5);
+            assertTrue(f.scene.iMode.visibleItems().stream().anyMatch(it -> it.key.equals(music.key)));
+            f.view.setItems(List.of(music));
+            f.step(16,100);
+            assertFalse(f.view.isExpanded());
+            assertTrue(f.scene.iMode.visibleItems().stream().anyMatch(it -> it.key.equals(music.key)));
+            assertEquals(Mode.COMPACT,f.scene.mode);
+        }
+    }
+
+    @Test public void consecutiveAlertsRestorePreviouslyExpandedActivity() {
+        try (Fixture f=new Fixture(1)) {
+            IslandItem music=f.items.get(0);
+            IslandItem first=item("first-alert",2); first.kind=IslandItem.Kind.PEEK;
+            IslandItem second=item("second-alert",2); second.kind=IslandItem.Kind.PEEK;
+            f.scene.iMode.open(music.key,true);
+            f.view.setItems(List.of(first,music));
+            assertTrue(f.view.peek(first,5000));
+            f.step(16,5);
+            f.view.setItems(List.of(music));
+            f.assertSingle(music.key);
+            f.view.setItems(List.of(second,music));
+            assertTrue(f.view.peek(second,5000));
+            f.step(16,5);
+            f.view.setItems(List.of(music));
+            f.step(16,100);
+            f.assertSingle(music.key);
+            assertEquals(Mode.EXPANDED,f.scene.mode);
+        }
+    }
+
+    @Test public void suppressedAlertDoesNotRestoreAnExpandedCard() {
+        try (Fixture f=new Fixture(1)) {
+            IslandItem music=f.items.get(0);
+            IslandItem alert=item("alert-sleep",2); alert.kind=IslandItem.Kind.PEEK;
+            f.scene.iMode.open(music.key,true);
+            f.view.setItems(List.of(alert,music));
+            assertTrue(f.view.peek(alert,5000));
+            f.view.setSuppressed(true);
+            assertFalse(f.view.isExpanded());
+            f.step(16,100);
+            assertTrue(f.view.isFullyHidden());
+        }
+    }
 }
