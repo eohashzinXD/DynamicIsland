@@ -173,7 +173,7 @@ final class Director {
         }
         if (scene.mode == Mode.EXPANDED) {
             rebuildStack();
-        } else if (scene.mode == Mode.HIDDEN) {
+        } else if (scene.mode == Mode.HIDDEN || scene.mode == Mode.IDLE) {
             appear(primary, hint == IslandView.HINT_FROM_LEFT);
         } else {
             switchCompact(oldPrimary, primary, hint);
@@ -306,14 +306,16 @@ final class Director {
     }
 
     private void appear(IslandItem primary, boolean fromLeft) {
+        boolean fromIdle = scene.mode == Mode.IDLE;
         scene.contentHandoff = null;
         scene.mode = Mode.COMPACT;
         appearedAt = IslandView.now();
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.snapTo(1.0f);
-        float start = Math.max(m.minPillW, m.holeD + m.dp(16.0f));
-        sp.width.snapTo(start);
-        sp.height.snapTo(m.pillH);
+        float start = m.restWidth();
+        if (!fromIdle) sp.width.snapTo(start);
+        // starts as a flattened drop so the pill visibly lands and bounces instead of only widening
+        if (!fromIdle) sp.height.snapTo(Math.min(start, m.pillH) * APPEAR_HEIGHT_FROM);
         if (m.holeD > 0.0f) {
             sp.visibility.snapTo(1.0f);
         } else {
@@ -340,16 +342,10 @@ final class Director {
         if (wasPeek) host.onPeekClosed(closedPeek);
         sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
         boolean wasExpanded = scene.mode == Mode.EXPANDED;
-        if (scene.mode == Mode.HIDDEN) {
-            float idleWidth = Math.max(m.minPillW, m.holeD + m.dp(16.0f));
-            sp.width.snapTo(idleWidth);
-            sp.height.snapTo(m.pillH);
-            sp.visibility.snapTo(1.0f);
-            view.scheduleFrame();
-            view.notifyHost();
-            return;
-        }
-        scene.mode = Mode.HIDDEN;
+        boolean wasIdle = scene.mode == Mode.IDLE;
+        boolean idle = ModuleSettings.alwaysVisible();
+        if (scene.mode == Mode.HIDDEN && !idle) return;
+        scene.mode = idle ? Mode.IDLE : Mode.HIDDEN;
         long t = IslandView.now();
         if (scene.mainIn != null) {
             scene.mainOut = scene.mainIn.toOutgoing(t, toLeft ? -1 : 0);
@@ -359,14 +355,17 @@ final class Director {
             scene.bubbleOut = scene.bubbleIn.toOutgoing(t, 0);
         }
         scene.bubbleIn = null;
-        float end = Math.max(m.minPillW, m.holeD + m.dp(16.0f));
+        float end = idle ? Math.max(m.minPillW, m.holeD + m.dp(16)) : m.restWidth();
         sp.width.animateTo(end, Motion.PILL_SHRINK);
-        sp.height.animateTo(m.pillH, Motion.PILL_SHRINK);
+        sp.height.animateTo(idle ? m.pillH : Math.min(end, m.pillH), Motion.PILL_SHRINK);
         sp.split.animateTo(0.0f, Motion.BUBBLE_MERGE);
         if (toLeft) {
             sp.offsetX.impulse(-m.dp(HIDE_TO_LEFT_IMPULSE_DP));
         }
-        sp.visibility.animateTo(1.0f, 0.22f, 1.0f);
+        if (idle) sp.visibility.animateTo(1.0f, 0.22f, 1.0f);
+        else if (m.holeD <= 0.0f || wasIdle) {
+            sp.visibility.animateTo(0.0f, 0.22f, 1.0f);
+        }
         view.scheduleFrame();
         if (wasExpanded) {
             host.onExpandedChanged(false);
