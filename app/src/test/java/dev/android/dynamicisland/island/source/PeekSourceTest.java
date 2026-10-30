@@ -120,6 +120,38 @@ public class PeekSourceTest {
         assertTrue(out.isEmpty());
     }
 
+    @Test public void queuedAlertsAreDeduplicatedBoundedAndPromoted() {
+        PeekSource s = source();
+        IslandItem first = new IslandItem("peek:first"); first.sourceKey = "first";
+        IslandItem second = new IslandItem("peek:second"); second.sourceKey = "second";
+        s.show(first, 1000);
+        assertTrue(s.enqueue(second, 2000));
+        IslandItem updated = new IslandItem("peek:second"); updated.sourceKey = "second";
+        assertTrue(s.enqueue(updated, 2000));
+        for (int i = 0; i < 3; i++) assertTrue(s.enqueue(new IslandItem("peek:" + i), 2000));
+        org.junit.Assert.assertFalse(s.enqueue(new IslandItem("peek:overflow"), 2000));
+        assertEquals(first, s.showing());
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(1100));
+        assertEquals(updated, s.promoted());
+        s.presented(updated);
+        assertEquals(null, s.promoted());
+        s.dismiss(updated);
+        assertEquals("peek:0", s.showing().key);
+    }
+
+    @Test public void removedAndExpiredQueuedNotificationsAreNotPresented() {
+        PeekSource s = source();
+        IslandItem first = new IslandItem("peek:first"); first.sourceKey = "first";
+        IslandItem removed = new IslandItem("peek:removed"); removed.sourceKey = "removed";
+        s.show(first, 40000);
+        assertTrue(s.enqueue(removed, 1000));
+        s.removeNotifications(java.util.Set.of("removed"));
+        assertTrue(s.enqueue(new IslandItem("peek:stale"), 1000));
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(31));
+        s.dismiss(first);
+        assertEquals(null, s.showing());
+    }
+
     private Notification.Builder sms(String sender, String body) {
         return new Notification.Builder(app, "sms")
                 .setSmallIcon(android.R.drawable.stat_notify_chat)

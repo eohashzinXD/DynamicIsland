@@ -464,15 +464,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (scene.secondary != null) {
             director.refreshBubble();
         }
-        if (scene.mode == Mode.HIDDEN && scene.iMode == null) {
-          float idleWidth = Math.max(
-          metrics.minPillW,
-          metrics.holeD + metrics.dp(16.0f)
-        );
-        springs.width.snapTo(idleWidth);
-        springs.height.snapTo(metrics.pillH);
-        springs.visibility.snapTo(1.0f);
-        scheduleFrame();
+        if (scene.mode == Mode.IDLE && scene.iMode == null) {
+            springs.width.animateTo(Math.max(metrics.minPillW, metrics.holeD + metrics.dp(16)));
+            springs.height.animateTo(metrics.pillH);
+            scheduleFrame();
         }
         invalidate();
         notifyHost();

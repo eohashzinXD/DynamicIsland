@@ -22,6 +22,7 @@ class TranslationChecks(unittest.TestCase):
         self.assertNotEqual(formats('%1$s'), formats('%1$d'))
         self.assertEqual(formats('%1$d%%'), formats('%%%1$d'))
         self.assertEqual(formats('%d apps'), formats('%1$d apps'))
+        self.assertEqual('values-pt-rBR', self.module.resource_dir('pt-BR'))
 
     def test_new_language_template_registration_and_failure_detection(self):
         module = self.module

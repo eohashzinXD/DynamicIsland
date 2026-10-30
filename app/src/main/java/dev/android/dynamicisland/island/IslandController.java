@@ -236,7 +236,6 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                 allowed.add(sbn);
             }
         }
-        headsUp.setSnapshot(allowed);
         sources.recorder.update(all); // recording lifecycle is not an ordinary-notification app-filter rule
         sources.promoted.update(allowed);
         sources.progress.update(allowed);
@@ -244,6 +243,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         List<StatusBarNotification> forCodes = new ArrayList<>(allowed);
         Runnable scan = () -> {
             try {
+                headsUp.setSnapshot(forCodes);
                 headsUp.scanForCodes(forCodes);
                 headsUp.scanAll(forCodes);
             } catch (Throwable t) {
@@ -530,6 +530,14 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
             view.setGlowSession(gathered.glowSession);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
+            IslandItem pendingPeek = sources.peeks.promoted();
+            if (pendingPeek != null && !view.isShowingCard(pendingPeek) && view.canPeek()) {
+                long remaining = pendingPeek.expiresAtUptime - now;
+                if (remaining > 0 && view.peek(pendingPeek, remaining)) {
+                    sources.peeks.presented(pendingPeek);
+                    headsUp.onQueuedPresented(pendingPeek);
+                }
+            }
             if (sourcePeekRequests != null) {
                 IslandItem requested = sourcePeekRequests.next(shape.shown, ModuleSettings.autoOpenCards(), now);
                 if (requested != null && !view.isExpanded() && view.canPeek()) {

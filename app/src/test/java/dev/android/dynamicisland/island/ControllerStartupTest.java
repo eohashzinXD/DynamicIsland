@@ -53,6 +53,14 @@ public class ControllerStartupTest {
         assertTrue(view.peek(second, 12000));
         view.collapse();
         assertNull("closing the current popup still consumes that source", sources.peeks.showing());
+        sources.peeks.show(first, 12000);
+        view.setItems(List.of(first));
+        assertTrue(view.peek(first, 12000));
+        assertTrue(sources.peeks.enqueue(second, 12000));
+        view.collapse();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertSame("the controller promotes the next queued alert", second, sources.peeks.showing());
+        assertTrue("the promoted alert must actually open", view.isShowingCard(second));
         c.onStatusBarViewDetached(statusBar);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
     }

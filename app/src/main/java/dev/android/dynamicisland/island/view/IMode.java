@@ -42,6 +42,8 @@ final class IMode {
     private final RectF gatherOther=new RectF();
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private String selected;
+    /** Expanded activity temporarily covered by a notification card. */
+    private String resumeAfterPeek;
     private String rowAnchor;
     private boolean initialized;
     private int rowCount;
@@ -146,13 +148,22 @@ final class IMode {
 
     void update() {
         syncOutlineTarget();
+        boolean wasIdle = scene.mode == Mode.IDLE;
         activities.clear();
         for (Node node : nodes.values()) node.removed=true;
         for (IslandItem item : scene.stackItems(Integer.MAX_VALUE)) {
             Node node=nodes.get(item.key);
             if (node!=null && !node.removed) continue; // a minimized source must not duplicate a live one
             activities.add(item);
-            if (node==null) { node=new Node(view,item); seed(node); nodes.put(item.key,node); }
+            if (node==null) {
+                node=new Node(view,item); seed(node);
+                if (wasIdle && activities.size()==1) {
+                    float w=Math.max(m.minPillW,m.holeD+m.dp(16));
+                    node.x.snapTo(m.cx); node.y.snapTo(m.cy); node.w.snapTo(w); node.h.snapTo(m.pillH);
+                    node.alpha.snapTo(1); node.presence.snapTo(1); node.iconOnly.snapTo(0);
+                }
+                nodes.put(item.key,node);
+            }
             else node.refresh(view,item);
             node.removed=false;
         }
@@ -161,13 +172,13 @@ final class IMode {
         if (scene.items.isEmpty()) {
             if(scene.mode==Mode.EXPANDED) collapse();
             selected=null;
-            scene.mode=Mode.HIDDEN;
+            scene.mode=ModuleSettings.alwaysVisible() && !gestureHidden ? Mode.IDLE : Mode.HIDDEN;
             director.cancelAutoCollapse();
             closeCards();
             layout();
-            scene.springs.visibility.animateTo(0,.36f,1);
+            scene.springs.visibility.animateTo(scene.mode==Mode.IDLE ? 1 : 0,.36f,1);
         } else {
-            if (scene.mode==Mode.HIDDEN && !gestureHidden) scene.mode=Mode.COMPACT;
+            if ((scene.mode==Mode.HIDDEN || scene.mode==Mode.IDLE) && !gestureHidden) scene.mode=Mode.COMPACT;
             scene.springs.visibility.animateTo(gestureHidden ? 0 : 1,.30f,1);
             if (selected!=null && (nodes.get(selected)==null || nodes.get(selected).removed)) {
                 if (scene.peekOpen) collapse();
@@ -263,9 +274,14 @@ final class IMode {
             if(n.slot>=0 && !n.removed && !gestureHidden) visible.add(n.item);
             float visible=n.slot>=0 && !n.removed && scene.mode!=Mode.HIDDEN ? 1 : 0;
             if(n.removed) {
-                // Depart from the last position, rather than flying across the row to its bubble slot.
-                n.target.set(n.x.value()-n.w.value()/2,n.y.value()-n.h.value()/2,
-                        n.x.value()+n.w.value()/2,n.y.value()+n.h.value()/2);
+                if (scene.mode==Mode.IDLE) {
+                    float width=Math.max(m.minPillW,m.holeD+m.dp(16));
+                    n.target.set(m.cx-width/2,m.cy-m.pillH/2,m.cx+width/2,m.cy+m.pillH/2);
+                } else {
+                    // Keep the existing exit when another activity remains.
+                    n.target.set(n.x.value()-n.w.value()/2,n.y.value()-n.h.value()/2,
+                            n.x.value()+n.w.value()/2,n.y.value()+n.h.value()/2);
+                }
             } else if(gestureHidden) {
                 float diameter=Math.max(m.dp(8),m.holeD);
                 n.target.set(m.cx-diameter/2,m.cy-diameter/2,m.cx+diameter/2,m.cy+diameter/2);
@@ -297,6 +313,7 @@ final class IMode {
         node.bounds(source);
         float iconOnly=node.iconOnly.value();
         if(manual) {
+            resumeAfterPeek=null;
             if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
             scene.peekOpen=false;
         }
@@ -338,6 +355,11 @@ final class IMode {
     }
 
     void peek(IslandItem item) {
+        Node previous=selected==null ? null : nodes.get(selected);
+        if (scene.mode==Mode.EXPANDED && previous!=null && !previous.removed
+                && previous.item.kind!=IslandItem.Kind.PEEK && !selected.equals(item.key)) {
+            resumeAfterPeek=selected;
+        }
         Node node=nodes.get(item.key);
         if(node==null) { node=new Node(view,item); seed(node); nodes.put(item.key,node); activities.add(item); }
         else node.refresh(view,item);
@@ -429,8 +451,17 @@ final class IMode {
         abortSwipe();
         boolean peek=scene.peekOpen;
         String closed=director.clearPeek();
+        String resume=peek ? resumeAfterPeek : null;
+        resumeAfterPeek=null;
         scene.peekOpen=false; scene.held=false;
         director.cancelAutoCollapse();
+        Node previous=resume==null ? null : nodes.get(resume);
+        if (previous!=null && !previous.removed && !scene.sleeping && !scene.suppressed && !gestureHidden) {
+            selected=null;
+            if(peek) host.onPeekClosed(closed);
+            open(resume,false);
+            return;
+        }
         selected=null; scene.mode=scene.items.isEmpty() ? Mode.HIDDEN : Mode.COMPACT;
         closeCards(); layout();
         if(peek) host.onPeekClosed(closed);
@@ -444,7 +475,7 @@ final class IMode {
         finishCompactInteraction();abortSwipe();
         boolean expanded=scene.mode==Mode.EXPANDED;
         if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
-        scene.peekOpen=false;selected=null;gestureHidden=true;scene.mode=Mode.HIDDEN;
+        scene.peekOpen=false;selected=null;resumeAfterPeek=null;gestureHidden=true;scene.mode=Mode.HIDDEN;
         director.cancelAutoCollapse();closeCards();layout();
         scene.springs.stackDx.animateTo(0);scene.springs.stackDy.animateTo(0);
         scene.springs.visibility.animateTo(0,.36f,1);
@@ -455,8 +486,8 @@ final class IMode {
         if(!gestureHidden || scene.sleeping || scene.suppressed) return;
         syncOutlineTarget();
         gestureHidden=false;selected=null;
-        scene.mode=scene.items.isEmpty() ? Mode.HIDDEN : Mode.COMPACT;
-        layout(true);scene.springs.visibility.animateTo(scene.items.isEmpty() ? 0 : 1,.30f,1);
+        scene.mode=scene.items.isEmpty() ? (ModuleSettings.alwaysVisible() ? Mode.IDLE : Mode.HIDDEN) : Mode.COMPACT;
+        layout(true);scene.springs.visibility.animateTo(scene.mode==Mode.HIDDEN ? 0 : 1,.30f,1);
         resizeWindow();Haptics.perform(view,HapticFeedbackConstants.CONTEXT_CLICK);changed();
     }
 
@@ -592,6 +623,7 @@ final class IMode {
             compactPage.pull.animateTo(0);compactPage.load.animateTo(0);
         }
         if(commit) {
+            resumeAfterPeek=null;
             if(scene.peekOpen) host.onPeekClosed(director.clearPeek());
             scene.peekOpen=false;
             selected=next.item.key;
@@ -722,6 +754,11 @@ final class IMode {
         return null;
     }
     void mainBounds(RectF out) {
+        if(scene.mode==Mode.IDLE) {
+            float width=Math.max(m.minPillW,m.holeD+m.dp(16));
+            out.set(m.cx-width/2,m.cy-m.pillH/2,m.cx+width/2,m.cy+m.pillH/2);
+            return;
+        }
         if(compactPage!=null) { out.set(compactPage.main);return; }
         for(Node n:nodes.values()) if(n.slot==0) { n.bounds(out); return; }
         out.set(m.cx-m.pillH/2,m.cy-m.pillH/2,m.cx+m.pillH/2,m.cy+m.pillH/2);
@@ -747,6 +784,19 @@ final class IMode {
     }
 
     void draw(Canvas canvas,long time) {
+        if (scene.mode==Mode.IDLE && !gestureHidden) {
+            float width=Math.max(m.minPillW,m.holeD+m.dp(16));
+            rect.set(m.cx-width/2,m.cy-m.pillH/2,m.cx+width/2,m.cy+m.pillH/2);
+            shadeBounds(rect,rect);
+            float radius=rect.height()/2;
+            paint.setStyle(Paint.Style.FILL); paint.setColor(Colors.BLACK);
+            canvas.drawRoundRect(rect,radius,radius,paint);
+            if(scene.pillOutlineOpacity()>.01f) {
+                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(m.outlineW);
+                paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE,scene.pillOutlineOpacity()));
+                canvas.drawRoundRect(rect,radius,radius,paint); paint.setStyle(Paint.Style.FILL);
+            }
+        }
         drawMovingGlows(canvas);
         drawMovingOutlines(canvas);
         if(activities.size()>3 && scene.mode==Mode.EXPANDED && selected!=null) {
@@ -963,9 +1013,10 @@ final class IMode {
     void finishSleeping() {
         if(compactPage!=null) { compactPage.clear();compactPage=null; }
         swipeCard=null;swipePreview=null;
-        selected=null;
+        selected=null;resumeAfterPeek=null;
         for(Card c:new ArrayList<>(scene.cards)) release(c);
-        scene.mode=scene.items.isEmpty() || gestureHidden ? Mode.HIDDEN : Mode.COMPACT;
+        scene.mode=gestureHidden ? Mode.HIDDEN : scene.items.isEmpty()
+                ? (ModuleSettings.alwaysVisible() ? Mode.IDLE : Mode.HIDDEN) : Mode.COMPACT;
         layout();
         for(Node n:nodes.values()) {
             n.x.snapTo(n.target.centerX());n.y.snapTo(n.target.centerY());
